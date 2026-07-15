@@ -1,0 +1,24 @@
+# STM32CubeIDE build output
+/Debug/
+/Release/
+
+# Compiled objects / build artifacts
+*.o
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.lst
+
+# CubeIDE / Eclipse workspace metadata
+.metadata/
+.settings/
+*.launch.bak
+
+# OS / editor cruft
+Thumbs.db
+Desktop.ini
+.DS_Store

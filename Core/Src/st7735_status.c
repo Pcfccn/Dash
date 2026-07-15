@@ -1,0 +1,225 @@
+/* Second, small on-board 0.96" ST7735 (160x80) status display on the WeAct
+ * MiniSTM32H743 board, driven through LVGL's built-in ST7735 driver.
+ *
+ * This is fully independent of the 4" ILI9488 dashboard: its own SPI4 bus and
+ * its own GPIOs, all set up here directly via HAL (NOT via CubeMX/.ioc), so it
+ * stays self-contained and never touches the main project configuration.
+ *
+ * Pinout is fixed by the WeAct board (matches their 03-LCD_Test reference):
+ *     SPI4:  SCK = PE12,  MOSI/SDA = PE14   (write-only, no MISO routed)
+ *     CS = PE11,  DC/RS = PE13
+ *     RST: none on this board -> software reset; backlight: always on.
+ *
+ * The panel is the common 0.96" 160x80 IPS type: native 80(w) x 160(h) with the
+ * visible window offset into GRAM by (26, 1), display inversion on, BGR order.
+ * If the image is shifted, colours look swapped/negative, or it's upside down,
+ * the four knobs to tune are marked "TUNE" below.
+ */
+
+#include "st7735_status.h"
+#include "main.h"   /* STM32 HAL + GPIO */
+#include "lvgl.h"
+#include "fdcan_obd.h"    /* g_obd (CAN status + battery) */
+#include "src/drivers/display/st7735/lv_st7735.h"
+
+/* ------- board wiring (SPI4 on GPIOE) ------- */
+#define ST_GPIO_PORT   GPIOE
+#define ST_SCK_PIN     GPIO_PIN_12
+#define ST_MOSI_PIN    GPIO_PIN_14
+#define ST_CS_PIN      GPIO_PIN_11
+#define ST_DC_PIN      GPIO_PIN_13
+#define ST_BL_PIN      GPIO_PIN_10   /* backlight gate. Per the WeAct schematic this drives a SI2301
+                                      * P-channel MOSFET (3V3 -> FET -> 22R -> LEDA), so it is
+                                      * ACTIVE-LOW: drive LOW to turn the backlight ON. */
+
+/* ------- panel geometry (TUNE if the image is shifted) ------- */
+#define ST_HOR_RES     80
+#define ST_VER_RES     160
+#define ST_X_GAP       26
+#define ST_Y_GAP       1
+
+static SPI_HandleTypeDef hspi4_st;
+static lv_display_t *status_disp;
+static lv_obj_t *title, *lbl_speed, *lbl_rpm, *lbl_uptime, *lbl_can, *lbl_canid, *lbl_dbg;
+
+/* Partial draw buffer (RGB565). 80 x 40 px is plenty for a text screen. */
+static uint8_t st_buf[ST_HOR_RES * 40 * 2];
+
+static inline void st_cs_low(void)  { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_CS_PIN, GPIO_PIN_RESET); }
+static inline void st_cs_high(void) { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_CS_PIN, GPIO_PIN_SET); }
+static inline void st_dc_cmd(void)  { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_DC_PIN, GPIO_PIN_RESET); }
+static inline void st_dc_data(void) { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_DC_PIN, GPIO_PIN_SET); }
+
+static void st_hw_init(void)
+{
+    GPIO_InitTypeDef gi = {0};
+
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+    __HAL_RCC_SPI4_CLK_ENABLE();
+
+    /* SCK + MOSI as SPI4 alternate function */
+    gi.Pin = ST_SCK_PIN | ST_MOSI_PIN;
+    gi.Mode = GPIO_MODE_AF_PP;
+    gi.Pull = GPIO_NOPULL;
+    gi.Speed = GPIO_SPEED_FREQ_HIGH;
+    gi.Alternate = GPIO_AF5_SPI4;
+    HAL_GPIO_Init(ST_GPIO_PORT, &gi);
+
+    /* CS + DC + backlight gate as plain push-pull outputs */
+    gi.Pin = ST_CS_PIN | ST_DC_PIN | ST_BL_PIN;
+    gi.Mode = GPIO_MODE_OUTPUT_PP;
+    gi.Pull = GPIO_NOPULL;
+    gi.Speed = GPIO_SPEED_FREQ_HIGH;
+    gi.Alternate = 0;
+    HAL_GPIO_Init(ST_GPIO_PORT, &gi);
+    st_cs_high();
+    /* backlight ON = LOW (P-FET gate, see schematic note above) */
+    HAL_GPIO_WritePin(ST_GPIO_PORT, ST_BL_PIN, GPIO_PIN_RESET);
+
+    /* SPI4: master, mode 0 (CPOL=0/CPHA=0 -- standard for ST7735), 8-bit MSB.
+     * SPI4 kernel clock is APB2 (~112 MHz); /16 -> ~7 MHz, safe and fast enough. */
+    hspi4_st.Instance = SPI4;
+    hspi4_st.Init.Mode = SPI_MODE_MASTER;
+    /* half-duplex, single data line on MOSI (PE14) -- matches WeAct's proven
+     * LCD_Test config; full-duplex (2LINES) leaves RX unread and can stall the
+     * large pixel transfers on H7, giving a blank panel. */
+    hspi4_st.Init.Direction = SPI_DIRECTION_1LINE;
+    hspi4_st.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi4_st.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi4_st.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi4_st.Init.NSS = SPI_NSS_SOFT;
+    hspi4_st.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+    hspi4_st.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi4_st.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi4_st.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi4_st.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+    if (HAL_SPI_Init(&hspi4_st) != HAL_OK) {
+        Error_Handler();
+    }
+}
+
+/* LVGL calls this to send init/setup commands (DC low = command, DC high = params). */
+static void st_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
+                        const uint8_t *param, size_t param_size)
+{
+    LV_UNUSED(disp);
+    st_cs_low();
+    st_dc_cmd();
+    HAL_SPI_Transmit(&hspi4_st, (uint8_t *)cmd, (uint16_t)cmd_size, HAL_MAX_DELAY);
+    if (param && param_size) {
+        st_dc_data();
+        HAL_SPI_Transmit(&hspi4_st, (uint8_t *)param, (uint16_t)param_size, HAL_MAX_DELAY);
+    }
+    st_cs_high();
+}
+
+/* LVGL calls this to push rendered pixels. LVGL stores RGB565 little-endian but
+ * the ST7735 wants the high byte first, so swap each pixel's two bytes. */
+static void st_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
+                          uint8_t *param, size_t param_size)
+{
+    for (size_t i = 0; i + 1 < param_size; i += 2) {
+        uint8_t t = param[i];
+        param[i] = param[i + 1];
+        param[i + 1] = t;
+    }
+    st_cs_low();
+    st_dc_cmd();
+    HAL_SPI_Transmit(&hspi4_st, (uint8_t *)cmd, (uint16_t)cmd_size, HAL_MAX_DELAY);
+    st_dc_data();
+    HAL_SPI_Transmit(&hspi4_st, param, (uint16_t)param_size, HAL_MAX_DELAY);
+    st_cs_high();
+    lv_display_flush_ready(disp);
+}
+
+void st7735_status_init(void)
+{
+    /* Remember the current default (the 4" dashboard) -- creating a second
+     * display makes it the new default, and we want to restore the 4". */
+    lv_display_t *prev = lv_display_get_default();
+
+    st_hw_init();
+
+    status_disp = lv_st7735_create(ST_HOR_RES, ST_VER_RES,
+                                   /* TUNE orientation/colour: */
+                                   LV_LCD_FLAG_MIRROR_X | LV_LCD_FLAG_MIRROR_Y | LV_LCD_FLAG_BGR,
+                                   st_send_cmd, st_send_color);
+    lv_st7735_set_gap(status_disp, ST_X_GAP, ST_Y_GAP);
+    lv_st7735_set_invert(status_disp, true);   /* TUNE: IPS panels need inversion on */
+    lv_display_set_buffers(status_disp, st_buf, NULL, sizeof(st_buf),
+                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+    lv_obj_t *scr = lv_display_get_screen_active(status_disp);
+    lv_obj_set_style_bg_color(scr, lv_color_hex(0x101216), 0);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+    lv_obj_set_style_pad_all(scr, 4, 0);
+
+    title = lv_label_create(scr);
+    lv_obj_set_style_text_color(title, lv_color_hex(0x00c8ff), 0);
+    lv_label_set_text(title, "DASH");
+    lv_obj_align(title, LV_ALIGN_TOP_LEFT, 0, 0);
+
+    lbl_speed = lv_label_create(scr);
+    lv_obj_set_style_text_color(lbl_speed, lv_color_white(), 0);
+    lv_label_set_text(lbl_speed, "SPD --");
+    lv_obj_align(lbl_speed, LV_ALIGN_TOP_LEFT, 0, 30);
+
+    lbl_rpm = lv_label_create(scr);
+    lv_obj_set_style_text_color(lbl_rpm, lv_color_white(), 0);
+    lv_label_set_text(lbl_rpm, "RPM --");
+    lv_obj_align(lbl_rpm, LV_ALIGN_TOP_LEFT, 0, 54);
+
+    lbl_uptime = lv_label_create(scr);
+    lv_obj_set_style_text_color(lbl_uptime, lv_color_hex(0x8a8f98), 0);
+    lv_label_set_text(lbl_uptime, "t 0s");
+    lv_obj_align(lbl_uptime, LV_ALIGN_TOP_LEFT, 0, 84);
+
+    lbl_can = lv_label_create(scr);   /* CAN frames received (bring-up diagnostic) */
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(0x37c871), 0);
+    lv_label_set_text(lbl_can, "rx 0");
+    lv_obj_align(lbl_can, LV_ALIGN_TOP_LEFT, 0, 112);
+
+    lbl_canid = lv_label_create(scr);
+    lv_obj_set_style_text_color(lbl_canid, lv_color_hex(0x8a8f98), 0);
+    lv_label_set_text(lbl_canid, "id ---");
+    lv_obj_align(lbl_canid, LV_ALIGN_TOP_LEFT, 0, 132);
+
+    lbl_dbg = lv_label_create(scr);   /* KEY(PC13) diagnostic line */
+    lv_obj_set_style_text_font(lbl_dbg, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(lbl_dbg, lv_color_hex(0xffb33e), 0);
+    lv_label_set_text(lbl_dbg, "KEY 0 #0");
+    lv_obj_align(lbl_dbg, LV_ALIGN_TOP_LEFT, 0, 146);
+
+    if (prev) {
+        lv_display_set_default(prev);   /* keep the 4" dashboard as the default display */
+    }
+}
+
+void st7735_status_set(int32_t speed_kmh, int32_t rpm)
+{
+    if (status_disp == NULL) {
+        return;
+    }
+    lv_lock();
+    lv_label_set_text_fmt(lbl_speed, "SPD %d", (int)speed_kmh);
+    lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
+    /* uptime doubles as a heartbeat: if this ticks, the whole LVGL loop is alive */
+    lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
+    lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37c871 : 0xff3b30), 0);
+    int bmv = (int)(g_obd.battery * 10.0f + 0.5f);   /* 0.1 V steps */
+    if (bmv > 10) lv_label_set_text_fmt(lbl_canid, "B %d.%dV", bmv / 10, bmv % 10);
+    else          lv_label_set_text(lbl_canid, "B --");
+    lv_unlock();
+}
+
+void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
+{
+    if (status_disp == NULL) {
+        return;
+    }
+    lv_lock();
+    lv_label_set_text_fmt(title, "DASH P%u", (unsigned)page);
+    lv_label_set_text_fmt(lbl_dbg, "KEY %u #%lu", (unsigned)key_raw, (unsigned long)key_cnt);
+    lv_unlock();
+}
