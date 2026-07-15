@@ -22,22 +22,25 @@
 #include <stdbool.h>
 
 /* ---- palette (from the HTML :root) --------------------------------------- */
+/* Palette brightened for the ILI9488 SPI panel: dark background kept for
+ * contrast, but text/borders/accents pushed much brighter so it reads crisp
+ * and vivid instead of dim/muddy (the reference tones looked washed here). */
 #define C_SCREEN     lv_color_hex(0x05080c)
-#define C_SURFACE    lv_color_hex(0x0b1017)
-#define C_LINE       lv_color_hex(0x1b2633)
-#define C_LINE_STR   lv_color_hex(0x2a394a)
-#define C_TEXT       lv_color_hex(0xf4f7fa)
-#define C_TEXT2      lv_color_hex(0xcad2dc)
-#define C_LABEL      lv_color_hex(0x91a0b2)
-#define C_MUTED      lv_color_hex(0x657386)
-#define C_FAINT      lv_color_hex(0x3d4857)
-#define C_OK         lv_color_hex(0x37d67a)
-#define C_INFO       lv_color_hex(0x42bff5)
-#define C_WARN       lv_color_hex(0xffb33e)
-#define C_CRIT       lv_color_hex(0xff4f5e)
-#define C_TRACK      lv_color_hex(0x1b2430)
-#define C_ALERTBG    lv_color_hex(0x060a0f)
-#define C_TOPBAR     lv_color_hex(0x070b10)
+#define C_SURFACE    lv_color_hex(0x111c2a)
+#define C_LINE       lv_color_hex(0x2e4058)
+#define C_LINE_STR   lv_color_hex(0x3d5270)
+#define C_TEXT       lv_color_hex(0xffffff)
+#define C_TEXT2      lv_color_hex(0xe8edf3)
+#define C_LABEL      lv_color_hex(0xbfc9d6)
+#define C_MUTED      lv_color_hex(0x8f9bab)
+#define C_FAINT      lv_color_hex(0x5f6b7c)
+#define C_OK         lv_color_hex(0x2bff77)
+#define C_INFO       lv_color_hex(0x3ccbff)
+#define C_WARN       lv_color_hex(0xffc03a)
+#define C_CRIT       lv_color_hex(0xff3b46)
+#define C_TRACK      lv_color_hex(0x25344a)
+#define C_ALERTBG    lv_color_hex(0x080d13)
+#define C_TOPBAR     lv_color_hex(0x0a1017)
 
 #define DEG "\xC2\xB0"          /* UTF-8 degree sign */
 
