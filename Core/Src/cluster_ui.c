@@ -212,6 +212,20 @@ static lv_obj_t *mk_bar(lv_obj_t *p, int x, int y, int w, int h)
     return b;
 }
 
+/* thin colored tick (warn/crit marker over a gauge, or a threshold swatch) */
+static lv_obj_t *mk_tick(lv_obj_t *p, int x, int y, int w, int h, lv_color_t c)
+{
+    lv_obj_t *t = lv_obj_create(p);
+    lv_obj_set_pos(t, x, y);
+    lv_obj_set_size(t, w, h);
+    lv_obj_set_style_radius(t, (w < h ? w : h) / 2, 0);
+    lv_obj_set_style_bg_color(t, c, 0);
+    lv_obj_set_style_bg_opa(t, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(t, 0, 0);
+    lv_obj_clear_flag(t, LV_OBJ_FLAG_SCROLLABLE);
+    return t;
+}
+
 static lv_obj_t *mk_dot(lv_obj_t *p, int x, int y)
 {
     lv_obj_t *d = lv_obj_create(p);
@@ -346,6 +360,17 @@ static void build_drive(void)
 
         ui.dm_bar[i] = mk_bar(cell, 12, 86, cw[i] - 24, 6);
 
+        /* warn/crit tick markers over the gauge, positioned from thresholds */
+        const metric_cfg_t *mc = &metrics[DRIVE_M[i]];
+        if (mc->kind == THR_HIGH_ONLY) {
+            int bw = cw[i] - 24;
+            float span = mc->scale_max - mc->scale_min;
+            int wx = 12 + (int)((mc->warn_high - mc->scale_min) * bw / span);
+            int cxk = 12 + (int)((mc->crit_high - mc->scale_min) * bw / span);
+            mk_tick(cell, wx, 83, 2, 12, C_WARN);
+            mk_tick(cell, cxk, 83, 2, 12, C_CRIT);
+        }
+
         char lo[8], hi[8];
         fmt(lo, sizeof lo, metrics[DRIVE_M[i]].scale_min, 0);
         fmt(hi, sizeof hi, metrics[DRIVE_M[i]].scale_max, 0);
@@ -422,10 +447,12 @@ static void build_dpf(void)
     lv_obj_set_pos(ui.regen_title, 150, 52);
     ui.regen_hint = mk_label(hero, "No regen request\nfrom ECM.", F14, C_LABEL);
     lv_obj_set_pos(ui.regen_hint, 150, 84);
+    mk_tick(hero, 150, 134, 13, 3, C_WARN);
     lv_obj_t *tn1 = mk_label(hero, "70% warning", F12, C_MUTED);
-    lv_obj_set_pos(tn1, 150, 128);
+    lv_obj_set_pos(tn1, 168, 128);
+    mk_tick(hero, 150, 152, 13, 3, C_CRIT);
     lv_obj_t *tn2 = mk_label(hero, "85% regen", F12, C_MUTED);
-    lv_obj_set_pos(tn2, 150, 146);
+    lv_obj_set_pos(tn2, 168, 146);
 
     /* 2x2 mini-cards */
     static const char *ML[4] = { "EGT", "dP DPF", "SINCE REGEN", "EGR" };
@@ -512,7 +539,7 @@ static void build_strip(lv_obj_t *scr)
     static const char *TAG[9] = { "MIL","CLT","OIL","ATF","EGT","DPF","BAT","DTC","CAN" };
     for (int i = 0; i < 9; i++) {
         ui.tag[i] = mk_label(ui.strip, TAG[i], F12, C_FAINT);
-        lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 6 + i * 25, 0);
+        lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, 0);
     }
     ui.count = mk_label(ui.strip, "", F12, C_CRIT);
     lv_obj_align(ui.count, LV_ALIGN_RIGHT_MID, -8, 0);
@@ -654,16 +681,22 @@ void cluster_ui_refresh(void)
     lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");
     lv_obj_set_style_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2, 0);
     if (d.dtc_count > 0) {
+        char mb[40];
         lv_snprintf(b, sizeof b, "%u DTC", (unsigned)d.dtc_count);
         chip_set(ui.dtc_chip, b, C_WARN);
-        lv_snprintf(b, sizeof b, "%u STORED CODE%s", (unsigned)d.dtc_count,
-                    d.dtc_count == 1 ? "" : "S");
-        lv_label_set_text(ui.dtc_msg, b);
+        lv_snprintf(mb, sizeof mb, LV_SYMBOL_WARNING "  %u STORED CODE%s",
+                    (unsigned)d.dtc_count, d.dtc_count == 1 ? "" : "S");
+        lv_label_set_text(ui.dtc_msg, mb);
         lv_obj_set_style_text_color(ui.dtc_msg, C_WARN, 0);
     } else {
         chip_set(ui.dtc_chip, "0 DTC", C_OK);
-        lv_label_set_text(ui.dtc_msg, live ? "NO STORED CODES" : "NO DATA");
-        lv_obj_set_style_text_color(ui.dtc_msg, C_TEXT2, 0);
+        if (live) {
+            lv_label_set_text(ui.dtc_msg, LV_SYMBOL_OK "  NO STORED CODES");
+            lv_obj_set_style_text_color(ui.dtc_msg, C_OK, 0);
+        } else {
+            lv_label_set_text(ui.dtc_msg, "NO DATA");
+            lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
+        }
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
@@ -688,10 +721,10 @@ void cluster_ui_refresh(void)
     }
 
     const char *txt; lv_color_t col;
-    if (!live)                 { txt = "CAN LOST"; col = C_CRIT; }
-    else if (worst == ST_CRIT) { txt = "CHECK";    col = C_CRIT; }
-    else if (worst == ST_WARN) { txt = "WARN";     col = C_WARN; }
-    else                       { txt = "ALL OK";   col = C_OK;   }
+    if (!live)                 { txt = LV_SYMBOL_WARNING " CAN LOST"; col = C_CRIT; }
+    else if (worst == ST_CRIT) { txt = LV_SYMBOL_WARNING " CHECK";    col = C_CRIT; }
+    else if (worst == ST_WARN) { txt = LV_SYMBOL_WARNING " WARN";     col = C_WARN; }
+    else                       { txt = LV_SYMBOL_OK " ALL OK";        col = C_OK;   }
     lv_label_set_text(ui.summary, txt);
     lv_obj_set_style_text_color(ui.summary, col, 0);
 

@@ -40,7 +40,7 @@
 
 static SPI_HandleTypeDef hspi4_st;
 static lv_display_t *status_disp;
-static lv_obj_t *title, *lbl_speed, *lbl_rpm, *lbl_uptime, *lbl_can, *lbl_canid, *lbl_dbg;
+static lv_obj_t *lbl_spcap, *lbl_speed, *lbl_rpm, *lbl_can, *lbl_canid, *lbl_uptime, *lbl_dbg;
 
 /* Partial draw buffer (RGB565). 80 x 40 px is plenty for a text screen. */
 static uint8_t st_buf[ST_HOR_RES * 40 * 2];
@@ -149,46 +149,55 @@ void st7735_status_init(void)
     lv_display_set_buffers(status_disp, st_buf, NULL, sizeof(st_buf),
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
 
+    /* High-contrast layout for in-car daylight readability: pure-black
+     * background, pure-white values, bright saturated status colours, and
+     * larger speed/rpm digits. No low-contrast greys. */
     lv_obj_t *scr = lv_display_get_screen_active(status_disp);
-    lv_obj_set_style_bg_color(scr, lv_color_hex(0x101216), 0);
+    lv_obj_set_style_bg_color(scr, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
-    lv_obj_set_style_pad_all(scr, 4, 0);
+    lv_obj_set_style_pad_all(scr, 3, 0);
 
-    title = lv_label_create(scr);
-    lv_obj_set_style_text_color(title, lv_color_hex(0x00c8ff), 0);
-    lv_label_set_text(title, "DASH");
-    lv_obj_align(title, LV_ALIGN_TOP_LEFT, 0, 0);
+    lbl_spcap = lv_label_create(scr);   /* "SPEED" caption */
+    lv_obj_set_style_text_font(lbl_spcap, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(lbl_spcap, lv_color_hex(0x8a93a0), 0);
+    lv_label_set_text(lbl_spcap, "SPEED km/h");
+    lv_obj_align(lbl_spcap, LV_ALIGN_TOP_LEFT, 0, 0);
 
-    lbl_speed = lv_label_create(scr);
+    lbl_speed = lv_label_create(scr);   /* big speed number */
+    lv_obj_set_style_text_font(lbl_speed, &lv_font_montserrat_28, 0);
     lv_obj_set_style_text_color(lbl_speed, lv_color_white(), 0);
-    lv_label_set_text(lbl_speed, "SPD --");
-    lv_obj_align(lbl_speed, LV_ALIGN_TOP_LEFT, 0, 30);
+    lv_label_set_text(lbl_speed, "--");
+    lv_obj_align(lbl_speed, LV_ALIGN_TOP_LEFT, 0, 12);
 
     lbl_rpm = lv_label_create(scr);
+    lv_obj_set_style_text_font(lbl_rpm, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(lbl_rpm, lv_color_white(), 0);
     lv_label_set_text(lbl_rpm, "RPM --");
-    lv_obj_align(lbl_rpm, LV_ALIGN_TOP_LEFT, 0, 54);
+    lv_obj_align(lbl_rpm, LV_ALIGN_TOP_LEFT, 0, 46);
 
-    lbl_uptime = lv_label_create(scr);
-    lv_obj_set_style_text_color(lbl_uptime, lv_color_hex(0x8a8f98), 0);
+    lbl_can = lv_label_create(scr);   /* CAN link status (bright green/red) */
+    lv_obj_set_style_text_font(lbl_can, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(0x2bff77), 0);
+    lv_label_set_text(lbl_can, "CAN --");
+    lv_obj_align(lbl_can, LV_ALIGN_TOP_LEFT, 0, 72);
+
+    lbl_canid = lv_label_create(scr);   /* battery voltage, pure white */
+    lv_obj_set_style_text_font(lbl_canid, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(lbl_canid, lv_color_white(), 0);
+    lv_label_set_text(lbl_canid, "B --");
+    lv_obj_align(lbl_canid, LV_ALIGN_TOP_LEFT, 0, 94);
+
+    lbl_uptime = lv_label_create(scr);   /* uptime = liveness heartbeat */
+    lv_obj_set_style_text_font(lbl_uptime, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(lbl_uptime, lv_color_hex(0xb0b8c2), 0);
     lv_label_set_text(lbl_uptime, "t 0s");
-    lv_obj_align(lbl_uptime, LV_ALIGN_TOP_LEFT, 0, 84);
+    lv_obj_align(lbl_uptime, LV_ALIGN_TOP_LEFT, 0, 116);
 
-    lbl_can = lv_label_create(scr);   /* CAN frames received (bring-up diagnostic) */
-    lv_obj_set_style_text_color(lbl_can, lv_color_hex(0x37c871), 0);
-    lv_label_set_text(lbl_can, "rx 0");
-    lv_obj_align(lbl_can, LV_ALIGN_TOP_LEFT, 0, 112);
-
-    lbl_canid = lv_label_create(scr);
-    lv_obj_set_style_text_color(lbl_canid, lv_color_hex(0x8a8f98), 0);
-    lv_label_set_text(lbl_canid, "id ---");
-    lv_obj_align(lbl_canid, LV_ALIGN_TOP_LEFT, 0, 132);
-
-    lbl_dbg = lv_label_create(scr);   /* KEY(PC13) diagnostic line */
+    lbl_dbg = lv_label_create(scr);   /* page + KEY(PC13) diagnostic line */
     lv_obj_set_style_text_font(lbl_dbg, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(lbl_dbg, lv_color_hex(0xffb33e), 0);
-    lv_label_set_text(lbl_dbg, "KEY 0 #0");
-    lv_obj_align(lbl_dbg, LV_ALIGN_TOP_LEFT, 0, 146);
+    lv_obj_set_style_text_color(lbl_dbg, lv_color_hex(0xffc033), 0);
+    lv_label_set_text(lbl_dbg, "P0 KEY0 #0");
+    lv_obj_align(lbl_dbg, LV_ALIGN_TOP_LEFT, 0, 138);
 
     if (prev) {
         lv_display_set_default(prev);   /* keep the 4" dashboard as the default display */
@@ -201,12 +210,11 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm)
         return;
     }
     lv_lock();
-    lv_label_set_text_fmt(lbl_speed, "SPD %d", (int)speed_kmh);
+    lv_label_set_text_fmt(lbl_speed, "%d", (int)speed_kmh);
     lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
-    /* uptime doubles as a heartbeat: if this ticks, the whole LVGL loop is alive */
     lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
     lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
-    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37c871 : 0xff3b30), 0);
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x2bff77 : 0xff2d2d), 0);
     int bmv = (int)(g_obd.battery * 10.0f + 0.5f);   /* 0.1 V steps */
     if (bmv > 10) lv_label_set_text_fmt(lbl_canid, "B %d.%dV", bmv / 10, bmv % 10);
     else          lv_label_set_text(lbl_canid, "B --");
@@ -219,7 +227,7 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
         return;
     }
     lv_lock();
-    lv_label_set_text_fmt(title, "DASH P%u", (unsigned)page);
-    lv_label_set_text_fmt(lbl_dbg, "KEY %u #%lu", (unsigned)key_raw, (unsigned long)key_cnt);
+    lv_label_set_text_fmt(lbl_dbg, "P%u KEY%u #%lu",
+                          (unsigned)page, (unsigned)key_raw, (unsigned long)key_cnt);
     lv_unlock();
 }
