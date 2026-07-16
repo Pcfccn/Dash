@@ -99,8 +99,11 @@ static void ili9488_init_sequence(void)
     lcd_write_data((const uint8_t[]){0x17,0x15}, 2);
     lcd_write_cmd(0xC1); /* power control 2 */
     lcd_write_data_byte(0x41);
-    lcd_write_cmd(0xC5); /* VCOM control */
-    lcd_write_data((const uint8_t[]){0x00,0x12,0x80}, 3);
+    lcd_write_cmd(0xC5); /* VCOM control — raised VCM (0x12->0x24) to deepen
+                          * black / cut the milky glow on this panel. Tune this
+                          * one byte: higher = deeper black up to a point, then
+                          * it starts to flicker; lower = washed out again. */
+    lcd_write_data((const uint8_t[]){0x00,0x1E,0x80}, 3);
 
     lcd_write_cmd(0x36); /* MADCTL: memory access order / orientation */
     lcd_write_data_byte(0x48); /* portrait 320x480 (MX + BGR); flip to 0x88 if upside down */

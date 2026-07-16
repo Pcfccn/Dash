@@ -25,31 +25,41 @@
 /* Palette brightened for the ILI9488 SPI panel: dark background kept for
  * contrast, but text/borders/accents pushed much brighter so it reads crisp
  * and vivid instead of dim/muddy (the reference tones looked washed here). */
-#define C_SCREEN     lv_color_hex(0x05080c)
-#define C_SURFACE    lv_color_hex(0x111c2a)
-#define C_LINE       lv_color_hex(0x2e4058)
-#define C_LINE_STR   lv_color_hex(0x3d5270)
+/* This ILI9488 only looks crisp with the small-screen recipe: pure black
+ * everywhere, bright near-white text, bright borders (outline cards instead of
+ * muddy grey fills), saturated accents. Any dark-grey fill/label goes milky. */
+#define C_SCREEN     lv_color_hex(0x000000)
+#define C_SURFACE    lv_color_hex(0x000000)   /* pure-black cards — no fog on this panel */
+#define C_LINE       lv_color_hex(0x2b3947)   /* subtle borders; vivid values carry contrast */
+#define C_LINE_STR   lv_color_hex(0x3c4d61)
 #define C_TEXT       lv_color_hex(0xffffff)
-#define C_TEXT2      lv_color_hex(0xe8edf3)
-#define C_LABEL      lv_color_hex(0xbfc9d6)
-#define C_MUTED      lv_color_hex(0x8f9bab)
-#define C_FAINT      lv_color_hex(0x5f6b7c)
-#define C_OK         lv_color_hex(0x2bff77)
-#define C_INFO       lv_color_hex(0x3ccbff)
-#define C_WARN       lv_color_hex(0xffc03a)
-#define C_CRIT       lv_color_hex(0xff3b46)
-#define C_TRACK      lv_color_hex(0x25344a)
-#define C_ALERTBG    lv_color_hex(0x080d13)
-#define C_TOPBAR     lv_color_hex(0x0a1017)
+#define C_TEXT2      lv_color_hex(0xffffff)
+#define C_LABEL      lv_color_hex(0xffffff)   /* labels white — grey washes out here */
+#define C_MUTED      lv_color_hex(0xe8edf3)   /* captions near-white (no dim grey) */
+#define C_FAINT      lv_color_hex(0xc8d2dc)   /* ticks / off-tags: light, still renders */
+#define C_OK         lv_color_hex(0x37d67a)   /* softer template green (2bff77 was too acidic) */
+#define C_COLD       lv_color_hex(0x54c8ff)   /* temperature < 50C: engine warming up, light blue */
+#define C_INFO       lv_color_hex(0x45d0ff)
+#define C_WARN       lv_color_hex(0xffc73f)
+#define C_CRIT       lv_color_hex(0xff4350)
+#define C_TRACK      lv_color_hex(0x2b3d54)
+#define C_ALERTBG    lv_color_hex(0x000000)
+#define C_TOPBAR     lv_color_hex(0x000000)
 
 #define DEG "\xC2\xB0"          /* UTF-8 degree sign */
+
+/* Montserrat Bold for the big readouts (generated from the TTF via
+ * lv_font_conv) so the numbers look heavy like the design reference. */
+LV_FONT_DECLARE(montserrat_bold_24);
+LV_FONT_DECLARE(montserrat_bold_28);
+LV_FONT_DECLARE(montserrat_bold_48);
 
 #define F12 &lv_font_montserrat_12
 #define F14 &lv_font_montserrat_14
 #define F20 &lv_font_montserrat_20
-#define F24 &lv_font_montserrat_24
-#define F28 &lv_font_montserrat_28
-#define F48 &lv_font_montserrat_48
+#define F24 &montserrat_bold_24    /* stat values */
+#define F28 &montserrat_bold_28    /* rpm / mini / boost / gear */
+#define F48 &montserrat_bold_48    /* speed / metric values / soot */
 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
@@ -113,6 +123,12 @@ static bool is_enhanced(metric_key_t k)
 {
     return k == M_ATF || k == M_SOOT || k == M_DPF_DP ||
            k == M_SINCE_REGEN || k == M_EGR_T;
+}
+
+/* the °C gauge temperatures — get a "cold" blue tint below 50°C */
+static bool is_temp(metric_key_t k)
+{
+    return k == M_COOL || k == M_OIL || k == M_ATF || k == M_EGT;
 }
 
 static float mval(const obd_data_t *d, metric_key_t k)
@@ -603,7 +619,7 @@ uint8_t cluster_ui_get_page(void)
 static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
                        metric_key_t k, const obd_data_t *d, bool live)
 {
-    bool ok = live && !is_enhanced(k);
+    bool ok = live && (!is_enhanced(k) || OBD_DEMO);
     if (!ok) {
         lv_label_set_text(val, "--");
         lv_obj_set_style_text_color(val, C_MUTED, 0);
@@ -621,11 +637,16 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
 
     metric_state_t s = metric_state(k, v);
     lv_color_t c = state_color(s);
-    lv_obj_set_style_text_color(val, (s >= ST_WARN) ? c : C_TEXT, 0);
+    /* Cold temperature (engine warming up): light blue instead of green. */
+    if (s == ST_OK && is_temp(k) && v < 50.0f) c = C_COLD;
+    /* Vivid state colouring, matching the design reference: the value takes
+     * its state colour (OK=green, INFO=blue, WARN=amber, CRIT=red). The
+     * saturated colour is what carries contrast on this weak panel. */
+    lv_obj_set_style_text_color(val, c, 0);
     if (dot) lv_obj_set_style_bg_color(dot, c, 0);
     if (bar) {
         lv_bar_set_value(bar, pct_of(k, v), LV_ANIM_OFF);
-        lv_obj_set_style_bg_color(bar, (s >= ST_WARN) ? c : C_INFO, LV_PART_INDICATOR);
+        lv_obj_set_style_bg_color(bar, c, LV_PART_INDICATOR);
     }
 }
 
@@ -671,7 +692,7 @@ void cluster_ui_refresh(void)
     /* ----- DPF ----- */
     set_metric(ui.soot_val, NULL, NULL, M_SOOT, &d, live);
     {
-        bool ok = live && !is_enhanced(M_SOOT);
+        bool ok = live && (!is_enhanced(M_SOOT) || OBD_DEMO);
         int sv = ok ? pct_of(M_SOOT, d.soot) : 0;
         lv_arc_set_value(ui.soot_arc, sv);
         metric_state_t ss = ok ? metric_state(M_SOOT, d.soot) : ST_OK;

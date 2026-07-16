@@ -19,6 +19,12 @@
 
 #include <stdint.h>
 
+/* ---- Bench demo -----------------------------------------------------------
+ * 1 = inject synthetic test values into g_obd (no CAN needed): all colours,
+ *     thresholds and the animated coolant are visible on the desk.
+ * 0 = real OBD-II over the bus. SET TO 0 BEFORE USING IN THE CAR.            */
+#define OBD_DEMO 1
+
 /* ---- Bus / addressing ---------------------------------------------------- */
 #define CAN_BITRATE_BPS        500000u
 #define OBD_REQ_FUNCTIONAL     0x7DFu   /* broadcast request                   */
@@ -76,7 +82,7 @@ static const metric_cfg_t metrics[M_COUNT] = {
 /*  label          kind           min    max   warnLo critLo warnHi critHi dec */
   { "SPEED",       THR_NONE,       0,    240,     0,     0,     0,     0,   0 },
   { "RPM",         THR_HIGH_ONLY,  0,   4500,     0,     0,  3800,  4300,   0 },
-  { "COOLANT",     THR_HIGH_ONLY, 40,    120,     0,     0,   105,   112,   0 },
+  { "COOLANT",     THR_HIGH_ONLY, 40,    120,     0,     0,    93,    97,   0 },
   { "OIL",         THR_HIGH_ONLY, 40,    140,     0,     0,   120,   130,   0 },
   { "ATF",         THR_HIGH_ONLY, 40,    150,     0,     0,   120,   130,   0 },
   { "EGT",         THR_HIGH_ONLY,  0,    800,     0,     0,   650,   720,   0 }, /* DPF-zone probe */

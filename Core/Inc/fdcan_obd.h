@@ -29,6 +29,7 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan);   /* filters + start               *
 void obd_rx_poll(void);                       /* drain RX FIFO0 (call often)    */
 void obd_poll_tick(void);                     /* round-robin requests           */
 void obd_watchdog_tick_1hz(void);             /* flips can_ok if bus went quiet */
+void obd_demo_tick(void);                     /* OBD_DEMO: inject test values    */
 
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);

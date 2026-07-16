@@ -168,3 +168,24 @@ void obd_watchdog_tick_1hz(void) {
         if (g_obd.can_ok) { g_obd.can_ok = false; obd_on_update(); }
     }
 }
+
+#if OBD_DEMO
+/* Bench demo: fill g_obd with the reference "cruise" scenario, and sweep the
+ * coolant 85..100..85 (~30 s) so the 93/97 warn/crit thresholds are visible. */
+void obd_demo_tick(void) {
+    uint32_t s = (HAL_GetTick() / 100u) % 300u;          /* 0..299 over 30 s   */
+    /* sweep coolant 40..100..40 so every band shows: <50 cold-blue, ok green,
+     * >=93 warn amber, >=97 crit red */
+    int cool = (s < 150) ? 40 + (int)(s * 60 / 150)
+                         : 40 + (int)((299 - s) * 60 / 150);
+
+    g_obd.speed = 95;   g_obd.rpm = 2150;  g_obd.cool = (float)cool;
+    g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
+    g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 58;   g_obd.battery = 14.1f;
+    g_obd.atf = 82;     g_obd.soot = 42;   g_obd.dpf_dp = 3.1f;
+    g_obd.since_regen = 180; g_obd.egr_t = 96;
+    g_obd.mil = false;  g_obd.dtc_count = 0;
+    g_obd.can_ok = true;
+    obd_on_update();
+}
+#endif

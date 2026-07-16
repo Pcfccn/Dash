@@ -22,6 +22,8 @@
 #include "fdcan_obd.h"    /* g_obd (CAN status + battery) */
 #include "src/drivers/display/st7735/lv_st7735.h"
 
+LV_FONT_DECLARE(montserrat_bold_28);   /* big bold speed number */
+
 /* ------- board wiring (SPI4 on GPIOE) ------- */
 #define ST_GPIO_PORT   GPIOE
 #define ST_SCK_PIN     GPIO_PIN_12
@@ -159,12 +161,12 @@ void st7735_status_init(void)
 
     lbl_spcap = lv_label_create(scr);   /* "SPEED" caption */
     lv_obj_set_style_text_font(lbl_spcap, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(lbl_spcap, lv_color_hex(0x8a93a0), 0);
+    lv_obj_set_style_text_color(lbl_spcap, lv_color_hex(0xe8edf3), 0);
     lv_label_set_text(lbl_spcap, "SPEED km/h");
     lv_obj_align(lbl_spcap, LV_ALIGN_TOP_LEFT, 0, 0);
 
     lbl_speed = lv_label_create(scr);   /* big speed number */
-    lv_obj_set_style_text_font(lbl_speed, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_text_font(lbl_speed, &montserrat_bold_28, 0);
     lv_obj_set_style_text_color(lbl_speed, lv_color_white(), 0);
     lv_label_set_text(lbl_speed, "--");
     lv_obj_align(lbl_speed, LV_ALIGN_TOP_LEFT, 0, 12);
@@ -177,7 +179,7 @@ void st7735_status_init(void)
 
     lbl_can = lv_label_create(scr);   /* CAN link status (bright green/red) */
     lv_obj_set_style_text_font(lbl_can, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(lbl_can, lv_color_hex(0x2bff77), 0);
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(0x37d67a), 0);
     lv_label_set_text(lbl_can, "CAN --");
     lv_obj_align(lbl_can, LV_ALIGN_TOP_LEFT, 0, 72);
 
@@ -189,7 +191,7 @@ void st7735_status_init(void)
 
     lbl_uptime = lv_label_create(scr);   /* uptime = liveness heartbeat */
     lv_obj_set_style_text_font(lbl_uptime, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(lbl_uptime, lv_color_hex(0xb0b8c2), 0);
+    lv_obj_set_style_text_color(lbl_uptime, lv_color_hex(0xd8dee6), 0);
     lv_label_set_text(lbl_uptime, "t 0s");
     lv_obj_align(lbl_uptime, LV_ALIGN_TOP_LEFT, 0, 116);
 
@@ -214,7 +216,7 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm)
     lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
     lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
     lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
-    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x2bff77 : 0xff2d2d), 0);
+    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37d67a : 0xff2d2d), 0);
     int bmv = (int)(g_obd.battery * 10.0f + 0.5f);   /* 0.1 V steps */
     if (bmv > 10) lv_label_set_text_fmt(lbl_canid, "B %d.%dV", bmv / 10, bmv % 10);
     else          lv_label_set_text(lbl_canid, "B --");
