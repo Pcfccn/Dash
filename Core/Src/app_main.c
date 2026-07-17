@@ -10,6 +10,24 @@
 
 #define BACKLIGHT_DUTY_PCT 100u   /* full brightness — 80% read as dim on the ILI9488 */
 
+/* KEY (PC13) gestures: short press = page/step, 3 s hold = toggle backlight mode. */
+#define KEY_HOLD_MS   3000u
+#define BL_STEP_PCT   10u
+#define BL_MIN_PCT    10u
+#define BL_MAX_PCT    100u
+
+static uint8_t s_bl_pct  = BACKLIGHT_DUTY_PCT;  /* current backlight duty %        */
+static uint8_t s_bl_mode = 0;                   /* 0 = pages, 1 = backlight control */
+
+/* Set TIM1_CH1 (PA8 -> IRF520 gate) duty; clamps to 0..100 %. */
+static void backlight_set(uint8_t pct)
+{
+    if (pct > 100u) pct = 100u;
+    s_bl_pct = pct;
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,
+                          (htim1.Init.Period * pct) / 100u);
+}
+
 /* On-board WeAct LED on PE3 (active low). Display-independent heartbeat:
  *   LED off       -> AppMain_Init never reached (RTOS/boot problem)
  *   LED solid on  -> hung inside AppMain_Init (a display init is blocking)
@@ -41,6 +59,36 @@ static void key_button_init(void)
     HAL_GPIO_Init(GPIOC, &gi);
 }
 
+/* PE3 heartbeat repurposed as a backlight-level indicator: it blinks
+ * (backlight% / 10) short pulses, then holds a long gap, and repeats. The
+ * ongoing blinking still doubles as the "loop alive" signal. PE3 is active-low
+ * (RESET = lit, SET = dark). Non-blocking; call every AppMain_Run iteration. */
+static void heartbeat_led_tick(uint32_t t)
+{
+    enum { LED_ON_MS = 130, LED_OFF_MS = 200, LED_GAP_MS = 1200 };
+    static uint32_t at = 0;
+    static uint8_t  flashes = 0;    /* ON pulses left in this cycle */
+    static uint8_t  lit = 0;        /* current electrical state     */
+
+    if (lit) {                                          /* end of an ON pulse */
+        if (t - at >= (uint32_t)LED_ON_MS) {
+            HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_SET);   /* dark */
+            lit = 0; at = t;
+        }
+        return;
+    }
+    /* dark: short gap between pulses, or the long gap between cycles */
+    uint32_t wait = (flashes > 0) ? (uint32_t)LED_OFF_MS : (uint32_t)LED_GAP_MS;
+    if (t - at < wait) return;
+
+    if (flashes == 0)                                   /* latch level for a new cycle */
+        flashes = (s_bl_pct >= 10u) ? (uint8_t)(s_bl_pct / 10u) : 1u;
+
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);        /* lit */
+    lit = 1; at = t;
+    flashes--;
+}
+
 void AppMain_Init(void)
 {
     heartbeat_led_init();   /* first, before anything that might block */
@@ -52,30 +100,45 @@ void AppMain_Init(void)
 
     /* backlight: TIM1_CH1 / PA8 -> IRF520 gate, per docs/wiring.md */
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,
-                          (htim1.Init.Period * BACKLIGHT_DUTY_PCT) / 100u);
+    backlight_set(BACKLIGHT_DUTY_PCT);
 }
 
 void AppMain_Run(void)
 {
-    /* heartbeat: independent of both displays, uses the HAL timebase (TIM6) */
-    static uint32_t last_led = 0u;
+    /* PE3 shows the backlight level as a blink code (also the loop heartbeat) */
     uint32_t t = HAL_GetTick();
-    if (t - last_led >= 1000u) {
-        last_led = t;
-        HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_3);
-    }
+    heartbeat_led_tick(t);
 
-    /* KEY (PC13, active-high): on a fresh press, advance the cluster page.
-     * 200 ms edge lockout debounces the contact. */
-    static uint8_t key_prev = 0;
-    static uint32_t key_t = 0;
+    /* KEY (PC13, active-high) gesture state machine:
+     *   short press        -> pages mode: next page;  backlight mode: +10% duty
+     *   press & hold 3 s   -> toggle pages <-> backlight mode
+     * The backlight stepping (visible dimming) is the feedback for the mode. */
+    static uint8_t  key_prev = 0;
+    static uint32_t key_down_t = 0;
+    static uint8_t  key_hold_done = 0;   /* long-press already handled this hold */
     static uint32_t key_cnt = 0;
     uint8_t key_now = (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET);
-    if (key_now && !key_prev && (t - key_t) > 200u) {
-        key_t = t;
-        key_cnt++;
-        cluster_ui_next_page();
+
+    if (key_now && !key_prev) {                          /* press begins        */
+        key_down_t = t;
+        key_hold_done = 0;
+    }
+    if (key_now && !key_hold_done && (t - key_down_t) >= KEY_HOLD_MS) {
+        key_hold_done = 1;                               /* consume this hold   */
+        s_bl_mode = !s_bl_mode;                          /* enter/leave mode    */
+    }
+    if (!key_now && key_prev) {                          /* release             */
+        uint32_t held = t - key_down_t;
+        if (!key_hold_done && held >= 40u) {             /* debounced short tap */
+            key_cnt++;
+            if (s_bl_mode) {
+                backlight_set((s_bl_pct >= BL_MAX_PCT)
+                                  ? BL_MIN_PCT
+                                  : (uint8_t)(s_bl_pct + BL_STEP_PCT));
+            } else {
+                cluster_ui_next_page();
+            }
+        }
     }
     key_prev = key_now;
 
