@@ -1,0 +1,15 @@
+# Focus the graph on our own firmware (Core/), skip vendor + build + generated.
+Debug/
+Drivers/
+Middlewares/
+Core/Startup/
+Core/Src/montserrat_bold_24.c
+Core/Src/montserrat_bold_28.c
+Core/Src/montserrat_bold_48.c
+Core/Src/system_stm32h7xx.c
+Core/Src/syscalls.c
+Core/Src/sysmem.c
+graphify-out/
+*.o
+*.d
+*.su

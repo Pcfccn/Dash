@@ -22,3 +22,6 @@
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Graphify: commit the graph, but not its local rebuild cache
+graphify-out/cache/
