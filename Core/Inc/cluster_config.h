@@ -61,6 +61,7 @@ typedef enum {
     M_SPEED = 0, M_RPM, M_COOL, M_OIL, M_ATF, M_EGT, M_BOOST,
     M_SOOT, M_DPF_DP, M_SINCE_REGEN, M_EGR_T,
     M_BATTERY, M_IAT, M_LOAD, M_RAIL,
+    M_GEAR,
     M_COUNT
 } metric_key_t;
 
@@ -94,7 +95,8 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "BATTERY",     THR_WINDOW,     9,     16,  12.0f, 11.5f, 15.0f, 15.5f,  1 },
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
-  { "RAIL",        THR_INFO,       0,    200,     0,     0,     0,     0,   0 }  /* MPa            */
+  { "RAIL",        THR_INFO,       0,    200,     0,     0,     0,     0,   0 }, /* MPa            */
+  { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
 
 /* Generic state resolver */
@@ -150,6 +152,7 @@ static const pid_map_t pid_map[] = {
   { M_DPF_DP,       SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "DPF differential pressure DID — TBD" },
   { M_SINCE_REGEN,  SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "distance since last regen DID — TBD" },
   { M_EGR_T,        SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "EGR/exhaust temp DID — TBD" },
+  { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x0000, "TCM current gear DID — TBD" },
 };
 
 /*

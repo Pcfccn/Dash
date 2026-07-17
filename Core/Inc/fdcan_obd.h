@@ -18,6 +18,7 @@
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
     float   atf, soot, dpf_dp, egr_t, since_regen;
+    int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     bool    mil;
     uint8_t dtc_count;
     bool    can_ok;          /* set false if no valid frame within timeout     */

@@ -14,7 +14,7 @@
 #include "cluster_config.h"
 #include <string.h>
 
-volatile obd_data_t g_obd = { .can_ok = false };
+volatile obd_data_t g_obd = { .can_ok = false, .gear = -1 };
 
 static FDCAN_HandleTypeDef *hfd;
 static volatile uint32_t    last_rx_ms;
@@ -183,7 +183,7 @@ void obd_demo_tick(void) {
     g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
     g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 58;   g_obd.battery = 14.1f;
     g_obd.atf = 82;     g_obd.soot = 42;   g_obd.dpf_dp = 3.1f;
-    g_obd.since_regen = 180; g_obd.egr_t = 96;
+    g_obd.since_regen = 180; g_obd.egr_t = 96;   g_obd.gear = 6;
     g_obd.mil = false;  g_obd.dtc_count = 0;
     g_obd.can_ok = true;
     obd_on_update();

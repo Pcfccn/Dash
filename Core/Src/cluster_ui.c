@@ -68,21 +68,22 @@ static struct {
     /* alert strip */
     lv_obj_t *strip;
     lv_obj_t *tag[9];               /* MIL CLT OIL ATF EGT DPF BAT DTC CAN */
+    lv_obj_t *tag_ul[9];            /* per-tag state underline (design signature) */
     lv_obj_t *summary;
     lv_obj_t *count;
 
     /* DRIVE */
-    lv_obj_t *ind_mil, *can_chip;
-    lv_obj_t *speed_val, *iat_val, *rpm_val, *rpm_bar;
+    lv_obj_t *gear_val;
+    lv_obj_t *speed_val, *rpm_val;
     lv_obj_t *dm_val[4], *dm_bar[4], *dm_dot[4];   /* cool oil atf egt */
-    lv_obj_t *boost_val, *boost_bar;
+    lv_obj_t *boost_val;
 
     /* DPF */
-    lv_obj_t *soot_arc, *soot_val, *regen_chip, *regen_title, *regen_hint;
+    lv_obj_t *soot_arc, *soot_val, *regen_title, *regen_hint;
     lv_obj_t *mc_val[4];            /* egt dp since egr */
 
     /* DIAG */
-    lv_obj_t *dtc_chip, *mil_text, *dtc_msg;
+    lv_obj_t *mil_text, *dtc_msg, *dtc_ring, *dtc_ic;
     lv_obj_t *st_val[4];            /* batt iat load rail */
 } ui;
 
@@ -141,7 +142,8 @@ static float mval(const obd_data_t *d, metric_key_t k)
         case M_DPF_DP:return d->dpf_dp;  case M_SINCE_REGEN: return d->since_regen;
         case M_EGR_T: return d->egr_t;   case M_BATTERY: return d->battery;
         case M_IAT:   return d->iat;     case M_LOAD: return d->load;
-        case M_RAIL:  return d->rail;    default: return 0;
+        case M_RAIL:  return d->rail;    case M_GEAR: return d->gear;
+        default: return 0;
     }
 }
 
@@ -188,31 +190,6 @@ static lv_obj_t *mk_card(lv_obj_t *p, int x, int y, int w, int h)
     lv_obj_set_style_pad_all(c, 9, 0);
     lv_obj_clear_flag(c, LV_OBJ_FLAG_SCROLLABLE);
     return c;
-}
-
-/* pill chip (rounded, bordered, small caps) */
-static lv_obj_t *mk_chip(lv_obj_t *p, const char *txt)
-{
-    lv_obj_t *c = lv_obj_create(p);
-    lv_obj_set_size(c, LV_SIZE_CONTENT, 18);
-    lv_obj_set_style_bg_color(c, C_SURFACE, 0);
-    lv_obj_set_style_bg_opa(c, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(c, C_LINE, 0);
-    lv_obj_set_style_border_width(c, 1, 0);
-    lv_obj_set_style_radius(c, 9, 0);
-    lv_obj_set_style_pad_hor(c, 7, 0);
-    lv_obj_set_style_pad_ver(c, 0, 0);
-    lv_obj_clear_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t *l = mk_label(c, txt, F12, C_MUTED);
-    lv_obj_center(l);
-    return c;
-}
-static void chip_set(lv_obj_t *chip, const char *txt, lv_color_t col)
-{
-    lv_obj_t *l = lv_obj_get_child(chip, 0);
-    lv_label_set_text(l, txt);
-    lv_obj_set_style_text_color(l, col, 0);
-    lv_obj_set_style_border_color(chip, col, 0);
 }
 
 /* horizontal gauge bar (track + colored indicator) */
@@ -274,8 +251,10 @@ static void mk_pager(lv_obj_t *page, int active)
     }
 }
 
-/* topbar strip (title centered, small indicators/chips at the sides) */
-static lv_obj_t *mk_topbar(lv_obj_t *page, const char *title)
+/* calibration eyebrow: vehicle/cal ID on the left, page name on the right.
+ * Replaces the old centered topbar. '/' is used as the separator because the
+ * Montserrat subset has no middle-dot (U+00B7) glyph. */
+static lv_obj_t *mk_eyebrow(lv_obj_t *page, const char *title)
 {
     lv_obj_t *tb = lv_obj_create(page);
     lv_obj_set_pos(tb, 0, 0);
@@ -288,8 +267,10 @@ static lv_obj_t *mk_topbar(lv_obj_t *page, const char *title)
     lv_obj_set_style_radius(tb, 0, 0);
     lv_obj_set_style_pad_all(tb, 0, 0);
     lv_obj_clear_flag(tb, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t *t = mk_label(tb, title, F12, C_TEXT2);
-    lv_obj_center(t);
+    lv_obj_t *id = mk_label(tb, "COLORADO 2.8 / E98 / 500 kbit/s", F12, C_MUTED);
+    lv_obj_align(id, LV_ALIGN_LEFT_MID, 8, 0);
+    lv_obj_t *pgn = mk_label(tb, title, F12, C_OK);
+    lv_obj_align(pgn, LV_ALIGN_RIGHT_MID, -8, 0);
     return tb;
 }
 
@@ -298,54 +279,55 @@ static void build_drive(void)
 {
     lv_obj_t *pg = ui.page[0];
 
-    lv_obj_t *tb = mk_topbar(pg, "DRIVE");
-    ui.ind_mil = mk_label(tb, "MIL", F12, C_FAINT);
-    lv_obj_align(ui.ind_mil, LV_ALIGN_LEFT_MID, 8, 0);
-    ui.can_chip = mk_chip(tb, "CAN");
-    lv_obj_align(ui.can_chip, LV_ALIGN_RIGHT_MID, -6, 0);
+    mk_eyebrow(pg, "DRIVE");
 
-    /* hero: gear | speed(+IAT) | rpm */
+    /* hero: gear | speed | (boost / rpm stacked) — matches the design's
+     * "working state next to speed" layout. No IAT here (it lives on DIAG),
+     * no separate boost strip, no rpm bar. */
     lv_obj_t *hero = lv_obj_create(pg);
     lv_obj_set_pos(hero, 0, 28);
-    lv_obj_set_size(hero, 320, 108);
+    lv_obj_set_size(hero, 320, 120);
     plain(hero);
     lv_obj_set_style_border_color(hero, C_LINE, 0);
     lv_obj_set_style_border_width(hero, 1, 0);
     lv_obj_set_style_border_side(hero, LV_BORDER_SIDE_BOTTOM, 0);
 
-    lv_obj_t *gear = mk_card(hero, 8, 8, 92, 92);
+    /* GEAR card (left column) */
+    lv_obj_t *gear = mk_card(hero, 8, 8, 78, 104);
     lv_obj_t *gl = mk_label(gear, "GEAR", F12, C_MUTED);
     lv_obj_align(gl, LV_ALIGN_TOP_MID, 0, -2);
-    lv_obj_t *gv = mk_label(gear, "--", F28, C_TEXT2);
-    lv_obj_align(gv, LV_ALIGN_CENTER, 0, 8);
+    ui.gear_val = mk_label(gear, "--", F28, C_TEXT2);
+    lv_label_set_recolor(ui.gear_val, true);   /* range letter white, gear no. green */
+    lv_obj_align(ui.gear_val, LV_ALIGN_CENTER, 0, 8);
 
-    /* speed panel */
+    /* speed (centre column) */
     ui.speed_val = mk_label(hero, "--", F48, C_TEXT);
-    lv_obj_set_width(ui.speed_val, 130);
+    lv_obj_set_width(ui.speed_val, 122);
     lv_obj_set_style_text_align(ui.speed_val, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(ui.speed_val, 105, 34);
+    lv_obj_set_pos(ui.speed_val, 92, 22);
     lv_obj_t *su = mk_label(hero, "KM/H", F12, C_LABEL);
-    lv_obj_set_width(su, 130);
+    lv_obj_set_width(su, 122);
     lv_obj_set_style_text_align(su, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(su, 105, 88);
-    lv_obj_t *ia = mk_label(hero, "IAT", F12, C_MUTED);
-    lv_obj_set_pos(ia, 118, 104);
-    ui.iat_val = mk_label(hero, "--" DEG, F14, C_TEXT2);
-    lv_obj_set_pos(ui.iat_val, 145, 102);
+    lv_obj_set_pos(su, 92, 82);
 
-    /* rpm panel */
-    lv_obj_t *rp = mk_card(hero, 242, 8, 70, 92);
-    lv_obj_set_style_pad_all(rp, 5, 0);
-    lv_obj_t *ru = mk_label(rp, "RPM", F12, C_MUTED);
-    lv_obj_align(ru, LV_ALIGN_TOP_MID, 0, -1);
-    ui.rpm_val = mk_label(rp, "--", F24, C_TEXT2);
-    lv_obj_align(ui.rpm_val, LV_ALIGN_CENTER, 0, -2);
-    ui.rpm_bar = mk_bar(rp, 0, 62, 56, 3);
+    /* work column: BOOST (data-cyan) over RPM */
+    lv_obj_t *work = mk_card(hero, 220, 8, 92, 104);
+    lv_obj_set_style_pad_all(work, 9, 0);
+    lv_obj_t *bl = mk_label(work, "BOOST", F12, C_LABEL);
+    lv_obj_set_pos(bl, 0, 0);
+    ui.boost_val = mk_label(work, "--", F24, C_INFO);
+    lv_obj_set_pos(ui.boost_val, 0, 14);
+    lv_obj_t *bu = mk_label(work, "bar", F12, C_LABEL);
+    lv_obj_set_pos(bu, 48, 24);           /* unit, inline to the right of value */
+    lv_obj_t *rl = mk_label(work, "RPM", F12, C_LABEL);
+    lv_obj_set_pos(rl, 0, 46);
+    ui.rpm_val = mk_label(work, "--", F24, C_TEXT2);
+    lv_obj_set_pos(ui.rpm_val, 0, 60);
 
-    /* 2x2 metric grid on a 1px line background */
+    /* 2x2 metric grid on a 1px line background (fills the reclaimed height) */
     lv_obj_t *grid = lv_obj_create(pg);
-    lv_obj_set_pos(grid, 0, 136);
-    lv_obj_set_size(grid, 320, 222);
+    lv_obj_set_pos(grid, 0, 148);
+    lv_obj_set_size(grid, 320, 276);
     lv_obj_set_style_bg_color(grid, C_LINE, 0);
     lv_obj_set_style_bg_opa(grid, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(grid, 0, 0);
@@ -354,13 +336,14 @@ static void build_drive(void)
     lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
 
     static const char *NAMES[4] = { "COOLANT", "OIL", "ATF", "EGT" };
+    const int ch = 137;                                 /* cell height */
     const int cx[4] = { 0, 160, 0, 160 };
-    const int cy[4] = { 0, 0, 111, 111 };
+    const int cy[4] = { 0, 0, ch + 1, ch + 1 };
     const int cw[4] = { 159, 160, 159, 160 };
     for (int i = 0; i < 4; i++) {
         lv_obj_t *cell = lv_obj_create(grid);
         lv_obj_set_pos(cell, cx[i], cy[i]);
-        lv_obj_set_size(cell, cw[i], 110);
+        lv_obj_set_size(cell, cw[i], ch);
         lv_obj_set_style_bg_color(cell, C_SCREEN, 0);
         lv_obj_set_style_bg_opa(cell, LV_OPA_COVER, 0);
         lv_obj_set_style_border_width(cell, 0, 0);
@@ -369,15 +352,15 @@ static void build_drive(void)
         lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t *nm = mk_label(cell, NAMES[i], F12, C_LABEL);
-        lv_obj_set_pos(nm, 12, 10);
-        ui.dm_dot[i] = mk_dot(cell, cw[i] - 16, 12);
+        lv_obj_set_pos(nm, 12, 12);
+        ui.dm_dot[i] = mk_dot(cell, cw[i] - 16, 14);
 
         ui.dm_val[i] = mk_label(cell, "--", F48, C_TEXT);
         lv_obj_set_width(ui.dm_val[i], cw[i]);
         lv_obj_set_style_text_align(ui.dm_val[i], LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_pos(ui.dm_val[i], 0, 30);
+        lv_obj_set_pos(ui.dm_val[i], 0, 44);
 
-        ui.dm_bar[i] = mk_bar(cell, 12, 86, cw[i] - 24, 6);
+        ui.dm_bar[i] = mk_bar(cell, 12, ch - 40, cw[i] - 24, 6);
 
         /* warn/crit tick markers over the gauge, positioned from thresholds */
         const metric_cfg_t *mc = &metrics[DRIVE_M[i]];
@@ -386,38 +369,18 @@ static void build_drive(void)
             float span = mc->scale_max - mc->scale_min;
             int wx = 12 + (int)((mc->warn_high - mc->scale_min) * bw / span);
             int cxk = 12 + (int)((mc->crit_high - mc->scale_min) * bw / span);
-            mk_tick(cell, wx, 83, 2, 12, C_WARN);
-            mk_tick(cell, cxk, 83, 2, 12, C_CRIT);
+            mk_tick(cell, wx, ch - 43, 2, 12, C_WARN);
+            mk_tick(cell, cxk, ch - 43, 2, 12, C_CRIT);
         }
 
         char lo[8], hi[8];
         fmt(lo, sizeof lo, metrics[DRIVE_M[i]].scale_min, 0);
         fmt(hi, sizeof hi, metrics[DRIVE_M[i]].scale_max, 0);
         lv_obj_t *tl = mk_label(cell, lo, F12, C_FAINT);
-        lv_obj_set_pos(tl, 12, 95);
+        lv_obj_set_pos(tl, 12, ch - 28);
         lv_obj_t *th = mk_label(cell, hi, F12, C_FAINT);
-        lv_obj_align(th, LV_ALIGN_TOP_RIGHT, -12, 95);
+        lv_obj_align(th, LV_ALIGN_TOP_RIGHT, -12, ch - 28);
     }
-
-    /* boost strip */
-    lv_obj_t *bs = lv_obj_create(pg);
-    lv_obj_set_pos(bs, 0, 358);
-    lv_obj_set_size(bs, 320, 66);
-    lv_obj_set_style_bg_color(bs, C_SURFACE, 0);
-    lv_obj_set_style_bg_opa(bs, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(bs, C_LINE, 0);
-    lv_obj_set_style_border_width(bs, 1, 0);
-    lv_obj_set_style_border_side(bs, LV_BORDER_SIDE_TOP, 0);
-    lv_obj_set_style_radius(bs, 0, 0);
-    lv_obj_set_style_pad_all(bs, 0, 0);
-    lv_obj_clear_flag(bs, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t *bl = mk_label(bs, "BOOST", F14, C_LABEL);
-    lv_obj_set_pos(bl, 12, 10);
-    ui.boost_val = mk_label(bs, "--", F28, C_TEXT);
-    lv_obj_align(ui.boost_val, LV_ALIGN_TOP_RIGHT, -40, 6);
-    lv_obj_t *bu = mk_label(bs, "bar", F14, C_LABEL);
-    lv_obj_align(bu, LV_ALIGN_TOP_RIGHT, -12, 14);
-    ui.boost_bar = mk_bar(bs, 12, 44, 296, 5);
 
     mk_pager(pg, 0);
 }
@@ -427,9 +390,7 @@ static void build_dpf(void)
 {
     lv_obj_t *pg = ui.page[1];
 
-    lv_obj_t *tb = mk_topbar(pg, "DPF");
-    ui.regen_chip = mk_chip(tb, "IDLE");
-    lv_obj_align(ui.regen_chip, LV_ALIGN_RIGHT_MID, -6, 0);
+    mk_eyebrow(pg, "DPF");
 
     /* hero: soot ring + regeneration summary */
     lv_obj_t *hero = lv_obj_create(pg);
@@ -464,17 +425,18 @@ static void build_dpf(void)
     lv_obj_set_pos(ml, 150, 34);
     ui.regen_title = mk_label(hero, "Inactive", F20, C_TEXT);
     lv_obj_set_pos(ui.regen_title, 150, 52);
-    ui.regen_hint = mk_label(hero, "No regen request\nfrom ECM.", F14, C_LABEL);
+    ui.regen_hint = mk_label(hero, "No regeneration\nrequest from ECM.", F14, C_LABEL);
     lv_obj_set_pos(ui.regen_hint, 150, 84);
     mk_tick(hero, 150, 134, 13, 3, C_WARN);
     lv_obj_t *tn1 = mk_label(hero, "70% warning", F12, C_MUTED);
     lv_obj_set_pos(tn1, 168, 128);
     mk_tick(hero, 150, 152, 13, 3, C_CRIT);
-    lv_obj_t *tn2 = mk_label(hero, "85% regen", F12, C_MUTED);
+    lv_obj_t *tn2 = mk_label(hero, "85% regen threshold", F12, C_MUTED);
     lv_obj_set_pos(tn2, 168, 146);
 
-    /* 2x2 mini-cards */
-    static const char *ML[4] = { "EGT", "dP DPF", "SINCE REGEN", "EGR" };
+    /* 2x2 mini-cards. "dP" keeps ASCII: the Montserrat subset has no Greek
+     * delta (U+0394) glyph, so "ΔP" from the design would render as a box. */
+    static const char *ML[4] = { "EGT", "dP DPF", "SINCE REGEN", "EGR T" DEG };
     static const char *MU[4] = { DEG "C", "kPa", "km", DEG "C" };
     const int mx[4] = { 10, 165, 10, 165 };
     const int my[4] = { 212, 212, 282, 282 };
@@ -496,9 +458,7 @@ static void build_diag(void)
 {
     lv_obj_t *pg = ui.page[2];
 
-    lv_obj_t *tb = mk_topbar(pg, "DIAGNOSTICS");
-    ui.dtc_chip = mk_chip(tb, "0 DTC");
-    lv_obj_align(ui.dtc_chip, LV_ALIGN_RIGHT_MID, -6, 0);
+    mk_eyebrow(pg, "DIAG");
 
     /* MIL summary row */
     lv_obj_t *mil = mk_card(pg, 10, 38, 300, 42);
@@ -508,7 +468,9 @@ static void build_diag(void)
     ui.mil_text = mk_label(mil, "--", F14, C_TEXT2);
     lv_obj_set_pos(ui.mil_text, 0, 16);
 
-    /* DTC message area */
+    /* DTC message area: circular status badge over a centred message.
+     * (LVGL borders are solid-only, so the design's dashed outline is
+     * approximated with a solid hairline.) */
     lv_obj_t *box = lv_obj_create(pg);
     lv_obj_set_pos(box, 10, 88);
     lv_obj_set_size(box, 300, 96);
@@ -518,9 +480,22 @@ static void build_diag(void)
     lv_obj_set_style_border_width(box, 1, 0);
     lv_obj_set_style_radius(box, 12, 0);
     lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
+
+    ui.dtc_ring = lv_obj_create(box);
+    lv_obj_set_size(ui.dtc_ring, 40, 40);
+    lv_obj_align(ui.dtc_ring, LV_ALIGN_TOP_MID, 0, 8);
+    lv_obj_set_style_bg_opa(ui.dtc_ring, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_radius(ui.dtc_ring, 20, 0);
+    lv_obj_set_style_border_color(ui.dtc_ring, C_OK, 0);
+    lv_obj_set_style_border_width(ui.dtc_ring, 2, 0);
+    lv_obj_set_style_pad_all(ui.dtc_ring, 0, 0);
+    lv_obj_clear_flag(ui.dtc_ring, LV_OBJ_FLAG_SCROLLABLE);
+    ui.dtc_ic = mk_label(ui.dtc_ring, LV_SYMBOL_OK, F20, C_OK);
+    lv_obj_center(ui.dtc_ic);
+
     ui.dtc_msg = mk_label(box, "NO STORED CODES", F14, C_TEXT2);
     lv_obj_set_style_text_align(ui.dtc_msg, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_center(ui.dtc_msg);
+    lv_obj_align(ui.dtc_msg, LV_ALIGN_BOTTOM_MID, 0, -14);
 
     /* 2x2 stat cards */
     static const char *SL[4] = { "BATT", "IAT", "LOAD", "RAIL" };
@@ -558,11 +533,13 @@ static void build_strip(lv_obj_t *scr)
     static const char *TAG[9] = { "MIL","CLT","OIL","ATF","EGT","DPF","BAT","DTC","CAN" };
     for (int i = 0; i < 9; i++) {
         ui.tag[i] = mk_label(ui.strip, TAG[i], F12, C_FAINT);
-        lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, 0);
+        lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, -3);
+        /* hairline state underline beneath each tag (coloured in refresh) */
+        ui.tag_ul[i] = mk_tick(ui.strip, 4 + i * 24, 25, 18, 2, C_LINE);
     }
     ui.count = mk_label(ui.strip, "", F12, C_CRIT);
     lv_obj_align(ui.count, LV_ALIGN_RIGHT_MID, -8, 0);
-    ui.summary = mk_label(ui.strip, "ALL OK", F12, C_OK);
+    ui.summary = mk_label(ui.strip, "NOMINAL", F12, C_OK);
     lv_obj_align(ui.summary, LV_ALIGN_RIGHT_MID, -26, 0);
 }
 
@@ -650,12 +627,6 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     }
 }
 
-static void set_tag(lv_obj_t *tag, metric_state_t s)
-{
-    lv_color_t c = (s == ST_CRIT) ? C_CRIT : (s == ST_WARN) ? C_WARN : C_FAINT;
-    lv_obj_set_style_text_color(tag, c, 0);
-}
-
 void cluster_ui_refresh(void)
 {
     /* snapshot the volatile shared struct */
@@ -665,29 +636,33 @@ void cluster_ui_refresh(void)
     d.boost = g_obd.boost; d.rail = g_obd.rail; d.egt = g_obd.egt;
     d.battery = g_obd.battery; d.atf = g_obd.atf; d.soot = g_obd.soot;
     d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
+    d.gear = g_obd.gear;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
     bool live = d.can_ok;
 
-    char b[16], nb[12];
+    char b[16];
 
     /* ----- DRIVE ----- */
+    /* GEAR: design shows the drive gear as "D6" (range letter + number, the
+     * number in nominal green). TCM gear DID is still TBD, so this reads live
+     * only under OBD_DEMO; on the real bus gear stays -1 -> "--". */
+    if (live && d.gear >= 1)      lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
+    else if (live && d.gear == 0) lv_snprintf(b, sizeof b, "N");
+    else                          lv_snprintf(b, sizeof b, "--");
+    lv_label_set_text(ui.gear_val, b);
+
     if (live) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
     else        lv_label_set_text(ui.speed_val, "--");
-    if (live) { fmt(nb, sizeof nb, d.iat, 0); lv_snprintf(b, sizeof b, "%s" DEG, nb); lv_label_set_text(ui.iat_val, b); }
-    else        lv_label_set_text(ui.iat_val, "--" DEG);
     if (live) { fmt(b, sizeof b, d.rpm, 0); lv_label_set_text(ui.rpm_val, b); }
     else        lv_label_set_text(ui.rpm_val, "--");
-    lv_bar_set_value(ui.rpm_bar, live ? pct_of(M_RPM, d.rpm) : 0, LV_ANIM_OFF);
-    {
+    {   /* RPM stays white, but warns/reds near the redline */
         metric_state_t rs = live ? metric_state(M_RPM, d.rpm) : ST_OK;
-        lv_obj_set_style_bg_color(ui.rpm_bar, (rs >= ST_WARN) ? state_color(rs) : C_INFO, LV_PART_INDICATOR);
+        lv_obj_set_style_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2, 0);
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.dm_val[i], ui.dm_bar[i], ui.dm_dot[i], DRIVE_M[i], &d, live);
-    set_metric(ui.boost_val, ui.boost_bar, NULL, M_BOOST, &d, live);
-
-    lv_obj_set_style_text_color(ui.ind_mil, d.mil ? C_CRIT : C_FAINT, 0);
-    chip_set(ui.can_chip, "CAN", live ? C_OK : C_CRIT);
+    set_metric(ui.boost_val, NULL, NULL, M_BOOST, &d, live);
+    /* MIL and CAN state now live only in the rail (see alert strip below). */
 
     /* ----- DPF ----- */
     set_metric(ui.soot_val, NULL, NULL, M_SOOT, &d, live);
@@ -706,21 +681,25 @@ void cluster_ui_refresh(void)
     lv_obj_set_style_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2, 0);
     if (d.dtc_count > 0) {
         char mb[40];
-        lv_snprintf(b, sizeof b, "%u DTC", (unsigned)d.dtc_count);
-        chip_set(ui.dtc_chip, b, C_WARN);
-        lv_snprintf(mb, sizeof mb, LV_SYMBOL_WARNING "  %u STORED CODE%s",
+        lv_snprintf(mb, sizeof mb, "%u STORED CODE%s",
                     (unsigned)d.dtc_count, d.dtc_count == 1 ? "" : "S");
         lv_label_set_text(ui.dtc_msg, mb);
         lv_obj_set_style_text_color(ui.dtc_msg, C_WARN, 0);
+        lv_label_set_text(ui.dtc_ic, "!");
+        lv_obj_set_style_text_color(ui.dtc_ic, C_WARN, 0);
+        lv_obj_set_style_border_color(ui.dtc_ring, C_WARN, 0);
+    } else if (live) {
+        lv_label_set_text(ui.dtc_msg, "NO STORED CODES");
+        lv_obj_set_style_text_color(ui.dtc_msg, C_OK, 0);
+        lv_label_set_text(ui.dtc_ic, LV_SYMBOL_OK);
+        lv_obj_set_style_text_color(ui.dtc_ic, C_OK, 0);
+        lv_obj_set_style_border_color(ui.dtc_ring, C_OK, 0);
     } else {
-        chip_set(ui.dtc_chip, "0 DTC", C_OK);
-        if (live) {
-            lv_label_set_text(ui.dtc_msg, LV_SYMBOL_OK "  NO STORED CODES");
-            lv_obj_set_style_text_color(ui.dtc_msg, C_OK, 0);
-        } else {
-            lv_label_set_text(ui.dtc_msg, "NO DATA");
-            lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
-        }
+        lv_label_set_text(ui.dtc_msg, "NO DATA");
+        lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
+        lv_label_set_text(ui.dtc_ic, "-");
+        lv_obj_set_style_text_color(ui.dtc_ic, C_MUTED, 0);
+        lv_obj_set_style_border_color(ui.dtc_ring, C_FAINT, 0);
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
@@ -739,7 +718,16 @@ void cluster_ui_refresh(void)
 
     int worst = ST_OK, nalarm = 0;
     for (int i = 0; i < 9; i++) {
-        set_tag(ui.tag[i], ts[i]);
+        /* MIL (0) and DTC (7) are indicators: grey/dim when nominal, not green.
+         * The monitored systems glow green when healthy (design signature). */
+        bool indicator = (i == 0 || i == 7);
+        lv_color_t tc, ulc;
+        if      (ts[i] == ST_CRIT) { tc = C_CRIT; ulc = C_CRIT; }
+        else if (ts[i] == ST_WARN) { tc = C_WARN; ulc = C_WARN; }
+        else                       { tc  = indicator ? C_FAINT : C_MUTED;
+                                     ulc = indicator ? C_LINE  : C_OK; }
+        lv_obj_set_style_text_color(ui.tag[i], tc, 0);
+        lv_obj_set_style_bg_color(ui.tag_ul[i], ulc, 0);
         if (ts[i] > worst) worst = ts[i];
         if (ts[i] >= ST_WARN) nalarm++;
     }
@@ -748,7 +736,7 @@ void cluster_ui_refresh(void)
     if (!live)                 { txt = LV_SYMBOL_WARNING " CAN LOST"; col = C_CRIT; }
     else if (worst == ST_CRIT) { txt = LV_SYMBOL_WARNING " CHECK";    col = C_CRIT; }
     else if (worst == ST_WARN) { txt = LV_SYMBOL_WARNING " WARN";     col = C_WARN; }
-    else                       { txt = LV_SYMBOL_OK " ALL OK";        col = C_OK;   }
+    else                       { txt = "NOMINAL";                    col = C_OK;   }
     lv_label_set_text(ui.summary, txt);
     lv_obj_set_style_text_color(ui.summary, col, 0);
 
