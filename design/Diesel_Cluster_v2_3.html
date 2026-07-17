@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Colorado 2.8 cluster — v2 (ECU instrument direction)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+<!--
+  DESIGN DIRECTION: "ECU instrument for a diesel, not a car app."
+  Subject: Holden Colorado RG 2.8 (E98 ECM). Owner watches diesel health
+  (boost, EGT, DPF soot/regen, temps) as much as speed.
+  Signature: the SYSTEMS RAIL — every monitored engine system, always in view,
+  with a hairline state underline. Plus the calibration eyebrow (2.8 / E98 / 500k).
+  Hard constraints (weak ILI9488 panel + LVGL/Montserrat, glanceable while driving):
+  pure #000, white/white-hot labels (grey washes out), state-coloured values,
+  SemiBold tabular numerics, NO motion. Colour encodes engine state, nothing decorative.
+  Rules: cold temp <50C -> --cold blue. COOLANT warn 93 / crit 97.
+-->
+<style>
+  :root{
+    --void:#000;--ink:#fff;--rule:#2b3947;--rule-2:#3a4d61;
+    --nominal:#3fdc84;--cold:#5cccff;--data:#4fd3ff;--warn:#ffc84a;--crit:#ff4651;--track:#33455a;--dim:#8593a4;
+    --num:'Montserrat',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#0b0e12;color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;
+       font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .tabs button{font:inherit;font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+       color:#cdd6e0;background:#12181f;border:1px solid #26303c;border-radius:6px;padding:7px 13px;cursor:pointer;}
+  .tabs button.on{color:#fff;border-color:#4a6386;background:#1a2532;}
+  .bezel{padding:8px;border-radius:22px;background:linear-gradient(145deg,#242a33,#10141a);box-shadow:0 20px 50px rgba(0,0,0,.55);}
+  .dev{width:320px;height:480px;position:relative;overflow:hidden;border-radius:14px;background:var(--void);}
+
+  .num{font-weight:600;letter-spacing:-.02em;line-height:.9;}
+  .lab{font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#fff;}
+  .micro{font-weight:600;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#fff;}
+
+  /* SIGNATURE: systems rail */
+  .rail{position:absolute;inset:0 0 auto 0;height:34px;display:flex;align-items:center;gap:0 7px;
+       padding:0 8px;border-bottom:1px solid var(--rule);background:#000;z-index:5;}
+  .sys{position:relative;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--dim);padding-bottom:4px;}
+  .sys::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--rule);}
+  .sys[data-s="ok"]{color:#e7edf3;}.sys[data-s="ok"]::after{background:var(--nominal);}
+  .sys[data-s="warn"]{color:var(--warn);}.sys[data-s="warn"]::after{background:var(--warn);}
+  .sys[data-s="crit"]{color:var(--crit);}.sys[data-s="crit"]::after{background:var(--crit);}
+  .rail .state{margin-left:auto;padding-left:6px;font-weight:700;font-size:10px;letter-spacing:.04em;color:var(--nominal);white-space:nowrap;}
+
+  /* calibration eyebrow */
+  .brow{height:20px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;
+       border-bottom:1px solid var(--rule);color:#fff;}
+  .brow .id{font-size:10px;font-weight:600;letter-spacing:.09em;color:#d7dee6;}
+  .brow .pg{font-size:10px;font-weight:700;letter-spacing:.16em;}
+
+  .page{position:absolute;inset:54px 0 0;display:none;flex-direction:column;}
+  .page.on{display:flex;}
+
+  /* DRIVE hero — speed + the diesel's working state (boost/egt) as the sub-thesis */
+  .hero{display:grid;grid-template-columns:78px 1fr 92px;gap:6px;padding:9px 8px;border-bottom:1px solid var(--rule);height:120px;}
+  .cell{border:1px solid var(--rule);border-radius:11px;display:flex;flex-direction:column;justify-content:center;padding:8px;}
+  .gear{align-items:center;gap:3px;}
+  .gearn{font-size:44px}.gearn b{color:var(--nominal);}
+  .spd{border:0;align-items:center;justify-content:center;}
+  .spdn{font-size:74px;color:#fff;}
+  .spdu{margin-top:2px;}
+  .work{gap:12px;padding:10px 8px;}
+  .work .row{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .work .k{font-size:10px;letter-spacing:.12em;color:#fff;font-weight:600;}
+  .work .v{font-size:25px;font-weight:600;line-height:1;white-space:nowrap;}
+  .work .v small{font-size:10px;color:#fff;font-weight:500;margin-left:1px;}
+
+  .grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--rule);}
+  .m{background:#000;padding:9px 12px;display:flex;flex-direction:column;justify-content:center;}
+  .m .top{display:flex;align-items:center;}
+  .m .dot{width:6px;height:6px;border-radius:50%;margin-left:auto;}
+  .m .val{font-size:48px;text-align:center;margin:2px 0;}
+  .m .val small{font-size:14px;color:#fff;font-weight:500;}
+  .g{position:relative;height:6px;border-radius:3px;background:var(--track);}
+  .g>span{display:block;height:100%;border-radius:3px;}
+  .g i{position:absolute;top:-3px;width:2px;height:12px;border-radius:1px;}
+  .tk{display:flex;justify-content:space-between;color:#cfd8e2;font-size:12px;margin-top:3px;}
+
+  .pager{height:22px;display:flex;align-items:center;justify-content:center;gap:7px;border-top:1px solid var(--rule);}
+  .pager b{width:7px;height:7px;border-radius:50%;background:#344051;}
+  .pager b.on{width:18px;border-radius:4px;background:#e7edf3;}
+
+  /* DPF */
+  .dpf{display:grid;grid-template-columns:132px 1fr;gap:10px;padding:12px;align-items:center;height:180px;border-bottom:1px solid var(--rule);}
+  .ring{position:relative;width:124px;height:124px;border-radius:50%;display:grid;place-items:center;
+       background:conic-gradient(from -90deg,var(--nominal) 42%,var(--track) 0);}
+  .ring::before{content:"";position:absolute;inset:11px;border-radius:50%;background:#000;}
+  .ring .c{position:relative;text-align:center;}
+  .ring .c .num{font-size:47px}.ring .c .num small{font-size:14px;color:#fff;}
+  .reg h3{margin:4px 0 6px;font-size:21px;font-weight:600;}
+  .reg p{margin:0;font-size:12px;color:#dfe6ee;line-height:1.4;}
+  .th{display:grid;gap:5px;margin-top:9px;font-size:11px;color:#fff;}
+  .th span{display:flex;align-items:center;gap:7px;}.th i{width:13px;height:3px;border-radius:2px;}
+  .mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;padding:10px;}
+  .mc{border:1px solid var(--rule);border-radius:11px;background:#000;padding:9px;}
+  .mc .v{font-size:29px;font-weight:600;margin-top:5px;}.mc .v small{font-size:12px;color:#fff;font-weight:500;}
+
+  /* DIAG */
+  .diag{flex:1;display:flex;flex-direction:column;gap:9px;padding:9px 10px 14px;}
+  .mil{border:1px solid var(--rule);border-radius:10px;background:#000;padding:8px 10px;}
+  .mil .v{font-size:19px;font-weight:600;margin-top:4px;}
+  .codes{flex:0 0 116px;border:1px dashed var(--rule-2);border-radius:12px;display:grid;place-items:center;align-content:center;gap:9px;}
+  .codes .ic{width:40px;height:40px;border-radius:50%;border:2px solid var(--nominal);color:var(--nominal);display:grid;place-items:center;font-size:24px;font-weight:700;}
+  .codes strong{color:#fff;font-size:15px;font-weight:600;letter-spacing:.04em;}
+  .stats{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;}
+  .st{border:1px solid var(--rule);border-radius:10px;background:#000;padding:8px 10px;}
+  .st .v{font-size:30px;font-weight:600;margin-top:3px;}.st .v small{font-size:11px;color:#fff;font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="tabs"><button class="on" data-p="drive">Drive</button><button data-p="dpf">DPF</button><button data-p="diag">Diag</button></div>
+  <div class="bezel"><div class="dev">
+
+    <div class="rail">
+      <span class="sys" data-s="off">MIL</span><span class="sys" data-s="ok">CLT</span>
+      <span class="sys" data-s="ok">OIL</span><span class="sys" data-s="ok">ATF</span>
+      <span class="sys" data-s="ok">EGT</span><span class="sys" data-s="ok">DPF</span>
+      <span class="sys" data-s="ok">BAT</span><span class="sys" data-s="off">DTC</span>
+      <span class="sys" data-s="ok">CAN</span>
+      <span class="state">NOMINAL</span>
+    </div>
+    <div class="brow"><span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span><span class="pg" id="pg" style="color:var(--nominal)">DRIVE</span></div>
+
+    <!-- DRIVE -->
+    <section class="page on" data-p="drive">
+      <div class="hero">
+        <div class="cell gear"><span class="micro">GEAR</span><span class="num gearn">D<b>6</b></span></div>
+        <div class="cell spd"><span class="num spdn">95</span><div class="spdu"><span class="micro">KM / H</span></div></div>
+        <div class="cell work">
+          <div class="row"><span class="k">BOOST</span><span class="v" style="color:var(--data)">1.4<small>bar</small></span></div>
+          <div class="row"><span class="k">RPM</span><span class="v" style="color:#fff">2150</span></div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="m"><div class="top"><span class="lab">COOLANT</span><span class="dot" style="background:var(--nominal)"></span></div>
+          <div class="num val" style="color:var(--nominal)">89<small>°C</small></div>
+          <div class="g"><span style="width:61%;background:var(--nominal)"></span><i style="left:66%;background:var(--warn)"></i><i style="left:71%;background:var(--crit)"></i></div>
+          <div class="tk"><span>40</span><span>120</span></div></div>
+        <div class="m"><div class="top"><span class="lab">OIL</span><span class="dot" style="background:var(--nominal)"></span></div>
+          <div class="num val" style="color:var(--nominal)">98<small>°C</small></div>
+          <div class="g"><span style="width:58%;background:var(--nominal)"></span><i style="left:80%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+          <div class="tk"><span>40</span><span>140</span></div></div>
+        <div class="m"><div class="top"><span class="lab">ATF</span><span class="dot" style="background:var(--nominal)"></span></div>
+          <div class="num val" style="color:var(--nominal)">82<small>°C</small></div>
+          <div class="g"><span style="width:38%;background:var(--nominal)"></span></div>
+          <div class="tk"><span>40</span><span>150</span></div></div>
+        <div class="m"><div class="top"><span class="lab">EGT</span><span class="dot" style="background:var(--nominal)"></span></div>
+          <div class="num val" style="color:var(--nominal)">421<small>°C</small></div>
+          <div class="g"><span style="width:53%;background:var(--nominal)"></span><i style="left:81%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+          <div class="tk"><span>0</span><span>800</span></div></div>
+      </div>
+      <div class="pager"><b class="on"></b><b></b><b></b></div>
+    </section>
+
+    <!-- DPF -->
+    <section class="page" data-p="dpf">
+      <div class="dpf">
+        <div class="ring"><div class="c"><div class="num">42<small>%</small></div><span class="micro" style="margin-top:3px;display:block">SOOT</span></div></div>
+        <div class="reg"><span class="micro">REGENERATION</span><h3>Inactive</h3><p>No regeneration request from ECM.</p>
+          <div class="th"><span><i style="background:var(--warn)"></i>70% warning</span><span><i style="background:var(--crit)"></i>85% regen threshold</span></div></div>
+      </div>
+      <div class="mini">
+        <div class="mc"><span class="lab">EGT</span><div class="v" style="color:var(--nominal)">421<small>°C</small></div></div>
+        <div class="mc"><span class="lab">ΔP DPF</span><div class="v" style="color:var(--data)">3.1<small>kPa</small></div></div>
+        <div class="mc"><span class="lab">SINCE REGEN</span><div class="v" style="color:var(--data)">180<small>km</small></div></div>
+        <div class="mc"><span class="lab">EGR T°</span><div class="v" style="color:var(--nominal)">96<small>°C</small></div></div>
+      </div>
+      <div class="pager"><b></b><b class="on"></b><b></b></div>
+    </section>
+
+    <!-- DIAG -->
+    <section class="page" data-p="diag">
+      <div class="diag">
+        <div class="mil"><span class="lab">MIL / CHECK ENGINE</span><div class="v">OFF</div></div>
+        <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+        <div class="stats">
+          <div class="st"><span class="lab">BATT</span><div class="v" style="color:var(--nominal)">14.1<small>V</small></div></div>
+          <div class="st"><span class="lab">IAT</span><div class="v" style="color:var(--data)">45<small>°C</small></div></div>
+          <div class="st"><span class="lab">LOAD</span><div class="v" style="color:var(--data)">67<small>%</small></div></div>
+          <div class="st"><span class="lab">RAIL</span><div class="v" style="color:var(--data)">58<small>MPa</small></div></div>
+        </div>
+      </div>
+      <div class="pager"><b></b><b></b><b class="on"></b></div>
+    </section>
+  </div></div>
+<script>
+  const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+  const btns=[...document.querySelectorAll('.tabs button')];
+  btns.forEach(b=>b.onclick=()=>{
+    btns.forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+    document.getElementById('pg').textContent=pgName[b.dataset.p];
+  });
+</script>
+</body>
+</html>
