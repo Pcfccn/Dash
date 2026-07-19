@@ -10,8 +10,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_freertosconfig",
-      "community": 18,
-      "community_name": "FreeRTOSConfig.h",
+      "community": 17,
       "norm_label": "freertosconfig.h"
     },
     {
@@ -21,8 +20,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_app_main",
-      "community": 14,
-      "community_name": "app_main.h",
+      "community": 13,
       "norm_label": "app_main.h"
     },
     {
@@ -32,8 +30,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_can_gauges",
-      "community": 12,
-      "community_name": "can_gauges.h",
+      "community": 11,
       "norm_label": "can_gauges.h"
     },
     {
@@ -43,8 +40,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_cluster_app",
-      "community": 15,
-      "community_name": "cluster_app.h",
+      "community": 14,
       "norm_label": "cluster_app.h"
     },
     {
@@ -54,19 +50,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_cluster_config",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "cluster_config.h"
     },
     {
       "label": "metric_state()",
       "file_type": "code",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L101",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "core_inc_cluster_config_metric_state",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "metric_state()"
     },
     {
@@ -77,7 +71,6 @@
       "_origin": "ast",
       "id": "core_inc_cluster_config_h_metric_state_t",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "metric_state_t"
     },
     {
@@ -88,7 +81,6 @@
       "_origin": "ast",
       "id": "core_inc_cluster_config_h_metric_key_t",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "metric_key_t"
     },
     {
@@ -98,8 +90,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_cluster_ui",
-      "community": 16,
-      "community_name": "cluster_ui.h",
+      "community": 15,
       "norm_label": "cluster_ui.h"
     },
     {
@@ -109,8 +100,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_fdcan",
-      "community": 10,
-      "community_name": "main.h",
+      "community": 9,
       "norm_label": "fdcan.h"
     },
     {
@@ -120,8 +110,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_fdcan_obd",
-      "community": 17,
-      "community_name": "fdcan_obd.h",
+      "community": 16,
       "norm_label": "fdcan_obd.h"
     },
     {
@@ -131,8 +120,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_gpio",
-      "community": 10,
-      "community_name": "main.h",
+      "community": 9,
       "norm_label": "gpio.h"
     },
     {
@@ -142,8 +130,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_lv_port_disp",
-      "community": 19,
-      "community_name": "lv_port_disp.h",
+      "community": 18,
       "norm_label": "lv_port_disp.h"
     },
     {
@@ -153,8 +140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_main",
-      "community": 10,
-      "community_name": "main.h",
+      "community": 9,
       "norm_label": "main.h"
     },
     {
@@ -164,8 +150,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_spi",
-      "community": 10,
-      "community_name": "main.h",
+      "community": 9,
       "norm_label": "spi.h"
     },
     {
@@ -175,8 +160,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_st7735_status",
-      "community": 20,
-      "community_name": "st7735_status.h",
+      "community": 19,
       "norm_label": "st7735_status.h"
     },
     {
@@ -186,8 +170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_stm32h7xx_hal_conf",
-      "community": 21,
-      "community_name": "stm32h7xx_hal_conf.h",
+      "community": 20,
       "norm_label": "stm32h7xx_hal_conf.h"
     },
     {
@@ -197,8 +180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_stm32h7xx_it",
-      "community": 22,
-      "community_name": "stm32h7xx_it.h",
+      "community": 21,
       "norm_label": "stm32h7xx_it.h"
     },
     {
@@ -208,8 +190,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_tim",
-      "community": 10,
-      "community_name": "main.h",
+      "community": 9,
       "norm_label": "tim.h"
     },
     {
@@ -219,8 +200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_ui_dashboard",
-      "community": 12,
-      "community_name": "can_gauges.h",
+      "community": 11,
       "norm_label": "ui_dashboard.h"
     },
     {
@@ -230,52 +210,67 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_app_main",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 4,
       "norm_label": "app_main.c"
+    },
+    {
+      "label": "backlight_set()",
+      "file_type": "code",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "core_src_app_main_backlight_set",
+      "community": 4,
+      "norm_label": "backlight_set()"
     },
     {
       "label": "heartbeat_led_init()",
       "file_type": "code",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L17",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "core_src_app_main_heartbeat_led_init",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 4,
       "norm_label": "heartbeat_led_init()"
     },
     {
       "label": "key_button_init()",
       "file_type": "code",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L33",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "core_src_app_main_key_button_init",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 4,
       "norm_label": "key_button_init()"
+    },
+    {
+      "label": "heartbeat_led_tick()",
+      "file_type": "code",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L66",
+      "_origin": "ast",
+      "id": "core_src_app_main_heartbeat_led_tick",
+      "community": 4,
+      "norm_label": "heartbeat_led_tick()"
     },
     {
       "label": "AppMain_Init()",
       "file_type": "code",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L44",
+      "source_location": "L92",
       "_origin": "ast",
       "id": "core_src_app_main_appmain_init",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 4,
       "norm_label": "appmain_init()"
     },
     {
       "label": "AppMain_Run()",
       "file_type": "code",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L59",
+      "source_location": "L106",
       "_origin": "ast",
       "id": "core_src_app_main_appmain_run",
       "community": 4,
-      "community_name": "st7735_status.c",
       "norm_label": "appmain_run()"
     },
     {
@@ -285,8 +280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_can_gauges",
-      "community": 23,
-      "community_name": "can_gauges.c",
+      "community": 22,
       "norm_label": "can_gauges.c"
     },
     {
@@ -296,8 +290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_cluster_app",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "cluster_app.c"
     },
     {
@@ -307,8 +300,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "core_src_cluster_app_cluster_app_init",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 1,
       "norm_label": "cluster_app_init()"
     },
     {
@@ -318,8 +310,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_src_cluster_app_c_fdcan_handletypedef",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 1,
       "norm_label": "fdcan_handletypedef"
     },
     {
@@ -329,8 +320,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "core_src_cluster_app_cluster_app_run",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "cluster_app_run()"
     },
     {
@@ -340,41 +330,37 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_cluster_ui",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "cluster_ui.c"
     },
     {
       "label": "iround()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L97",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "core_src_cluster_ui_iround",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "iround()"
     },
     {
       "label": "fmt()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L100",
+      "source_location": "L101",
       "_origin": "ast",
       "id": "core_src_cluster_ui_fmt",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "fmt()"
     },
     {
       "label": "state_color()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L111",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "core_src_cluster_ui_state_color",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "state_color()"
     },
     {
@@ -384,8 +370,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "lv_color_t",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "lv_color_t"
     },
     {
@@ -396,18 +381,16 @@
       "_origin": "ast",
       "id": "core_src_cluster_ui_c_metric_state_t",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "metric_state_t"
     },
     {
       "label": "is_enhanced()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L122",
+      "source_location": "L123",
       "_origin": "ast",
       "id": "core_src_cluster_ui_is_enhanced",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "is_enhanced()"
     },
     {
@@ -418,29 +401,26 @@
       "_origin": "ast",
       "id": "core_src_cluster_ui_c_metric_key_t",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "metric_key_t"
     },
     {
       "label": "is_temp()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L129",
+      "source_location": "L130",
       "_origin": "ast",
       "id": "core_src_cluster_ui_is_temp",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "is_temp()"
     },
     {
       "label": "mval()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L134",
+      "source_location": "L135",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mval",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "mval()"
     },
     {
@@ -451,29 +431,26 @@
       "_origin": "ast",
       "id": "obd_data_t",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "obd_data_t"
     },
     {
       "label": "pct_of()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L148",
+      "source_location": "L150",
       "_origin": "ast",
       "id": "core_src_cluster_ui_pct_of",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "pct_of()"
     },
     {
       "label": "plain()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L158",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "core_src_cluster_ui_plain",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "plain()"
     },
     {
@@ -483,19 +460,17 @@
       "source_location": "",
       "_origin": "ast",
       "id": "lv_obj_t",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "lv_obj_t"
     },
     {
       "label": "mk_label()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L167",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_label",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_label()"
     },
     {
@@ -505,228 +480,177 @@
       "source_location": "",
       "_origin": "ast",
       "id": "lv_font_t",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "lv_font_t"
     },
     {
       "label": "mk_card()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L178",
+      "source_location": "L180",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_card",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_card()"
-    },
-    {
-      "label": "mk_chip()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L194",
-      "_origin": "ast",
-      "id": "core_src_cluster_ui_mk_chip",
-      "community": 1,
-      "community_name": "cluster_ui.c",
-      "norm_label": "mk_chip()"
-    },
-    {
-      "label": "chip_set()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L210",
-      "_origin": "ast",
-      "id": "core_src_cluster_ui_chip_set",
-      "community": 1,
-      "community_name": "cluster_ui.c",
-      "norm_label": "chip_set()"
     },
     {
       "label": "mk_bar()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L219",
+      "source_location": "L196",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_bar",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_bar()"
     },
     {
       "label": "mk_tick()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L235",
+      "source_location": "L212",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_tick",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_tick()"
     },
     {
       "label": "mk_dot()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L248",
+      "source_location": "L225",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_dot",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_dot()"
     },
     {
       "label": "mk_pager()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L262",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "core_src_cluster_ui_mk_pager",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "mk_pager()"
     },
     {
-      "label": "mk_topbar()",
+      "label": "mk_eyebrow()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L278",
+      "source_location": "L257",
       "_origin": "ast",
-      "id": "core_src_cluster_ui_mk_topbar",
-      "community": 1,
-      "community_name": "cluster_ui.c",
-      "norm_label": "mk_topbar()"
+      "id": "core_src_cluster_ui_mk_eyebrow",
+      "community": 2,
+      "norm_label": "mk_eyebrow()"
     },
     {
       "label": "build_drive()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L297",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_drive",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "build_drive()"
     },
     {
       "label": "build_dpf()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L426",
+      "source_location": "L389",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_dpf",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "build_dpf()"
     },
     {
       "label": "build_diag()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L495",
+      "source_location": "L457",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_diag",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "build_diag()"
     },
     {
       "label": "build_strip()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L544",
+      "source_location": "L519",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_strip",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "build_strip()"
     },
     {
       "label": "cluster_ui_build()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L570",
+      "source_location": "L547",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_build",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "cluster_ui_build()"
     },
     {
       "label": "cluster_ui_set_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L597",
+      "source_location": "L574",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_set_page",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "cluster_ui_set_page()"
     },
     {
       "label": "cluster_ui_next_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L608",
+      "source_location": "L585",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_next_page",
-      "community": 1,
-      "community_name": "cluster_ui.c",
+      "community": 2,
       "norm_label": "cluster_ui_next_page()"
     },
     {
       "label": "cluster_ui_get_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L613",
+      "source_location": "L590",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_get_page",
       "community": 4,
-      "community_name": "st7735_status.c",
       "norm_label": "cluster_ui_get_page()"
     },
     {
       "label": "set_metric()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L619",
+      "source_location": "L596",
       "_origin": "ast",
       "id": "core_src_cluster_ui_set_metric",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "set_metric()"
-    },
-    {
-      "label": "set_tag()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L653",
-      "_origin": "ast",
-      "id": "core_src_cluster_ui_set_tag",
-      "community": 1,
-      "community_name": "cluster_ui.c",
-      "norm_label": "set_tag()"
     },
     {
       "label": "cluster_ui_refresh()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L659",
+      "source_location": "L630",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_refresh",
       "community": 3,
-      "community_name": "set_metric",
       "norm_label": "cluster_ui_refresh()"
     },
     {
       "label": "obd_on_update()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L769",
+      "source_location": "L757",
       "_origin": "ast",
       "id": "core_src_cluster_ui_obd_on_update",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "obd_on_update()"
     },
     {
@@ -737,7 +661,6 @@
       "_origin": "ast",
       "id": "core_src_fdcan",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "fdcan.c"
     },
     {
@@ -748,7 +671,6 @@
       "_origin": "ast",
       "id": "core_src_fdcan_mx_fdcan1_init",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "mx_fdcan1_init()"
     },
     {
@@ -759,7 +681,6 @@
       "_origin": "ast",
       "id": "core_src_fdcan_hal_fdcan_mspinit",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "hal_fdcan_mspinit()"
     },
     {
@@ -770,7 +691,6 @@
       "_origin": "ast",
       "id": "core_src_fdcan_c_fdcan_handletypedef",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "fdcan_handletypedef"
     },
     {
@@ -781,7 +701,6 @@
       "_origin": "ast",
       "id": "core_src_fdcan_hal_fdcan_mspdeinit",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "hal_fdcan_mspdeinit()"
     },
     {
@@ -791,8 +710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_fdcan_obd",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "fdcan_obd.c"
     },
     {
@@ -802,8 +720,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_can_send",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "can_send()"
     },
     {
@@ -813,8 +730,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_req_mode01",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "req_mode01()"
     },
     {
@@ -824,8 +740,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_req_mode03",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "req_mode03()"
     },
     {
@@ -835,8 +750,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_send_flow_control",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "send_flow_control()"
     },
     {
@@ -846,8 +760,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_set_f",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "set_f()"
     },
     {
@@ -857,8 +770,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_decode_mode01",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "decode_mode01()"
     },
     {
@@ -868,8 +780,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_dispatch",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "dispatch()"
     },
     {
@@ -879,8 +790,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_obd_rx_poll",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "obd_rx_poll()"
     },
     {
@@ -890,8 +800,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_obd_init",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 1,
       "norm_label": "obd_init()"
     },
     {
@@ -901,8 +810,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_c_fdcan_handletypedef",
-      "community": 6,
-      "community_name": "AppMain_Init",
+      "community": 1,
       "norm_label": "fdcan_handletypedef"
     },
     {
@@ -912,8 +820,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_obd_poll_tick",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "obd_poll_tick()"
     },
     {
@@ -923,8 +830,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "obd_watchdog_tick_1hz()"
     },
     {
@@ -934,8 +840,7 @@
       "source_location": "L175",
       "_origin": "ast",
       "id": "core_src_fdcan_obd_obd_demo_tick",
-      "community": 2,
-      "community_name": "fdcan_obd.c",
+      "community": 1,
       "norm_label": "obd_demo_tick()"
     },
     {
@@ -945,8 +850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_freertos",
-      "community": 0,
-      "community_name": "Error_Handler",
+      "community": 4,
       "norm_label": "freertos.c"
     },
     {
@@ -956,8 +860,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "core_src_freertos_mx_freertos_init",
-      "community": 0,
-      "community_name": "Error_Handler",
+      "community": 4,
       "norm_label": "mx_freertos_init()"
     },
     {
@@ -967,8 +870,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "core_src_freertos_startdefaulttask",
-      "community": 0,
-      "community_name": "Error_Handler",
+      "community": 4,
       "norm_label": "startdefaulttask()"
     },
     {
@@ -979,7 +881,6 @@
       "_origin": "ast",
       "id": "core_src_gpio",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "gpio.c"
     },
     {
@@ -990,7 +891,6 @@
       "_origin": "ast",
       "id": "core_src_gpio_mx_gpio_init",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "mx_gpio_init()"
     },
     {
@@ -1001,7 +901,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lv_port_disp.c"
     },
     {
@@ -1012,7 +911,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_cs_low",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "cs_low()"
     },
     {
@@ -1023,7 +921,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_cs_high",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "cs_high()"
     },
     {
@@ -1034,7 +931,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_dc_cmd",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "dc_cmd()"
     },
     {
@@ -1045,7 +941,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_dc_data",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "dc_data()"
     },
     {
@@ -1056,7 +951,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_lcd_write_cmd",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lcd_write_cmd()"
     },
     {
@@ -1067,7 +961,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_lcd_write_data",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lcd_write_data()"
     },
     {
@@ -1078,7 +971,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_lcd_write_data_byte",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lcd_write_data_byte()"
     },
     {
@@ -1089,7 +981,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_lcd_set_window",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lcd_set_window()"
     },
     {
@@ -1100,7 +991,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_ili9488_init_sequence",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "ili9488_init_sequence()"
     },
     {
@@ -1111,7 +1001,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_disp_flush_cb",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "disp_flush_cb()"
     },
     {
@@ -1122,7 +1011,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_c_lv_display_t",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lv_display_t"
     },
     {
@@ -1133,7 +1021,6 @@
       "_origin": "ast",
       "id": "lv_area_t",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lv_area_t"
     },
     {
@@ -1144,7 +1031,6 @@
       "_origin": "ast",
       "id": "core_src_lv_port_disp_lv_port_disp_init",
       "community": 5,
-      "community_name": "lv_port_disp.c",
       "norm_label": "lv_port_disp_init()"
     },
     {
@@ -1155,7 +1041,6 @@
       "_origin": "ast",
       "id": "core_src_main",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "main.c"
     },
     {
@@ -1166,7 +1051,6 @@
       "_origin": "ast",
       "id": "core_src_main_main",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "main()"
     },
     {
@@ -1177,7 +1061,6 @@
       "_origin": "ast",
       "id": "core_src_main_systemclock_config",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "systemclock_config()"
     },
     {
@@ -1188,7 +1071,6 @@
       "_origin": "ast",
       "id": "core_src_main_mpu_config",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "mpu_config()"
     },
     {
@@ -1199,7 +1081,6 @@
       "_origin": "ast",
       "id": "core_src_main_hal_tim_periodelapsedcallback",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "hal_tim_periodelapsedcallback()"
     },
     {
@@ -1210,7 +1091,6 @@
       "_origin": "ast",
       "id": "core_src_main_c_tim_handletypedef",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "tim_handletypedef"
     },
     {
@@ -1221,7 +1101,6 @@
       "_origin": "ast",
       "id": "core_src_main_error_handler",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "error_handler()"
     },
     {
@@ -1232,7 +1111,6 @@
       "_origin": "ast",
       "id": "core_src_main_assert_failed",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "assert_failed()"
     },
     {
@@ -1243,7 +1121,6 @@
       "_origin": "ast",
       "id": "core_src_spi",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "spi.c"
     },
     {
@@ -1254,7 +1131,6 @@
       "_origin": "ast",
       "id": "core_src_spi_mx_spi2_init",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "mx_spi2_init()"
     },
     {
@@ -1265,7 +1141,6 @@
       "_origin": "ast",
       "id": "core_src_spi_hal_spi_mspinit",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "hal_spi_mspinit()"
     },
     {
@@ -1276,7 +1151,6 @@
       "_origin": "ast",
       "id": "spi_handletypedef",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "spi_handletypedef"
     },
     {
@@ -1287,7 +1161,6 @@
       "_origin": "ast",
       "id": "core_src_spi_hal_spi_mspdeinit",
       "community": 0,
-      "community_name": "Error_Handler",
       "norm_label": "hal_spi_mspdeinit()"
     },
     {
@@ -1297,74 +1170,67 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_st7735_status",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st7735_status.c"
     },
     {
       "label": "st_cs_low()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L50",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_cs_low",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_cs_low()"
     },
     {
       "label": "st_cs_high()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L51",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_cs_high",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_cs_high()"
     },
     {
       "label": "st_dc_cmd()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L52",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_dc_cmd",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_dc_cmd()"
     },
     {
       "label": "st_dc_data()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L53",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_dc_data",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_dc_data()"
     },
     {
       "label": "st_hw_init()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L55",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_hw_init",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_hw_init()"
     },
     {
       "label": "st_send_cmd()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L104",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_send_cmd",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_send_cmd()"
     },
     {
@@ -1374,53 +1240,58 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_src_st7735_status_c_lv_display_t",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "lv_display_t"
     },
     {
       "label": "st_send_color()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L120",
+      "source_location": "L121",
       "_origin": "ast",
       "id": "core_src_st7735_status_st_send_color",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st_send_color()"
     },
     {
       "label": "st7735_status_init()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L137",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "core_src_st7735_status_st7735_status_init",
-      "community": 4,
-      "community_name": "st7735_status.c",
+      "community": 6,
       "norm_label": "st7735_status_init()"
     },
     {
       "label": "st7735_status_set()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L209",
+      "source_location": "L232",
       "_origin": "ast",
       "id": "core_src_st7735_status_st7735_status_set",
       "community": 4,
-      "community_name": "st7735_status.c",
       "norm_label": "st7735_status_set()"
     },
     {
       "label": "st7735_status_key_dbg()",
       "file_type": "code",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L226",
+      "source_location": "L249",
       "_origin": "ast",
       "id": "core_src_st7735_status_st7735_status_key_dbg",
       "community": 4,
-      "community_name": "st7735_status.c",
       "norm_label": "st7735_status_key_dbg()"
+    },
+    {
+      "label": "st7735_status_backlight()",
+      "file_type": "code",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L260",
+      "_origin": "ast",
+      "id": "core_src_st7735_status_st7735_status_backlight",
+      "community": 4,
+      "norm_label": "st7735_status_backlight()"
     },
     {
       "label": "stm32h7xx_hal_msp.c",
@@ -1429,8 +1300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_msp",
-      "community": 13,
-      "community_name": "stm32h7xx_hal_msp.c",
+      "community": 12,
       "norm_label": "stm32h7xx_hal_msp.c"
     },
     {
@@ -1440,8 +1310,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_msp_hal_mspinit",
-      "community": 13,
-      "community_name": "stm32h7xx_hal_msp.c",
+      "community": 12,
       "norm_label": "hal_mspinit()"
     },
     {
@@ -1451,8 +1320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_timebase_tim",
-      "community": 11,
-      "community_name": "stm32h7xx_hal_timebase_tim.c",
+      "community": 10,
       "norm_label": "stm32h7xx_hal_timebase_tim.c"
     },
     {
@@ -1462,8 +1330,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_timebase_tim_hal_inittick",
-      "community": 11,
-      "community_name": "stm32h7xx_hal_timebase_tim.c",
+      "community": 10,
       "norm_label": "hal_inittick()"
     },
     {
@@ -1473,8 +1340,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "hal_statustypedef",
-      "community": 11,
-      "community_name": "stm32h7xx_hal_timebase_tim.c",
+      "community": 10,
       "norm_label": "hal_statustypedef"
     },
     {
@@ -1484,8 +1350,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_timebase_tim_hal_suspendtick",
-      "community": 11,
-      "community_name": "stm32h7xx_hal_timebase_tim.c",
+      "community": 10,
       "norm_label": "hal_suspendtick()"
     },
     {
@@ -1495,8 +1360,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "core_src_stm32h7xx_hal_timebase_tim_hal_resumetick",
-      "community": 11,
-      "community_name": "stm32h7xx_hal_timebase_tim.c",
+      "community": 10,
       "norm_label": "hal_resumetick()"
     },
     {
@@ -1507,7 +1371,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "stm32h7xx_it.c"
     },
     {
@@ -1518,7 +1381,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_nmi_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "nmi_handler()"
     },
     {
@@ -1529,7 +1391,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_hardfault_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "hardfault_handler()"
     },
     {
@@ -1540,7 +1401,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_memmanage_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "memmanage_handler()"
     },
     {
@@ -1551,7 +1411,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_busfault_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "busfault_handler()"
     },
     {
@@ -1562,7 +1421,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_usagefault_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "usagefault_handler()"
     },
     {
@@ -1573,7 +1431,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_debugmon_handler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "debugmon_handler()"
     },
     {
@@ -1584,7 +1441,6 @@
       "_origin": "ast",
       "id": "core_src_stm32h7xx_it_tim6_dac_irqhandler",
       "community": 7,
-      "community_name": "stm32h7xx_it.c",
       "norm_label": "tim6_dac_irqhandler()"
     },
     {
@@ -1594,8 +1450,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_tim",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "tim.c"
     },
     {
@@ -1605,8 +1460,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "core_src_tim_mx_tim1_init",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "mx_tim1_init()"
     },
     {
@@ -1616,8 +1470,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_pwm_mspinit",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "hal_tim_pwm_mspinit()"
     },
     {
@@ -1627,8 +1480,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_src_tim_c_tim_handletypedef",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "tim_handletypedef"
     },
     {
@@ -1638,8 +1490,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_msppostinit",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "hal_tim_msppostinit()"
     },
     {
@@ -1649,8 +1500,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_pwm_mspdeinit",
-      "community": 9,
-      "community_name": "tim.c",
+      "community": 0,
       "norm_label": "hal_tim_pwm_mspdeinit()"
     },
     {
@@ -1660,8 +1510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_ui_dashboard",
-      "community": 24,
-      "community_name": "ui_dashboard.c",
+      "community": 23,
       "norm_label": "ui_dashboard.c"
     },
     {
@@ -1672,7 +1521,6 @@
       "_origin": "ast",
       "id": "claude",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "claude.md"
     },
     {
@@ -1683,7 +1531,6 @@
       "_origin": "ast",
       "id": "claude_dash_stm32h743_diesel_instrument_cluster",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "dash \u2014 stm32h743 diesel instrument cluster"
     },
     {
@@ -1694,7 +1541,6 @@
       "_origin": "ast",
       "id": "claude_hardware_weact_ministm32h743vit6",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "hardware (weact ministm32h743vit6)"
     },
     {
@@ -1705,7 +1551,6 @@
       "_origin": "ast",
       "id": "claude_build_conventions",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "build / conventions"
     },
     {
@@ -1716,7 +1561,6 @@
       "_origin": "ast",
       "id": "claude_architecture_the_parts_we_own_in_core",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "architecture (the parts we own, in `core/`)"
     },
     {
@@ -1727,7 +1571,6 @@
       "_origin": "ast",
       "id": "claude_design_language_tuned_for_the_weak_ili9488_panel",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "design language (tuned for the weak ili9488 panel)"
     },
     {
@@ -1738,7 +1581,6 @@
       "_origin": "ast",
       "id": "claude_repo",
       "community": 8,
-      "community_name": "Dash \u2014 STM32H743 diesel instrument cluster",
       "norm_label": "repo"
     }
   ],
@@ -1759,7 +1601,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L101",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_inc_cluster_config",
@@ -1806,7 +1648,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L101",
+      "source_location": "L103",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -1818,7 +1660,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L101",
+      "source_location": "L103",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast",
@@ -1832,7 +1674,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L682",
+      "source_location": "L659",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -1844,7 +1686,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L638",
+      "source_location": "L615",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -1902,7 +1744,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L44",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main",
@@ -1913,7 +1755,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L59",
+      "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main",
@@ -1924,7 +1766,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L17",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main",
+      "target": "core_src_app_main_backlight_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main",
@@ -1935,7 +1788,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L33",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main",
+      "target": "core_src_app_main_heartbeat_led_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main",
@@ -1947,7 +1811,31 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L46",
+      "source_location": "L103",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_init",
+      "target": "core_src_app_main_backlight_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L135",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_run",
+      "target": "core_src_app_main_backlight_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L94",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_init",
@@ -1959,7 +1847,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L47",
+      "source_location": "L95",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_init",
@@ -1969,10 +1857,22 @@
     {
       "relation": "calls",
       "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_run",
+      "target": "core_src_app_main_heartbeat_led_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L50",
+      "source_location": "L98",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_init",
@@ -1984,7 +1884,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L49",
+      "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_init",
@@ -1996,7 +1896,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L51",
+      "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_init",
@@ -2020,7 +1920,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L83",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_run",
@@ -2032,7 +1932,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L92",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_run",
@@ -2044,7 +1944,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L78",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_run",
@@ -2056,7 +1956,19 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L92",
+      "source_location": "L157",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_run",
+      "target": "core_src_st7735_status_st7735_status_backlight"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_run",
@@ -2068,7 +1980,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/app_main.c",
-      "source_location": "L90",
+      "source_location": "L153",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_app_main_appmain_run",
@@ -2208,7 +2120,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L495",
+      "source_location": "L457",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2219,7 +2131,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L426",
+      "source_location": "L389",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2230,7 +2142,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L297",
+      "source_location": "L278",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2241,7 +2153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L544",
+      "source_location": "L519",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2252,18 +2164,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L210",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_chip_set",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L570",
+      "source_location": "L547",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2274,7 +2175,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L613",
+      "source_location": "L590",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2285,7 +2186,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L608",
+      "source_location": "L585",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2296,7 +2197,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L659",
+      "source_location": "L630",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2307,7 +2208,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L597",
+      "source_location": "L574",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2318,7 +2219,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2329,7 +2230,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L97",
+      "source_location": "L98",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2340,7 +2241,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L122",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2351,7 +2252,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L129",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2362,7 +2263,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L219",
+      "source_location": "L196",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2373,7 +2274,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L178",
+      "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2384,18 +2285,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L194",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_chip",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L248",
+      "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2406,7 +2296,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L167",
+      "source_location": "L257",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L169",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2417,7 +2318,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L262",
+      "source_location": "L239",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2428,7 +2329,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L235",
+      "source_location": "L212",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2439,18 +2340,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L278",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_topbar",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L134",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2461,7 +2351,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L769",
+      "source_location": "L757",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2472,7 +2362,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L148",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2483,7 +2373,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L158",
+      "source_location": "L160",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2494,7 +2384,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L619",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2505,18 +2395,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L653",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_set_tag",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L111",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -2528,7 +2407,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L103",
+      "source_location": "L104",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_fmt",
@@ -2540,7 +2419,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L153",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_pct_of",
@@ -2552,7 +2431,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L394",
+      "source_location": "L377",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -2564,7 +2443,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L674",
+      "source_location": "L654",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -2576,7 +2455,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L635",
+      "source_location": "L612",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2588,7 +2467,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L683",
+      "source_location": "L660",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -2600,7 +2479,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L639",
+      "source_location": "L616",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2611,7 +2490,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L111",
+      "source_location": "L112",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2623,7 +2502,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L111",
+      "source_location": "L112",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast",
@@ -2635,19 +2514,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L210",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_chip_set",
-      "target": "lv_color_t",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L167",
+      "source_location": "L169",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2659,7 +2526,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L235",
+      "source_location": "L212",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2668,23 +2535,11 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L653",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_set_tag",
-      "target": "core_src_cluster_ui_c_metric_state_t",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L695",
+      "source_location": "L670",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -2695,7 +2550,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L122",
+      "source_location": "L123",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2708,7 +2563,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L622",
+      "source_location": "L599",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2719,7 +2574,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L129",
+      "source_location": "L130",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2731,7 +2586,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L134",
+      "source_location": "L135",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2743,7 +2598,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L148",
+      "source_location": "L150",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2755,7 +2610,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L619",
+      "source_location": "L596",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2768,7 +2623,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L641",
+      "source_location": "L618",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2779,7 +2634,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L134",
+      "source_location": "L135",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2792,7 +2647,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L633",
+      "source_location": "L610",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2803,7 +2658,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L619",
+      "source_location": "L596",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2816,7 +2671,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L680",
+      "source_location": "L671",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -2828,7 +2683,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L648",
+      "source_location": "L625",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2840,7 +2695,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L438",
+      "source_location": "L399",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -2852,7 +2707,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L311",
+      "source_location": "L290",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -2863,7 +2718,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L158",
+      "source_location": "L160",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2875,7 +2730,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L544",
+      "source_location": "L519",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2887,19 +2742,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L210",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_chip_set",
-      "target": "lv_obj_t",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L219",
+      "source_location": "L196",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2911,7 +2754,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L178",
+      "source_location": "L180",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2923,19 +2766,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L194",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_mk_chip",
-      "target": "lv_obj_t",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L248",
+      "source_location": "L225",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2947,7 +2778,19 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L167",
+      "source_location": "L257",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_eyebrow",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L169",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2959,7 +2802,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L262",
+      "source_location": "L239",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2971,7 +2814,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L235",
+      "source_location": "L212",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2983,19 +2826,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L278",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_mk_topbar",
-      "target": "lv_obj_t",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L619",
+      "source_location": "L596",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3004,23 +2835,11 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L653",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_set_tag",
-      "target": "lv_obj_t",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L506",
+      "source_location": "L466",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -3032,7 +2851,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L458",
+      "source_location": "L419",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3044,7 +2863,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L302",
+      "source_location": "L297",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3056,7 +2875,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L560",
+      "source_location": "L535",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_strip",
@@ -3068,10 +2887,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L206",
+      "source_location": "L270",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "core_src_cluster_ui_mk_chip",
+      "source": "core_src_cluster_ui_mk_eyebrow",
       "target": "core_src_cluster_ui_mk_label",
       "confidence_score": 1.0
     },
@@ -3079,7 +2898,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L167",
+      "source_location": "L169",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3092,19 +2911,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L291",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_mk_topbar",
-      "target": "core_src_cluster_ui_mk_label",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L504",
+      "source_location": "L464",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -3116,7 +2923,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L482",
+      "source_location": "L444",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3128,7 +2935,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L316",
+      "source_location": "L296",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3140,55 +2947,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L500",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_chip",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L431",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_chip",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L304",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_chip",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L690",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_chip_set",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L343",
+      "source_location": "L363",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3200,7 +2959,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L469",
+      "source_location": "L430",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3212,7 +2971,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L389",
+      "source_location": "L372",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3224,7 +2983,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L373",
+      "source_location": "L538",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_strip",
+      "target": "core_src_cluster_ui_mk_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L356",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3236,7 +3007,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L540",
+      "source_location": "L515",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -3248,7 +3019,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L491",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3260,7 +3031,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L422",
+      "source_location": "L385",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3272,11 +3043,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L499",
+      "source_location": "L461",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_topbar",
+      "target": "core_src_cluster_ui_mk_eyebrow",
       "confidence_score": 1.0
     },
     {
@@ -3284,11 +3055,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L430",
+      "source_location": "L393",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_topbar",
+      "target": "core_src_cluster_ui_mk_eyebrow",
       "confidence_score": 1.0
     },
     {
@@ -3296,11 +3067,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L301",
+      "source_location": "L282",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_topbar",
+      "target": "core_src_cluster_ui_mk_eyebrow",
       "confidence_score": 1.0
     },
     {
@@ -3308,7 +3079,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L589",
+      "source_location": "L566",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -3320,7 +3091,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L590",
+      "source_location": "L567",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -3332,7 +3103,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L591",
+      "source_location": "L568",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -3344,7 +3115,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L592",
+      "source_location": "L569",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -3356,7 +3127,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L594",
+      "source_location": "L571",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -3368,7 +3139,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L610",
+      "source_location": "L587",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_next_page",
@@ -3380,23 +3151,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L686",
+      "source_location": "L663",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
       "target": "core_src_cluster_ui_set_metric",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L742",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_set_tag",
       "confidence_score": 1.0
     },
     {
@@ -4390,7 +4149,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L99",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st_hw_init",
@@ -4469,7 +4228,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L137",
+      "source_location": "L260",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status",
+      "target": "core_src_st7735_status_st7735_status_backlight",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4480,7 +4250,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L226",
+      "source_location": "L249",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4491,7 +4261,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L209",
+      "source_location": "L232",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4502,7 +4272,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L51",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4513,7 +4283,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L50",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4524,7 +4294,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4535,7 +4305,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L53",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4546,7 +4316,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L55",
+      "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4557,7 +4327,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L104",
+      "source_location": "L105",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4568,7 +4338,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L120",
+      "source_location": "L121",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status",
@@ -4580,71 +4350,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L108",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_st7735_status_st_send_cmd",
-      "target": "core_src_st7735_status_st_cs_low",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L128",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_st7735_status_st_send_color",
-      "target": "core_src_st7735_status_st_cs_low",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L77",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_st7735_status_st_hw_init",
-      "target": "core_src_st7735_status_st_cs_high",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L115",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_st7735_status_st_send_cmd",
-      "target": "core_src_st7735_status_st_cs_high",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L133",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_st7735_status_st_send_color",
-      "target": "core_src_st7735_status_st_cs_high",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/st7735_status.c",
       "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st_send_cmd",
-      "target": "core_src_st7735_status_st_dc_cmd",
+      "target": "core_src_st7735_status_st_cs_low",
       "confidence_score": 1.0
     },
     {
@@ -4656,6 +4366,54 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st_send_color",
+      "target": "core_src_st7735_status_st_cs_low",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status_st_hw_init",
+      "target": "core_src_st7735_status_st_cs_high",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L116",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status_st_send_cmd",
+      "target": "core_src_st7735_status_st_cs_high",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status_st_send_color",
+      "target": "core_src_st7735_status_st_cs_high",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status_st_send_cmd",
       "target": "core_src_st7735_status_st_dc_cmd",
       "confidence_score": 1.0
     },
@@ -4664,7 +4422,19 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L112",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_st7735_status_st_send_color",
+      "target": "core_src_st7735_status_st_dc_cmd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/st7735_status.c",
+      "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st_send_cmd",
@@ -4676,7 +4446,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L131",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st_send_color",
@@ -4688,7 +4458,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L143",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_st7735_status_st7735_status_init",
@@ -4699,7 +4469,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L104",
+      "source_location": "L105",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -4711,7 +4481,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/st7735_status.c",
-      "source_location": "L120",
+      "source_location": "L121",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -4951,9 +4721,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude",
-      "target": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "confidence_score": 1.0
+      "target": "claude_dash_stm32h743_diesel_instrument_cluster"
     },
     {
       "relation": "contains",
@@ -4962,9 +4732,9 @@
       "source_location": "L23",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "target": "claude_architecture_the_parts_we_own_in_core",
-      "confidence_score": 1.0
+      "target": "claude_architecture_the_parts_we_own_in_core"
     },
     {
       "relation": "contains",
@@ -4973,9 +4743,9 @@
       "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "target": "claude_build_conventions",
-      "confidence_score": 1.0
+      "target": "claude_build_conventions"
     },
     {
       "relation": "contains",
@@ -4984,9 +4754,9 @@
       "source_location": "L37",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "target": "claude_design_language_tuned_for_the_weak_ili9488_panel",
-      "confidence_score": 1.0
+      "target": "claude_design_language_tuned_for_the_weak_ili9488_panel"
     },
     {
       "relation": "contains",
@@ -4995,9 +4765,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "target": "claude_hardware_weact_ministm32h743vit6",
-      "confidence_score": 1.0
+      "target": "claude_hardware_weact_ministm32h743vit6"
     },
     {
       "relation": "contains",
@@ -5006,11 +4776,11 @@
       "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "claude_dash_stm32h743_diesel_instrument_cluster",
-      "target": "claude_repo",
-      "confidence_score": 1.0
+      "target": "claude_repo"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4a082a775f582095d48cd85e356f8aa84babe72c"
+  "built_at_commit": "66cb40f7f67047d1a57b33dfaad0cde19d921ea5"
 }

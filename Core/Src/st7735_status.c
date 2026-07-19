@@ -43,6 +43,7 @@ LV_FONT_DECLARE(montserrat_bold_28);   /* big bold speed number */
 static SPI_HandleTypeDef hspi4_st;
 static lv_display_t *status_disp;
 static lv_obj_t *lbl_spcap, *lbl_speed, *lbl_rpm, *lbl_can, *lbl_canid, *lbl_uptime, *lbl_dbg;
+static lv_obj_t *bl_panel, *bl_cap, *bl_val;   /* brightness overlay (shown only in BL mode) */
 
 /* Partial draw buffer (RGB565). 80 x 40 px is plenty for a text screen. */
 static uint8_t st_buf[ST_HOR_RES * 40 * 2];
@@ -201,6 +202,28 @@ void st7735_status_init(void)
     lv_label_set_text(lbl_dbg, "P0 KEY0 #0");
     lv_obj_align(lbl_dbg, LV_ALIGN_TOP_LEFT, 0, 138);
 
+    /* Brightness overlay: a full-screen black panel with a caption and a big
+     * number, hidden until the KEY gesture switches into brightness mode. */
+    bl_panel = lv_obj_create(scr);
+    lv_obj_remove_style_all(bl_panel);
+    lv_obj_set_size(bl_panel, ST_HOR_RES, ST_VER_RES);
+    lv_obj_align(bl_panel, LV_ALIGN_TOP_LEFT, -3, -3);   /* cancel scr's 3px pad */
+    lv_obj_set_style_bg_color(bl_panel, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(bl_panel, LV_OPA_COVER, 0);
+    lv_obj_add_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);
+
+    bl_cap = lv_label_create(bl_panel);
+    lv_obj_set_style_text_font(bl_cap, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(bl_cap, lv_color_hex(0xffc033), 0);
+    lv_label_set_text(bl_cap, "BRIGHTNESS");
+    lv_obj_align(bl_cap, LV_ALIGN_CENTER, 0, -30);
+
+    bl_val = lv_label_create(bl_panel);
+    lv_obj_set_style_text_font(bl_val, &montserrat_bold_28, 0);
+    lv_obj_set_style_text_color(bl_val, lv_color_white(), 0);
+    lv_label_set_text(bl_val, "--");
+    lv_obj_align(bl_val, LV_ALIGN_CENTER, 0, 6);
+
     if (prev) {
         lv_display_set_default(prev);   /* keep the 4" dashboard as the default display */
     }
@@ -231,5 +254,20 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
     lv_lock();
     lv_label_set_text_fmt(lbl_dbg, "P%u KEY%u #%lu",
                           (unsigned)page, (unsigned)key_raw, (unsigned long)key_cnt);
+    lv_unlock();
+}
+
+void st7735_status_backlight(uint8_t mode, uint8_t pct)
+{
+    if (status_disp == NULL) {
+        return;
+    }
+    lv_lock();
+    if (mode) {
+        lv_label_set_text_fmt(bl_val, "%u%%", (unsigned)pct);
+        lv_obj_clear_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);   /* overlay on top */
+    } else {
+        lv_obj_add_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);
+    }
     lv_unlock();
 }
