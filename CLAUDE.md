@@ -13,17 +13,22 @@ This is a STM32CubeIDE-managed project (Eclipse `.project`/`.cproject`), not a C
 
 ## Git workflow: commit and push automatically
 
-After completing a logical change (a feature, fix, or other coherent unit of work — not after every single line edit), commit it with a descriptive message and push to `origin main` immediately, without asking for confirmation first. This repo has no CI and no compile check reachable from a coding-agent shell (no `arm-none-eabi-gcc`/`make` on PATH — the build runs through STM32CubeIDE), so there is no automated gate to wait on; real validation only happens when the user flashes hardware. Push directly to `main` — this is a solo repo, no PR workflow.
+After completing a logical change (a feature, fix, or other coherent unit of work — not after every single line edit), commit it with a descriptive message and push to `origin main` immediately, without asking for confirmation first. There's no CI, but a **CLI compile check is now available** via STM32CubeCLT (see Build section) — when you've touched compiled code, build it before pushing and only push if it links clean. Behavioural/visual correctness still only shows up when the user flashes hardware. Push directly to `main` — this is a solo repo, no PR workflow.
 
 Still surface anything a reasonable collaborator would flag before pushing (e.g. a diagnostic/placeholder value left in place, like `BACKLIGHT_DUTY_PCT` being temporarily 0 for hardware debugging) in the commit message or a short note, so it's visible in the history — but do not block the push on it.
 
 ## Build / flash / debug
 
-There is no CLI build script — build via **STM32CubeIDE** (the `.project`/`.cproject`/`.mxproject` files are CubeIDE-managed). If building from the command line, use the CubeIDE-generated makefile in `Debug/` (or `Release/` after configuring it) with the `arm-none-eabi-gcc` toolchain that CubeIDE installs:
+Build in the IDE via **STM32CubeIDE**, or from the command line using the CubeIDE-generated makefile in `Debug/` with the **STM32CubeCLT** toolchain (installed at `C:\ST\STM32CubeCLT_1.22.0`). VS Code is wired up in `.vscode/` (build/flash tasks, ST-LINK debug via Cortex-Debug, IntelliSense). CLI build:
 
 ```
-cd Debug && make -j
+export PATH="/c/ST/STM32CubeCLT_1.22.0/GNU-tools-for-STM32/bin:/c/ST/STM32CubeCLT_1.22.0/Make/bin:$PATH"
+cd Debug && make all -j8
 ```
+
+Two gotchas with the generated makefile:
+- **Use `make all`, never a bare `make`.** The `Debug/makefile` `-include`s the per-folder `subdir.mk` files (which define `clean-*` targets) before its own `all`, so the default goal resolves to *clean* — a bare `make` wipes every `.o`.
+- **A new source file added to `Core/Src/` is invisible to the raw CLI build** until it's added to `Debug/Core/Src/subdir.mk` (the C_SRCS/OBJS/C_DEPS lists) **and** `Debug/objects.list` — or you let CubeIDE regenerate them (it auto-discovers new files on Build/Refresh). `Debug/` is git-ignored and CubeIDE-owned; hand-editing it is only for a one-off CLI build.
 
 Peripheral/pin config lives in `Dash.ioc` — regenerating code from it via CubeMX/CubeIDE will rewrite the `USER CODE BEGIN/END` guarded sections in `Core/Src/*.c` and `Core/Inc/*.h`; only edit within those guards in CubeMX-owned files (`main.c`, `freertos.c`, `gpio.c`, `spi.c`, `tim.c`, `fdcan.c`, `stm32h7xx_*`) or edits will be lost on regeneration.
 

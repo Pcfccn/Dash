@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder}/Debug",
+    "env": {
+      "PATH": "C:\\ST\\STM32CubeCLT_1.22.0\\GNU-tools-for-STM32\\bin;C:\\ST\\STM32CubeCLT_1.22.0\\Make\\bin;C:\\ST\\STM32CubeCLT_1.22.0\\STM32CubeProgrammer\\bin;${env:PATH}"
+    }
+  },
+  "tasks": [
+    {
+      "label": "Build (make all)",
+      "type": "shell",
+      "command": "make",
+      "args": ["all", "-j8"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"],
+      "detail": "Build via the CubeIDE-generated Debug/ makefile. NOTE the explicit 'all' target: a bare 'make' resolves the default goal to clean and wipes the build."
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "make",
+      "args": ["clean"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Flash (ST-LINK)",
+      "type": "shell",
+      "command": "STM32_Programmer_CLI",
+      "args": ["-c", "port=SWD", "-w", "Dash.elf", "-rst"],
+      "dependsOn": "Build (make all)",
+      "problemMatcher": []
+    }
+  ]
+}

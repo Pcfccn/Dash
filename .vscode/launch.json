@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug (ST-LINK)",
+      "cwd": "${workspaceFolder}",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "stlink",
+      "executable": "${workspaceFolder}/Debug/Dash.elf",
+      "device": "STM32H743VITx",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "Build (make all)",
+      "svdFile": "C:/ST/STM32CubeCLT_1.22.0/STMicroelectronics_CMSIS_SVD/STM32H743.svd",
+      "serverpath": "C:/ST/STM32CubeCLT_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver.exe",
+      "stm32cubeprogrammer": "C:/ST/STM32CubeCLT_1.22.0/STM32CubeProgrammer/bin",
+      "gdbPath": "C:/ST/STM32CubeCLT_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb.exe"
+    }
+  ]
+}
