@@ -20,9 +20,9 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_config.h": {
-    "mtime": 1784443292.0654552,
-    "ast_hash": "75046c03985b3313717a646bd39a0506",
-    "semantic_hash": "75046c03985b3313717a646bd39a0506"
+    "mtime": 1784446575.089768,
+    "ast_hash": "917ae402e7c4965047691b5f417c6f86",
+    "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
     "mtime": 1784269129.710937,
@@ -192,6 +192,11 @@
   "Core/Src/montserrat_bold_72.c": {
     "mtime": 1784443292.186914,
     "ast_hash": "6a1afbe9d76b766db05f2d62bc2eda0a",
+    "semantic_hash": ""
+  },
+  "docs/vehicle-install.md": {
+    "mtime": 1784446708.6570556,
+    "ast_hash": "b23382d7af86f86b68e153952f908e72",
     "semantic_hash": ""
   }
 }

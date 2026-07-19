@@ -976,8 +976,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_freertos",
-      "community": 0,
-      "community_name": "FDCAN & OBD Bus Init",
+      "community": 2,
+      "community_name": "App Main & Superloop",
       "norm_label": "freertos.c"
     },
     {
@@ -987,8 +987,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "core_src_freertos_mx_freertos_init",
-      "community": 0,
-      "community_name": "FDCAN & OBD Bus Init",
+      "community": 2,
+      "community_name": "App Main & Superloop",
       "norm_label": "mx_freertos_init()"
     },
     {
@@ -998,8 +998,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "core_src_freertos_startdefaulttask",
-      "community": 0,
-      "community_name": "FDCAN & OBD Bus Init",
+      "community": 2,
+      "community_name": "App Main & Superloop",
       "norm_label": "startdefaulttask()"
     },
     {
@@ -1647,8 +1647,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_src_tim",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "tim.c"
     },
     {
@@ -1658,8 +1658,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "core_src_tim_mx_tim1_init",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "mx_tim1_init()"
     },
     {
@@ -1669,8 +1669,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_pwm_mspinit",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "hal_tim_pwm_mspinit()"
     },
     {
@@ -1680,8 +1680,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_src_tim_c_tim_handletypedef",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "tim_handletypedef"
     },
     {
@@ -1691,8 +1691,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_msppostinit",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "hal_tim_msppostinit()"
     },
     {
@@ -1702,8 +1702,8 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "core_src_tim_hal_tim_pwm_mspdeinit",
-      "community": 23,
-      "community_name": "Metric State Enum",
+      "community": 0,
+      "community_name": "FDCAN & OBD Bus Init",
       "norm_label": "hal_tim_pwm_mspdeinit()"
     },
     {
@@ -1826,6 +1826,94 @@
       "community": 26,
       "community_name": "README.md",
       "norm_label": "readme.md"
+    },
+    {
+      "label": "vehicle-install.md",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_vehicle_install",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "vehicle-install.md"
+    },
+    {
+      "label": "In-vehicle install \u2014 from bench demo to a live car",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "in-vehicle install \u2014 from bench demo to a live car"
+    },
+    {
+      "label": "1. Powering the board in the car",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_1_powering_the_board_in_the_car",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "1. powering the board in the car"
+    },
+    {
+      "label": "2. Connecting to the CAN bus (OBD-II port)",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L50",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_2_connecting_to_the_can_bus_obd_ii_port",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "2. connecting to the can bus (obd-ii port)"
+    },
+    {
+      "label": "\u26a0\ufe0f Bus termination \u2014 the #1 thing to get right",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L73",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_bus_termination_the_1_thing_to_get_right",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "\u26a0\ufe0f bus termination \u2014 the #1 thing to get right"
+    },
+    {
+      "label": "3. Read-only safety",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L87",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_3_read_only_safety",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "3. read-only safety"
+    },
+    {
+      "label": "4. Bring-up sequence",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L98",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_4_bring_up_sequence",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "4. bring-up sequence"
+    },
+    {
+      "label": "5. Known gaps for a \"complete\" in-car build",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L115",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_5_known_gaps_for_a_complete_in_car_build",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "5. known gaps for a \"complete\" in-car build"
     },
     {
       "label": "wiring.md",
@@ -5492,6 +5580,83 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install",
+      "target": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_1_powering_the_board_in_the_car",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_2_connecting_to_the_can_bus_obd_ii_port",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_3_read_only_safety",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L98",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_4_bring_up_sequence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_5_known_gaps_for_a_complete_in_car_build",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_2_connecting_to_the_can_bus_obd_ii_port",
+      "target": "docs_vehicle_install_bus_termination_the_1_thing_to_get_right",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "docs/wiring.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -5833,5 +5998,5 @@
       "source_file": "design/Diesel_Cluster_v2_3.html"
     }
   ],
-  "built_at_commit": "c014e799a25c412151fde203c93feb10efc6230d"
+  "built_at_commit": "5f7aa9dd958cf456945df45143d8a816fe0a6ce9"
 }

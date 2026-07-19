@@ -23,7 +23,7 @@
  * 1 = inject synthetic test values into g_obd (no CAN needed): all colours,
  *     thresholds and the animated coolant are visible on the desk.
  * 0 = real OBD-II over the bus. SET TO 0 BEFORE USING IN THE CAR.            */
-#define OBD_DEMO 1
+#define OBD_DEMO 0
 
 /* ---- Bus / addressing ---------------------------------------------------- */
 #define CAN_BITRATE_BPS        500000u
