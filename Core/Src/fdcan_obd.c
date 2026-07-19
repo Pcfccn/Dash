@@ -25,6 +25,31 @@ static uint16_t itp_len, itp_got;
 static uint8_t  itp_next_seq;
 static bool     itp_active;
 
+/* ---- outstanding-request gate -------------------------------------------
+ * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
+ * logger plugged in alongside this cluster. Those also poll, and their
+ * multi-frame replies land on the same 0x7E8..0x7EA IDs we listen to. If we
+ * answered every First Frame with our own Flow Control, the ECU would receive
+ * TWO FC frames for one transfer and both readers would get corrupt data.
+ * So we only drive a transfer we actually asked for. Exactly one request is
+ * outstanding at a time (obd_poll_tick sends one per 25 ms tick), so a single
+ * slot is enough. Single-frame replies are still decoded unconditionally —
+ * they need no FC, cost nothing, and decode_mode01 keys off the echoed PID,
+ * so the other tester's polling transparently feeds our gauges too. */
+#define OBD_AWAIT_MS 50u             /* replies land in a few ms; poll is 25 ms */
+static uint32_t await_resp_id;       /* 0 = nothing outstanding                 */
+static uint32_t await_until_ms;
+
+static void expect_reply(uint32_t req_id) {
+    await_resp_id  = req_id + 8u;    /* 0x7E0->0x7E8, 0x7E1->0x7E9, 0x7E2->0x7EA */
+    await_until_ms = HAL_GetTick() + OBD_AWAIT_MS;
+}
+
+static bool reply_is_ours(uint32_t resp_id) {
+    return await_resp_id == resp_id &&
+           (int32_t)(HAL_GetTick() - await_until_ms) < 0;   /* tick-wrap safe */
+}
+
 /* =============================== TX ====================================== */
 static void can_send(uint32_t req_id, const uint8_t *data8) {
     FDCAN_TxHeaderTypeDef tx = {0};
@@ -45,12 +70,14 @@ static void req_mode01(const uint8_t *pids, uint8_t n) {
     d[0] = (uint8_t)(1 + n);         /* PCI length: SID + n PIDs               */
     d[1] = 0x01;                     /* service                                */
     for (uint8_t i = 0; i < n && i < 6; i++) d[2 + i] = pids[i];
+    expect_reply(OBD_REQ_ECM);
     can_send(OBD_REQ_ECM, d);
 }
 
 /* mode 03: request stored DTCs */
 static void req_mode03(void) {
     uint8_t d[8] = { 0x01, 0x03, 0,0,0,0,0,0 };
+    expect_reply(OBD_REQ_ECM);
     can_send(OBD_REQ_ECM, d);
 }
 
@@ -63,6 +90,7 @@ static void req_mode22(uint32_t req_id, uint16_t did) {
     d[1] = 0x22;                     /* service                                 */
     d[2] = (uint8_t)(did >> 8);
     d[3] = (uint8_t)(did & 0xFFu);
+    expect_reply(req_id);
     can_send(req_id, d);
 }
 
@@ -148,8 +176,13 @@ void obd_rx_poll(void) {
         uint8_t pci = d[0] >> 4;
         if (pci == 0x0) {                       /* Single Frame                */
             uint8_t len = d[0] & 0x0F;
-            dispatch(&d[1], len);
+            if (reply_is_ours(rh.Identifier)) await_resp_id = 0;  /* satisfied  */
+            dispatch(&d[1], len);               /* decode even if not ours     */
         } else if (pci == 0x1) {                /* First Frame                 */
+            /* Only drive a multi-frame transfer we requested. Another tester's
+             * First Frame must not get our Flow Control (see await_resp_id),
+             * and must not clobber our reassembly buffer. */
+            if (!reply_is_ours(rh.Identifier)) continue;
             itp_len  = ((d[0] & 0x0F) << 8) | d[1];
             itp_got  = 0; itp_next_seq = 1; itp_active = true;
             for (int i = 0; i < 6 && itp_got < itp_len; i++) itp_buf[itp_got++] = d[2 + i];
@@ -159,7 +192,10 @@ void obd_rx_poll(void) {
                 itp_next_seq = (itp_next_seq + 1) & 0x0F;
                 for (int i = 0; i < 7 && itp_got < itp_len && itp_got < sizeof(itp_buf); i++)
                     itp_buf[itp_got++] = d[1 + i];
-                if (itp_got >= itp_len) { itp_active = false; dispatch(itp_buf, itp_len); }
+                if (itp_got >= itp_len) {
+                    itp_active = false; await_resp_id = 0;
+                    dispatch(itp_buf, itp_len);
+                }
             } else { itp_active = false; }      /* sequence error -> drop       */
         }
     }

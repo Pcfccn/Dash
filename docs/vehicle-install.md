@@ -99,6 +99,25 @@ The RG's **HS-CAN** (ISO 15765-4, 500 kbps — what this firmware speaks) is on 
   handle this on-board.
 - Keep **CANH/CANL as a twisted pair** and the stub from the OBD port short.
 
+### Sharing the OBD port with another device
+
+Running this cluster alongside a scan tool / insurance dongle / logger (Y-splitter
+or a second tap on pins 6 + 14) is fine — CAN is multi-drop and this firmware is
+read-only. Two rules:
+
+- **Do not add a termination resistor.** The vehicle already has 2 x 120 Ω (60 Ω
+  total). Many SN65HVD230 breakout boards ship with a 120 Ω resistor populated —
+  remove/disable it, or the bus impedance drops far enough to cause errors.
+- **Keep each stub short** (< ~30 cm); long branches reflect at 500 kbps.
+
+Protocol-wise the firmware tolerates a second tester: it only answers a
+multi-frame **First Frame** with Flow Control when it is the one that sent the
+matching request (`await_resp_id` in `fdcan_obd.c`). Without that gate both
+readers would send Flow Control for the same transfer and corrupt each other's
+multi-frame reads (mode 22 DIDs, mode 03 DTC lists). Single-frame replies are
+decoded regardless of who asked, and `decode_mode01()` keys off the echoed PID —
+so the other tool's polling transparently feeds these gauges as a bonus.
+
 ### ⚠️ Bus termination — the #1 thing to get right
 
 HS-CAN is already terminated by the vehicle: **120 Ω at each end = 60 Ω total**.
