@@ -213,14 +213,18 @@ void st7735_status_init(void)
     lv_obj_add_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);
 
     bl_cap = lv_label_create(bl_panel);
-    lv_obj_set_style_text_font(bl_cap, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(bl_cap, &lv_font_montserrat_12, 0);   /* 14 overflowed the 80px width */
     lv_obj_set_style_text_color(bl_cap, lv_color_hex(0xffc033), 0);
+    lv_obj_set_width(bl_cap, ST_HOR_RES);                            /* full panel width, so it centers/ */
+    lv_obj_set_style_text_align(bl_cap, LV_TEXT_ALIGN_CENTER, 0);    /* wraps instead of clipping off-screen */
     lv_label_set_text(bl_cap, "BRIGHTNESS");
     lv_obj_align(bl_cap, LV_ALIGN_CENTER, 0, -30);
 
     bl_val = lv_label_create(bl_panel);
     lv_obj_set_style_text_font(bl_val, &montserrat_bold_28, 0);
     lv_obj_set_style_text_color(bl_val, lv_color_white(), 0);
+    lv_obj_set_width(bl_val, ST_HOR_RES);                            /* center "100%" within the panel */
+    lv_obj_set_style_text_align(bl_val, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_text(bl_val, "--");
     lv_obj_align(bl_val, LV_ALIGN_CENTER, 0, 6);
 

@@ -11,7 +11,8 @@
 #define BACKLIGHT_DUTY_PCT 0u     /* DIAGNOSTIC: 0% at boot -> PA8 held LOW. If backlight still full-on, the MOSFET is not in the backlight current path (wiring). Revert to 100u. */
 
 /* KEY (PC13) gestures: short press = page/step, 3 s hold = toggle backlight mode. */
-#define KEY_HOLD_MS   3000u
+#define KEY_HOLD_MS     3000u
+#define KEY_DEBOUNCE_MS 30u       /* ignore edges closer than this (contact bounce) */
 #define BL_STEP_PCT   10u
 #define BL_MIN_PCT    10u
 #define BL_MAX_PCT    100u
@@ -116,20 +117,23 @@ void AppMain_Run(void)
     static uint8_t  key_prev = 0;
     static uint32_t key_down_t = 0;
     static uint8_t  key_hold_done = 0;   /* long-press already handled this hold */
+    static uint32_t key_last_edge = 0;   /* tick of the last accepted edge (debounce) */
     static uint32_t key_cnt = 0;
     uint8_t key_now = (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET);
 
-    if (key_now && !key_prev) {                          /* press begins        */
-        key_down_t = t;
-        key_hold_done = 0;
-    }
-    if (key_now && !key_hold_done && (t - key_down_t) >= KEY_HOLD_MS) {
-        key_hold_done = 1;                               /* consume this hold   */
-        s_bl_mode = !s_bl_mode;                          /* enter/leave mode    */
-    }
-    if (!key_now && key_prev) {                          /* release             */
-        uint32_t held = t - key_down_t;
-        if (!key_hold_done && held >= 40u) {             /* debounced short tap */
+    /* Edge-triggered with time-based debounce. A tap fires on the RELEASE edge
+     * regardless of how briefly the key was held. The old code required the
+     * press to span >=40 ms of *sampled* time, so a quick tap caught in a single
+     * loop iteration measured ~0 ms and was silently dropped -- that was the
+     * "button doesn't always react" bug. Bounce is rejected by ignoring any edge
+     * within KEY_DEBOUNCE_MS of the previous accepted one (key_prev is left
+     * unchanged so the edge is re-evaluated once the window passes). */
+    if (key_now != key_prev && (t - key_last_edge) >= KEY_DEBOUNCE_MS) {
+        key_last_edge = t;
+        if (key_now) {                                   /* press begins        */
+            key_down_t = t;
+            key_hold_done = 0;
+        } else if (!key_hold_done) {                     /* release -> short tap */
             key_cnt++;
             if (s_bl_mode) {
                 backlight_set((s_bl_pct >= BL_MAX_PCT)
@@ -139,8 +143,13 @@ void AppMain_Run(void)
                 cluster_ui_next_page();
             }
         }
+        key_prev = key_now;
     }
-    key_prev = key_now;
+    /* 3 s hold toggles pages <-> backlight mode (uses the live level, not edges) */
+    if (key_now && !key_hold_done && (t - key_down_t) >= KEY_HOLD_MS) {
+        key_hold_done = 1;                               /* consume this hold   */
+        s_bl_mode = !s_bl_mode;                          /* enter/leave mode    */
+    }
 
     lv_timer_handler();   /* LVGL rendering for both displays */
     cluster_app_run();    /* OBD-II: RX drain, request scheduler, UI refresh, watchdog */

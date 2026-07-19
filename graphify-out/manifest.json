@@ -85,9 +85,9 @@
     "semantic_hash": ""
   },
   "Core/Src/app_main.c": {
-    "mtime": 1784443292.1208599,
-    "ast_hash": "aa655efb7499f37cfc34f656048085eb",
-    "semantic_hash": "aa655efb7499f37cfc34f656048085eb"
+    "mtime": 1784445740.369253,
+    "ast_hash": "6aa5c8261b8ccb0815aa27187015c572",
+    "semantic_hash": ""
   },
   "Core/Src/can_gauges.c": {
     "mtime": 1784269129.7231088,
@@ -140,8 +140,8 @@
     "semantic_hash": "c1be273808b399e0577f5e8667d3ff77"
   },
   "Core/Src/st7735_status.c": {
-    "mtime": 1784443292.2116916,
-    "ast_hash": "5004191d8d8ec3765089f7affc980c15",
+    "mtime": 1784445756.7185135,
+    "ast_hash": "9e253e630652d297f4574dfb962fdfc8",
     "semantic_hash": ""
   },
   "Core/Src/stm32h7xx_hal_msp.c": {
