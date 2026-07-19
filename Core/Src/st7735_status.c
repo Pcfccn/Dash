@@ -21,6 +21,7 @@
 #include "lvgl.h"
 #include "fdcan_obd.h"    /* g_obd (CAN status + battery) */
 #include "src/drivers/display/st7735/lv_st7735.h"
+#include <math.h>
 
 LV_FONT_DECLARE(montserrat_bold_28);   /* big bold speed number */
 
@@ -244,7 +245,10 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm)
     lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
     lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
     lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37d67a : 0xff2d2d), 0);
-    int bmv = (int)(g_obd.battery * 10.0f + 0.5f);   /* 0.1 V steps */
+    /* battery is NaN until the PID actually answers; casting that to int is UB,
+     * so test before converting rather than relying on it landing on 0 */
+    float bv = g_obd.battery;
+    int bmv = isnan(bv) ? 0 : (int)(bv * 10.0f + 0.5f);   /* 0.1 V steps */
     if (bmv > 10) lv_label_set_text_fmt(lbl_canid, "B %d.%dV", bmv / 10, bmv % 10);
     else          lv_label_set_text(lbl_canid, "B --");
     lv_unlock();

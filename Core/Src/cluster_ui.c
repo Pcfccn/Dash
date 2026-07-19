@@ -20,6 +20,7 @@
 #include "fdcan_obd.h"
 #include "lvgl.h"
 #include <stdbool.h>
+#include <math.h>
 
 /* ---- palette (from the HTML :root) --------------------------------------- */
 /* Palette brightened for the ILI9488 SPI panel: dark background kept for
@@ -87,6 +88,7 @@ static struct {
     /* DIAG */
     lv_obj_t *mil_text, *dtc_msg, *dtc_ring, *dtc_ic;
     lv_obj_t *st_val[4];            /* batt iat load rail */
+    lv_obj_t *did_dbg;              /* raw gear byte + last NRC (DID probing) */
 } ui;
 
 static uint8_t s_page = 0;
@@ -121,12 +123,12 @@ static lv_color_t state_color(metric_state_t s)
     }
 }
 
-/* enhanced (mode-22) metrics have no DID mapped yet -> treat as "no data" */
-static bool is_enhanced(metric_key_t k)
-{
-    return k == M_ATF || k == M_SOOT || k == M_DPF_DP ||
-           k == M_SINCE_REGEN || k == M_EGR_T;
-}
+/* "Do we actually have this number?" — g_obd initialises every float to NaN and
+ * only a decoded frame overwrites it, so this covers both the enhanced DIDs that
+ * are still unmapped and any standard PID this calibration does not support.
+ * Blanket-blacklisting metrics (the old is_enhanced()) hid real data the moment
+ * a DID started working. */
+static bool has_value(float v) { return !isnan(v); }
 
 /* the °C gauge temperatures — get a "cold" blue tint below 50°C */
 static bool is_temp(metric_key_t k)
@@ -535,6 +537,14 @@ static void build_diag(void)
         lv_obj_set_pos(lv_obj_get_parent(ui.st_val[i]), 0, 20);
     }
 
+    /* Enhanced-DID probe readout, in the gap above the pager. Deliberately
+     * terse and dim — it is a workbench aid for pinning down the GM DIDs, not
+     * part of the design. GEAR shows the raw byte behind the gear label; NRC
+     * shows the last negative response (service/code), which distinguishes
+     * "module rejected the identifier" from "nothing answered at all". */
+    ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
+    lv_obj_set_pos(ui.did_dbg, 10, 412);
+
     mk_pager(pg, 2);
 }
 
@@ -619,7 +629,8 @@ uint8_t cluster_ui_get_page(void)
 static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
                        metric_key_t k, const obd_data_t *d, bool live)
 {
-    bool ok = live && (!is_enhanced(k) || OBD_DEMO);
+    float v  = mval(d, k);
+    bool  ok = live && has_value(v);
     if (!ok) {
         lv_label_set_text(val, "--");
         lv_obj_set_style_text_color(val, C_MUTED, 0);
@@ -630,7 +641,6 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
         }
         return;
     }
-    float v = mval(d, k);
     char b[16];
     fmt(b, sizeof b, v, metrics[k].decimals);
     lv_label_set_text(val, b);
@@ -661,25 +671,32 @@ void cluster_ui_refresh(void)
     d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
     d.gear = g_obd.gear;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
+    d.gear_raw = g_obd.gear_raw;
+    d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
     bool live = d.can_ok;
 
     char b[16];
 
     /* ----- DRIVE ----- */
     /* GEAR: design shows the drive gear as "D6" (range letter + number, the
-     * number in nominal green). TCM gear DID is still TBD, so this reads live
-     * only under OBD_DEMO; on the real bus gear stays -1 -> "--". */
-    if (live && d.gear >= 1)      lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
-    else if (live && d.gear == 0) lv_snprintf(b, sizeof b, "N");
-    else                          lv_snprintf(b, sizeof b, "--");
+     * number in nominal green). The DID is still unverified — but the one hard
+     * data point we have (ignition on, selector in P, raw byte = 1) fits the
+     * common GM range encoding 1=P 2=R 3=N 4=D1. The raw byte is printed on the
+     * DIAG page so this table can be corrected against the selector in one
+     * sitting instead of being guessed at again. */
+    if (!live || d.gear <= 0)  lv_snprintf(b, sizeof b, "--");
+    else if (d.gear == 1)      lv_snprintf(b, sizeof b, "P");
+    else if (d.gear == 2)      lv_snprintf(b, sizeof b, "R");
+    else if (d.gear == 3)      lv_snprintf(b, sizeof b, "N");
+    else                       lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear - 3);
     lv_label_set_text(ui.gear_val, b);
 
-    if (live) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
+    if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
     else        lv_label_set_text(ui.speed_val, "--");
-    if (live) { fmt(b, sizeof b, d.rpm, 0); lv_label_set_text(ui.rpm_val, b); }
+    if (live && has_value(d.rpm)) { fmt(b, sizeof b, d.rpm, 0); lv_label_set_text(ui.rpm_val, b); }
     else        lv_label_set_text(ui.rpm_val, "--");
     {   /* RPM stays white, but warns/reds near the redline */
-        metric_state_t rs = live ? metric_state(M_RPM, d.rpm) : ST_OK;
+        metric_state_t rs = (live && has_value(d.rpm)) ? metric_state(M_RPM, d.rpm) : ST_OK;
         lv_obj_set_style_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2, 0);
     }
     for (int i = 0; i < 4; i++)
@@ -690,7 +707,7 @@ void cluster_ui_refresh(void)
     /* ----- DPF ----- */
     set_metric(ui.soot_val, NULL, NULL, M_SOOT, &d, live);
     {
-        bool ok = live && (!is_enhanced(M_SOOT) || OBD_DEMO);
+        bool ok = live && has_value(d.soot);
         int sv = ok ? pct_of(M_SOOT, d.soot) : 0;
         lv_arc_set_value(ui.soot_arc, sv);
         metric_state_t ss = ok ? metric_state(M_SOOT, d.soot) : ST_OK;
@@ -727,17 +744,34 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
-    /* ----- alert strip ----- */
+    {   /* DID probe line — raw gear byte and last negative response */
+        char db[48];
+        if (d.last_nrc_sid)
+            lv_snprintf(db, sizeof db, "GEAR RAW %02X   NRC %02X/%02X",
+                        (unsigned)d.gear_raw,
+                        (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
+        else
+            lv_snprintf(db, sizeof db, "GEAR RAW %02X   NRC --",
+                        (unsigned)d.gear_raw);
+        lv_label_set_text(ui.did_dbg, db);
+    }
+
+    /* ----- alert strip -----
+     * A tag only judges a value we actually have: metric_state() on NaN would
+     * fall through every comparison and report a confident ST_OK, and a PID
+     * that reads 0 because it is unsupported must not raise CHECK either. */
     metric_state_t ts[9];
+    #define TAG_ST(k, v) ((live && has_value(v)) ? metric_state((k), (v)) : ST_OK)
     ts[0] = d.mil ? ST_CRIT : ST_OK;                        /* MIL */
-    ts[1] = live ? metric_state(M_COOL, d.cool) : ST_OK;    /* CLT */
-    ts[2] = live ? metric_state(M_OIL, d.oil) : ST_OK;      /* OIL */
-    ts[3] = ST_OK;                                          /* ATF (no data) */
-    ts[4] = live ? metric_state(M_EGT, d.egt) : ST_OK;      /* EGT */
-    ts[5] = ST_OK;                                          /* DPF (no data) */
-    ts[6] = live ? metric_state(M_BATTERY, d.battery):ST_OK;/* BAT */
+    ts[1] = TAG_ST(M_COOL, d.cool);                         /* CLT */
+    ts[2] = TAG_ST(M_OIL, d.oil);                           /* OIL */
+    ts[3] = TAG_ST(M_ATF, d.atf);                           /* ATF */
+    ts[4] = TAG_ST(M_EGT, d.egt);                           /* EGT */
+    ts[5] = TAG_ST(M_SOOT, d.soot);                         /* DPF */
+    ts[6] = TAG_ST(M_BATTERY, d.battery);                   /* BAT */
     ts[7] = d.dtc_count > 0 ? ST_WARN : ST_OK;              /* DTC */
     ts[8] = live ? ST_OK : ST_CRIT;                         /* CAN */
+    #undef TAG_ST
 
     int worst = ST_OK, nalarm = 0;
     for (int i = 0; i < 9; i++) {

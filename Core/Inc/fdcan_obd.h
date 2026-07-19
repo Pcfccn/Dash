@@ -14,7 +14,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/* Live values decoded from the bus. UI reads this. */
+/* Live values decoded from the bus. UI reads this.
+ *
+ * Every float starts as NaN meaning "never received". That distinction matters
+ * on a real ECM: a PID this calibration does not support simply never answers,
+ * and a plain 0.0f would render as a believable reading (a 0 V battery, a 0 °C
+ * oil temp). The UI shows "--" for NaN, so the screen only ever claims a value
+ * the bus actually produced. */
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
     float   atf, soot, dpf_dp, egr_t, since_regen;
@@ -22,6 +28,15 @@ typedef struct {
     bool    mil;
     uint8_t dtc_count;
     bool    can_ok;          /* set false if no valid frame within timeout     */
+
+    /* ---- DID discovery aids (DIAG page) --------------------------------
+     * The GM-enhanced DIDs are still being identified for this truck, so the
+     * raw gear byte and the last negative response are surfaced rather than
+     * silently dropped: a stuck raw byte means "wrong DID", while an NRC means
+     * "right module, wrong/unsupported identifier". */
+    uint8_t gear_raw;        /* last raw byte from the gear DID                */
+    uint8_t last_nrc_sid;    /* service that was rejected (0 = none seen)      */
+    uint8_t last_nrc;        /* its negative-response code                     */
 } obd_data_t;
 
 extern volatile obd_data_t g_obd;

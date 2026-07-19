@@ -13,8 +13,18 @@
 #include "fdcan_obd.h"
 #include "cluster_config.h"
 #include <string.h>
+#include <math.h>
 
-volatile obd_data_t g_obd = { .can_ok = false, .gear = -1 };
+/* Every float starts as NaN = "the bus has never given us this". A PID the
+ * calibration does not support simply never answers, and leaving those at 0.0f
+ * would paint a plausible lie on the screen (0 V battery, 0 degC oil). The UI
+ * renders NaN as "--". */
+volatile obd_data_t g_obd = {
+    .speed = NAN, .rpm   = NAN, .cool   = NAN, .oil = NAN, .iat     = NAN,
+    .load  = NAN, .boost = NAN, .rail   = NAN, .egt = NAN, .battery = NAN,
+    .atf   = NAN, .soot  = NAN, .dpf_dp = NAN, .egr_t = NAN, .since_regen = NAN,
+    .gear  = -1,  .can_ok = false,
+};
 
 static FDCAN_HandleTypeDef *hfd;
 static volatile uint32_t    last_rx_ms;
@@ -105,6 +115,21 @@ static void set_f(volatile float *dst, float v) {
     if (*dst != v) { *dst = v; obd_on_update(); }
 }
 
+/* Boost is a GAUGE pressure but PID 0x0B reports ABSOLUTE manifold pressure, so
+ * the reading has to be referenced to ambient (PID 0x33). Without that, a
+ * stationary engine shows ~1.0 bar of "boost". Either PID can arrive first, so
+ * both feed this and the gauge is recomputed whenever one of them lands.
+ * baro defaults to sea level: a plausible reference beats no reading at all. */
+static float last_map_kpa = NAN;
+static float baro_kpa     = 101.0f;
+
+static void update_boost(void) {
+    if (isnan(last_map_kpa)) return;
+    float bar = (last_map_kpa - baro_kpa) / 100.0f;
+    if (bar < 0.0f) bar = 0.0f;      /* vacuum: not meaningful on this gauge   */
+    set_f(&g_obd.boost, bar);
+}
+
 /* Decode a completed mode-01 payload: [0x41][PID][A][B]... (concatenated) */
 static void decode_mode01(const uint8_t *p, uint16_t n) {
     uint16_t i = 1;                  /* skip 0x41                              */
@@ -112,6 +137,7 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
         uint8_t pid = p[i++];
         uint8_t A = (i < n) ? p[i] : 0;
         uint8_t B = (i + 1 < n) ? p[i + 1] : 0;
+        uint8_t C = (i + 2 < n) ? p[i + 2] : 0;
         switch (pid) {
             case 0x0D: set_f(&g_obd.speed,   A);                        i += 1; break;
             case 0x0C: set_f(&g_obd.rpm,     ((A * 256) + B) / 4.0f);   i += 2; break;
@@ -119,9 +145,14 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x5C: set_f(&g_obd.oil,     A - 40);                   i += 1; break;
             case 0x0F: set_f(&g_obd.iat,     A - 40);                   i += 1; break;
             case 0x04: set_f(&g_obd.load,    A * 100.0f / 255.0f);      i += 1; break;
-            case 0x0B: set_f(&g_obd.boost,   A / 100.0f);               i += 1; break; /* MAP; subtract baro(0x33) for gauge */
+            case 0x0B: last_map_kpa = (float)A; update_boost();          i += 1; break; /* absolute MAP, kPa */
+            case 0x33: baro_kpa     = (float)A; update_boost();          i += 1; break; /* barometric, kPa   */
             case 0x23: set_f(&g_obd.rail,    ((A * 256) + B) * 10 / 1000.0f); i += 2; break; /* MPa */
-            case 0x78: set_f(&g_obd.egt,     ((A * 256 + B) / 10.0f) - 40); i += 2; break;
+            /* Exhaust gas temperature, 9 data bytes: A = supported-sensor bit
+             * mask, then FOUR 2-byte sensors. Sensor 1 is B,C as (x/10)-40.
+             * Decoding A,B as the value (and stepping 2) reads the mask as the
+             * high byte and desynchronises everything after it. */
+            case 0x78: set_f(&g_obd.egt, (((B * 256) + C) / 10.0f) - 40.0f); i += 9; break;
             case 0x42: set_f(&g_obd.battery, ((A * 256) + B) / 1000.0f);i += 2; break;
             /* Standard J1979 diesel EGR temperature: A = supported-sensor bits,
              * B = EGR temp sensor 1 (bank1) as B-40 degC. 5 data bytes total
@@ -147,6 +178,10 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
             set_f(&g_obd.atf, (float)A - 40.0f);
             break;
         case 0x199A: {                          /* current gear (raw index in A) */
+            /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
+             * never moves while the selector does) can be told apart from a
+             * wrong scaling (byte moves, gear label doesn't match). */
+            if (g_obd.gear_raw != A) { g_obd.gear_raw = A; obd_on_update(); }
             int8_t g = (int8_t)A;
             if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
             break;
@@ -159,7 +194,17 @@ static void dispatch(const uint8_t *p, uint16_t n) {
     if (n == 0) return;
     if (p[0] == 0x41) decode_mode01(p, n);
     else if (p[0] == 0x62) decode_mode22(p, n);
-    /* 0x43 (DTC list) / 0x7F (negative response) intentionally ignored */
+    else if (p[0] == 0x7F && n >= 3) {
+        /* Negative response. Silently dropping these is what makes an unknown
+         * DID indistinguishable from a dead module: an NRC proves the module
+         * answered and only the identifier was wrong. Surfaced on DIAG. */
+        if (g_obd.last_nrc_sid != p[1] || g_obd.last_nrc != p[2]) {
+            g_obd.last_nrc_sid = p[1];
+            g_obd.last_nrc     = p[2];
+            obd_on_update();
+        }
+    }
+    /* 0x43 (DTC list) intentionally ignored */
 }
 
 /* =============================== RX (polled) ============================= */
@@ -227,9 +272,14 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
 void obd_poll_tick(void) {
     static uint8_t step = 0;
     static const uint8_t fast[]  = { 0x0C, 0x0D, 0x04, 0x0B };     /* rpm,speed,load,MAP */
-    static const uint8_t temps[] = { 0x05, 0x5C, 0x0F, 0x78 };     /* cool,oil,iat,egt   */
+    static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };           /* cool,oil,iat       */
     static const uint8_t misc[]  = { 0x23, 0x42, 0x33, 0x01 };     /* rail,batt,baro,mil */
-    static const uint8_t egr[]   = { 0x6B };  /* EGR temp: own frame (multi-byte) */
+    /* 0x6B and 0x78 each return 5/9 data bytes; they share a step and alternate
+     * rather than riding along with the short temps, so one unsupported wide PID
+     * cannot desynchronise the parse of the ones that do work. */
+    static const uint8_t egr[]   = { 0x6B };  /* EGR temperature                  */
+    static const uint8_t egt[]   = { 0x78 };  /* exhaust gas temperature          */
+    static bool wide_alt = false;
 
     /* fast group is hit twice per cycle; enhanced (mode 22, GM-specific) and the
      * DTC scan are interleaved. ATF temp + gear go to the trans controller on
@@ -241,7 +291,10 @@ void obd_poll_tick(void) {
         case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
         case 4: req_mode01(fast,  sizeof fast);   break;
         case 5: req_mode01(misc,  sizeof misc);   break;
-        case 6: req_mode01(egr,   sizeof egr);    break; /* EGR temperature        */
+        case 6: wide_alt = !wide_alt;
+                if (wide_alt) req_mode01(egr, sizeof egr);
+                else          req_mode01(egt, sizeof egt);
+                break;
         case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */
     }
     step = (step + 1) % 8;
