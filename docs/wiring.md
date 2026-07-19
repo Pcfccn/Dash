@@ -72,7 +72,9 @@ Generic red **"4.0'' TFT SPI 480X320 V1.0"** module (silkscreen confirmed on the
 
 **Si4599** dual **N- and P-channel 40V** MOSFET module (expansion board). Driven from **TIM1_CH1 / PA8** PWM — this is the "MOSFET module" referenced by `backlight_set()` in `app_main.c`.
 
-> **Discrepancy to reconcile:** code comments in `app_main.c` and the bullet above historically said "IRF520". The module actually purchased for backlight control is the **Si4599** N+P MOSFET board. Verify against the physical build and update the `app_main.c` comment to match; behavior (PWM into a MOSFET gate) is the same either way.
+> **Why a P-channel MOSFET (not the IRF520 originally tried):** an **IRF520 is N-channel**, i.e. a **low-side** switch — it makes/breaks the *ground* side of its load. This backlight has **no separate return**: the backlight's minus is tied to the **common ground**, so there is nothing to interrupt on the low side. The switch therefore has to be **high-side**, on the *plus* rail, which needs a **P-channel** MOSFET — hence the Si4599 (its P-channel device) replaced the IRF520. The IRF520 was bought first and did not work for this reason.
+>
+> **Polarity implication:** a high-side P-FET turns **ON when its gate is pulled LOW**. So PWM/duty sense is inverted vs. a low-side N-FET — PA8 LOW ≈ backlight ON. This matches the standing `BACKLIGHT_DUTY_PCT 0u` diagnostic comment in `app_main.c` (0% duty holds PA8 LOW). Confirm the exact gate drive against the Si4599 board wiring, and once verified, update the `app_main.c` comment that still names "IRF520".
 
 ### CAN transceiver module
 
