@@ -25,3 +25,18 @@ Desktop.ini
 
 # Graphify: commit the graph, but not its local rebuild cache
 graphify-out/cache/
+
+# Graphify: transient intermediate files (deleted at end of a normal run;
+# ignored here in case a run is interrupted) and machine-specific paths
+graphify-out/.graphify_ast.json
+graphify-out/.graphify_detect.json
+graphify-out/.graphify_extract.json
+graphify-out/.graphify_semantic.json
+graphify-out/.graphify_semantic_new.json
+graphify-out/.graphify_analysis.json
+graphify-out/.graphify_cached.json
+graphify-out/.graphify_uncached.txt
+graphify-out/.graphify_chunk_*.json
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/.needs_update
