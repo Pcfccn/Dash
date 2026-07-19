@@ -54,7 +54,29 @@ Everything else in this firmware is **this project's own wiring**, added on top 
 
 - **Main 4" ILI9488 dashboard** (320×480) on **SPI2** — `lv_port_disp.c`. CS=PC0, DC=PC4, RST=PC5 (see that file).
 - **FDCAN1** wired to an external CAN transceiver (SN65HVD230) for the vehicle's HS-CAN bus at 500kbps — see `cluster_config.h`. There is no CAN transceiver on the core board itself.
-- **Backlight PWM** for the main display on **TIM1_CH1 / PA8**, driving an IRF520 MOSFET gate — see `AppMain_Init()`/`backlight_set()` in `app_main.c`.
+- **Backlight PWM** for the main display on **TIM1_CH1 / PA8**, driving an external MOSFET module gate — see `AppMain_Init()`/`backlight_set()` in `app_main.c`.
+
+## External modules (as purchased)
+
+The three add-on modules this project wires to the core board, identified from the actual AliExpress order.
+
+### Main 4" display module
+
+Generic red **"4.0'' TFT SPI 480X320 V1.0"** module (silkscreen confirmed on the board). AliExpress listing "2.4/2.8/3.2/3.5/4.0 inch SPI TFT LCD ... ST7789 ILI9488 480×320 240×320"; the 4.0" size is the **ILI9488** variant. The **no-touch** variant is fitted (this project uses no touch), so the touch-controller pins on touch versions are absent.
+
+- **Driver:** ILI9488 · **Resolution:** 480×320 (used as 320×480 portrait) · **Interface:** 4-wire SPI · **Logic:** 3.3V (module has onboard regulator/level parts; listing also cites 5V tolerance).
+- **Display header signals** (label set on the pin row; match exact order to the board silkscreen, and see `lv_port_disp.c` for the MCU pins actually used): `VCC, GND, CS, RESET, DC/RS, SDI(MOSI), SCK, LED, SDO(MISO)`.
+- **Onboard microSD slot** with its **own** SPI pins broken out on the board edge: `SD_CS, SD_MOSI, SD_MISO, SD_SCK`. **Not used by this project** — available if SD logging or a flash-backed config store is ever wanted.
+
+### Backlight control module
+
+**Si4599** dual **N- and P-channel 40V** MOSFET module (expansion board). Driven from **TIM1_CH1 / PA8** PWM — this is the "MOSFET module" referenced by `backlight_set()` in `app_main.c`.
+
+> **Discrepancy to reconcile:** code comments in `app_main.c` and the bullet above historically said "IRF520". The module actually purchased for backlight control is the **Si4599** N+P MOSFET board. Verify against the physical build and update the `app_main.c` comment to match; behavior (PWM into a MOSFET gate) is the same either way.
+
+### CAN transceiver module
+
+**SN65HVD230 (a.k.a. VP230)** CAN board — 3.3V transceiver (listing: DC 3.0–3.6V), matches the chip named in `cluster_config.h`. Bridges FDCAN1 TX/RX to the vehicle's HS-CAN differential pair at 500 kbps. The core board has no onboard CAN transceiver, so this external module is required.
 
 ## Boot / programming
 
