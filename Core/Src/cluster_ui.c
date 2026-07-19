@@ -53,13 +53,15 @@
 LV_FONT_DECLARE(montserrat_bold_24);
 LV_FONT_DECLARE(montserrat_bold_28);
 LV_FONT_DECLARE(montserrat_bold_48);
+LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero */
 
 #define F12 &lv_font_montserrat_12
 #define F14 &lv_font_montserrat_14
 #define F20 &lv_font_montserrat_20
-#define F24 &montserrat_bold_24    /* stat values */
-#define F28 &montserrat_bold_28    /* rpm / mini / boost / gear */
-#define F48 &montserrat_bold_48    /* speed / metric values / soot */
+#define F24 &montserrat_bold_24    /* small stat values */
+#define F28 &montserrat_bold_28    /* rpm / mini / stat / boost */
+#define F48 &montserrat_bold_48    /* gear / grid metric values / soot */
+#define F72 &montserrat_bold_72    /* speed — matches the 74px design hero */
 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
@@ -174,6 +176,30 @@ static lv_obj_t *mk_label(lv_obj_t *p, const char *txt,
     lv_obj_set_style_text_font(l, f, 0);
     lv_obj_set_style_text_color(l, c, 0);
     return l;
+}
+
+/* Big value with a small trailing unit, laid out inline and baseline-aligned
+ * (the design's "89°C" / "3.1kPa": the unit hugs the number instead of floating
+ * at the card corner). Returns the VALUE label so refresh() can update it; the
+ * unit label is static. The row auto-sizes to its content, so a centred row
+ * re-centres itself when the value changes width (89 -> 421). */
+static lv_obj_t *mk_value(lv_obj_t *p, const lv_font_t *vf, lv_color_t vc,
+                          const char *unit, const lv_font_t *uf)
+{
+    lv_obj_t *row = lv_obj_create(p);
+    plain(row);
+    lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    /* main: pack left · cross: bottom-align so the small unit sits on the big
+     * number's baseline · pad_column: a hair of space before the unit */
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_pad_column(row, 2, 0);
+    lv_obj_t *v = mk_label(row, "--", vf, vc);
+    if (unit && unit[0]) {
+        lv_obj_t *u = mk_label(row, unit, uf, C_LABEL);
+        lv_obj_set_style_pad_bottom(u, 8, 0);   /* lift the unit toward a superscript */
+    }
+    return v;
 }
 
 /* filled surface card with 1px border + rounded corners */
@@ -292,23 +318,26 @@ static void build_drive(void)
     lv_obj_set_style_border_width(hero, 1, 0);
     lv_obj_set_style_border_side(hero, LV_BORDER_SIDE_BOTTOM, 0);
 
-    /* GEAR card (left column) */
+    /* GEAR card (left column) — big "D6" like the 44px design gear */
     lv_obj_t *gear = mk_card(hero, 8, 8, 78, 104);
+    lv_obj_set_style_pad_hor(gear, 4, 0);      /* tighter sides so 48px D6 fits 78px */
     lv_obj_t *gl = mk_label(gear, "GEAR", F12, C_MUTED);
     lv_obj_align(gl, LV_ALIGN_TOP_MID, 0, -2);
-    ui.gear_val = mk_label(gear, "--", F28, C_TEXT2);
+    ui.gear_val = mk_label(gear, "--", F48, C_TEXT2);
     lv_label_set_recolor(ui.gear_val, true);   /* range letter white, gear no. green */
-    lv_obj_align(ui.gear_val, LV_ALIGN_CENTER, 0, 8);
+    lv_obj_align(ui.gear_val, LV_ALIGN_CENTER, 0, 10);
 
-    /* speed (centre column) */
-    ui.speed_val = mk_label(hero, "--", F48, C_TEXT);
-    lv_obj_set_width(ui.speed_val, 122);
+    /* speed (centre column) — 72px hero number, the design's dominant readout.
+     * The digits-only font has a 53px line-height (cap height of the 72px em),
+     * which matches the design's ~53px visual digit height. */
+    ui.speed_val = mk_label(hero, "--", F72, C_TEXT);
+    lv_obj_set_width(ui.speed_val, 134);
     lv_obj_set_style_text_align(ui.speed_val, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(ui.speed_val, 92, 22);
-    lv_obj_t *su = mk_label(hero, "KM/H", F12, C_LABEL);
-    lv_obj_set_width(su, 122);
+    lv_obj_set_pos(ui.speed_val, 86, 22);
+    lv_obj_t *su = mk_label(hero, "KM / H", F12, C_LABEL);
+    lv_obj_set_width(su, 134);
     lv_obj_set_style_text_align(su, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(su, 92, 82);
+    lv_obj_set_pos(su, 86, 82);
 
     /* work column: BOOST (data-cyan) over RPM */
     lv_obj_t *work = mk_card(hero, 220, 8, 92, 104);
@@ -355,10 +384,8 @@ static void build_drive(void)
         lv_obj_set_pos(nm, 12, 12);
         ui.dm_dot[i] = mk_dot(cell, cw[i] - 16, 14);
 
-        ui.dm_val[i] = mk_label(cell, "--", F48, C_TEXT);
-        lv_obj_set_width(ui.dm_val[i], cw[i]);
-        lv_obj_set_style_text_align(ui.dm_val[i], LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_pos(ui.dm_val[i], 0, 44);
+        ui.dm_val[i] = mk_value(cell, F48, C_TEXT, DEG "C", F14);
+        lv_obj_align(lv_obj_get_parent(ui.dm_val[i]), LV_ALIGN_TOP_MID, 0, 34);
 
         ui.dm_bar[i] = mk_bar(cell, 12, ch - 40, cw[i] - 24, 6);
 
@@ -416,10 +443,10 @@ static void build_dpf(void)
     lv_obj_set_style_pad_all(ui.soot_arc, 0, LV_PART_KNOB);
     lv_obj_clear_flag(ui.soot_arc, LV_OBJ_FLAG_CLICKABLE);
 
-    ui.soot_val = mk_label(ui.soot_arc, "--", F48, C_TEXT);
-    lv_obj_align(ui.soot_val, LV_ALIGN_CENTER, 0, -4);
+    ui.soot_val = mk_value(ui.soot_arc, F48, C_TEXT, "%", F14);
+    lv_obj_align(lv_obj_get_parent(ui.soot_val), LV_ALIGN_CENTER, 0, -6);
     lv_obj_t *sl = mk_label(ui.soot_arc, "SOOT", F12, C_MUTED);
-    lv_obj_align(sl, LV_ALIGN_CENTER, 0, 30);
+    lv_obj_align(sl, LV_ALIGN_CENTER, 0, 28);
 
     lv_obj_t *ml = mk_label(hero, "REGENERATION", F12, C_MUTED);
     lv_obj_set_pos(ml, 150, 34);
@@ -439,15 +466,13 @@ static void build_dpf(void)
     static const char *ML[4] = { "EGT", "dP DPF", "SINCE REGEN", "EGR T" DEG };
     static const char *MU[4] = { DEG "C", "kPa", "km", DEG "C" };
     const int mx[4] = { 10, 165, 10, 165 };
-    const int my[4] = { 212, 212, 282, 282 };
+    const int my[4] = { 210, 210, 320, 320 };   /* taller cards fill the lower area */
     for (int i = 0; i < 4; i++) {
-        lv_obj_t *c = mk_card(pg, mx[i], my[i], 145, 62);
+        lv_obj_t *c = mk_card(pg, mx[i], my[i], 145, 100);
         lv_obj_t *nm = mk_label(c, ML[i], F12, C_LABEL);
         lv_obj_set_pos(nm, 0, 0);
-        ui.mc_val[i] = mk_label(c, "--", F28, C_TEXT);
-        lv_obj_set_pos(ui.mc_val[i], 0, 13);
-        lv_obj_t *u = mk_label(c, MU[i], F14, C_LABEL);
-        lv_obj_align(u, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+        ui.mc_val[i] = mk_value(c, F28, C_TEXT, MU[i], F14);
+        lv_obj_set_pos(lv_obj_get_parent(ui.mc_val[i]), 0, 20);
     }
 
     mk_pager(pg, 1);
@@ -473,7 +498,7 @@ static void build_diag(void)
      * approximated with a solid hairline.) */
     lv_obj_t *box = lv_obj_create(pg);
     lv_obj_set_pos(box, 10, 88);
-    lv_obj_set_size(box, 300, 96);
+    lv_obj_set_size(box, 300, 104);
     lv_obj_set_style_bg_color(box, C_SURFACE, 0);
     lv_obj_set_style_bg_opa(box, LV_OPA_50, 0);
     lv_obj_set_style_border_color(box, C_LINE_STR, 0);
@@ -501,15 +526,13 @@ static void build_diag(void)
     static const char *SL[4] = { "BATT", "IAT", "LOAD", "RAIL" };
     static const char *SU[4] = { "V", DEG "C", "%", "MPa" };
     const int sx[4] = { 10, 165, 10, 165 };
-    const int sy[4] = { 192, 192, 256, 256 };
+    const int sy[4] = { 200, 200, 308, 308 };   /* taller cards fill down to the pager */
     for (int i = 0; i < 4; i++) {
-        lv_obj_t *c = mk_card(pg, sx[i], sy[i], 145, 58);
+        lv_obj_t *c = mk_card(pg, sx[i], sy[i], 145, 100);
         lv_obj_t *nm = mk_label(c, SL[i], F12, C_MUTED);
         lv_obj_set_pos(nm, 0, 0);
-        ui.st_val[i] = mk_label(c, "--", F24, C_TEXT);
-        lv_obj_set_pos(ui.st_val[i], 0, 14);
-        lv_obj_t *u = mk_label(c, SU[i], F12, C_LABEL);
-        lv_obj_align(u, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+        ui.st_val[i] = mk_value(c, F28, C_TEXT, SU[i], F14);
+        lv_obj_set_pos(lv_obj_get_parent(ui.st_val[i]), 0, 20);
     }
 
     mk_pager(pg, 2);
