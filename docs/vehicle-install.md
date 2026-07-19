@@ -45,6 +45,27 @@ You **cannot** feed 12 V straight in, and you **must** protect against the noise
 SN65HVD230's ground all tie to **vehicle chassis ground** (OBD pin 4/5 or a body
 ground bolt). Use a single star point to avoid ground loops.
 
+**Where the 5 V actually connects on the board — there is NO power jack.** You
+feed the buck's output into the board's **header pins**, using the silkscreen
+labels:
+
+- Buck **+5 V → a pin labelled `5V`** on the WeAct header.
+- Buck **GND → any pin labelled `GND`**.
+- The `5V` header pin is the **same net as the USB-C 5 V, with no protection** —
+  so this is exactly equivalent to plugging in USB. **Never feed 5 V here and have
+  USB plugged in at the same time** (two sources fighting). Pick one.
+- Do **not** use the `3V3` pin (that's the regulated 3.3 V rail — feeding it means
+  bypassing the regulator) or `VBAT` (RTC backup only).
+- The power pins are grouped near the USB-C / button end of the two 44-pin
+  headers; if the labels are unclear, buzz the `5V` pin against the USB-C 5 V shell
+  pin with a multimeter (continuity) to confirm before wiring.
+
+**Current display wiring (bench, keep it):** the 4" panel's **VCC is on the
+board's 3.3 V** and its **backlight is on the board's 5 V**. Feeding the board 5 V
+as above reproduces this 1:1 — the board passes 5 V to the backlight and makes
+3.3 V for VCC, just like USB does. (This is also why a 3.3 V-only supply won't
+work as wired: the backlight would lose its 5 V.)
+
 ---
 
 ## 2. Connecting to the CAN bus (OBD-II port)
@@ -145,21 +166,26 @@ validate before driving.
 
 ### Power distribution
 
+Everything hangs off the WeAct board — the buck feeds ONLY the board's `5V`
+pin, exactly like USB does now.
+
 ```
 Car 12 V  (IGNITION/ACC, inline fuse 2-3 A)
   │
-  └─►  12 V → 5 V buck  (automotive, ≥ 2 A)  ──►  5 V rail
-                                                   │
-        ┌──────────────────────┬───────────────────┴──────────────┐
-        ▼                      ▼                                   ▼
-  WeAct board 5V/USB in   4" ILI9488  VCC (5 V)          4" backlight LED+
-  (spec 3.3-5.5 V)        (module is 5 V; 3.3 V only     via Si4599 P-FET (high-side)
-        │                  if it has a 3V3 bypass)        source=5V, drain=LED+, LED-=GND
-        │
-        └─► board 3V3 rail  ──►  SN65HVD230 VCC = 3.3 V   ← NEVER 5 V (max 3.6 V)
+  └─►  12 V → 5 V buck (automotive, ≥ 2 A)
+             +5V │              │ GND
+                 ▼              ▼
+        WeAct pin `5V`     WeAct pin `GND`
+        (= USB 5V net, no protection — do NOT also plug in USB)
+                 │
+    ── on the board, already wired ─────────────────────────────
+        board passes 5 V ───────────►  4" backlight LED+  (5 V)
+        board regulator → 3V3 rail ─►  4" panel VCC        (3.3 V)
+                                   └─►  SN65HVD230 VCC      (3.3 V, never 5 V)
+                                   └─►  STM32H743 + on-board 0.96" ST7735
 
-GND: one common star ground — buck GND · board GND · display GND · transceiver GND
-     · vehicle chassis (OBD pin 4/5).
+GND: one common star ground — buck GND · WeAct GND · display GND · transceiver
+     GND · vehicle chassis (OBD pin 4/5).
 ```
 
 ### Signal wiring (all MCU I/O is 3.3 V logic — do not exceed ~3.6 V on any pin)
@@ -188,14 +214,16 @@ MOSI PE14, CS PE11, DC PE13, backlight PE10), KEY button (PC13), heartbeat LED (
 | 5 V rail (buck out) | 5 V | ~0.4–0.6 A total | size buck ≥ 2 A |
 | WeAct board input | 5 V (3.3–5.5 V ok) | — | onboard DC-DC 3V3 rail = **1 A max** |
 | STM32H743 (3V3) | 3.3 V (from board) | ~0.2–0.3 A | — |
-| 4" ILI9488 VCC + backlight | 5 V | ~50–150 mA | 3.3–5 V (5 V for full backlight) |
-| SN65HVD230 VCC | **3.3 V** | ~20 mA | **3.6 V max — never 5 V** |
+| 4" panel VCC (logic) | 3.3 V (from board 3V3) | ~20–40 mA | 3.3–5 V |
+| 4" backlight | 5 V (from board 5V pin) | ~40–120 mA | — |
+| SN65HVD230 VCC | **3.3 V** (from board) | ~20 mA | **3.6 V max — never 5 V** |
 | OBD pin 16 (+12 V) | 12 V constant | bench test only, fuse it | drains battery if left on |
 
 Notes:
-- Feed the 4" module's VCC and backlight from the **5 V rail directly**, not through
-  the board's 3V3 — keep backlight current off the onboard 1 A DC-DC.
-- The transceiver, MCU and ST7735 all run off the board's own 3.3 V — no separate
-  3.3 V supply needed.
+- As wired now, **everything is fed through the WeAct board** — you only connect
+  the buck's 5 V to the board's `5V` pin. The board passes 5 V to the backlight and
+  its regulator makes 3.3 V for the panel VCC, transceiver, MCU and ST7735.
+- The backlight's 5 V draw passes through the board's `5V`/USB net (not the 1 A
+  3V3 DC-DC), so the onboard regulator only carries the 3.3 V loads.
 - Backlight PWM sense is inverted (P-FET): `BACKLIGHT_DUTY_PCT 0` in `app_main.c`
   holds PA8 LOW = backlight ON. Confirm on the bench before wiring in the car.
