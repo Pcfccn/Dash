@@ -45,20 +45,28 @@ You **cannot** feed 12 V straight in, and you **must** protect against the noise
 SN65HVD230's ground all tie to **vehicle chassis ground** (OBD pin 4/5 or a body
 ground bolt). Use a single star point to avoid ground loops.
 
-**Where the 5 V actually connects on the board — there is NO power jack.** You
-feed the buck's output into the board's **header pins**, using the silkscreen
-labels:
+**Where the 5 V actually connects on the board — there is NO power jack.** Per the
+WeAct V1.2 schematic the power path is:
 
-- Buck **+5 V → a pin labelled `5V`** on the WeAct header.
-- Buck **GND → any pin labelled `GND`**.
-- The `5V` header pin is the **same net as the USB-C 5 V, with no protection** —
-  so this is exactly equivalent to plugging in USB. **Never feed 5 V here and have
-  USB plugged in at the same time** (two sources fighting). Pick one.
-- Do **not** use the `3V3` pin (that's the regulated 3.3 V rail — feeding it means
-  bypassing the regulator) or `VBAT` (RTC backup only).
-- The power pins are grouped near the USB-C / button end of the two 44-pin
-  headers; if the labels are unclear, buzz the `5V` pin against the USB-C 5 V shell
-  pin with a multimeter (continuity) to confirm before wiring.
+```
+USB-C VBUS ─► D10 (Schottky) ─► 5V rail ─► DC-DC U2 (1-2 A) ─► 3V3 rail
+```
+
+Feed the buck's output into the board's supply input:
+
+- Buck **+5 V → the `V+` pin** (next to the DC-DC input caps). This is the entry
+  of the **5 V rail** that feeds the regulator; it's the same net as the header
+  `5V` pins, so those work too, but `V+`/`GND` is the intended input pair.
+- Buck **GND → the `GND`** beside it.
+- Supply **5 V (max 5.5 V — DC-DC input limit).** The board makes 3.3 V from it and
+  the same 5 V rail feeds the panel backlight.
+- The `3V3` pins are the regulator **output** — do NOT inject supply there.
+  `VBAT` is RTC backup only (BAT54C), not a power input.
+- USB is **diode-isolated** from the 5 V rail by D10, so external 5 V can't
+  back-feed the USB port — but still cleanest to run one source at a time.
+- Multimeter sanity check: `V+` ↔ header `5V` = continuity (same rail); `V+` ↔
+  `3V3` = none (post-regulator); `V+` ↔ USB-C 5 V = reads through D10 as a diode
+  drop (~0.2-0.3 V), NOT a dead short — that's normal.
 
 **Current display wiring (bench, keep it):** the 4" panel's **VCC is on the
 board's 3.3 V** and its **backlight is on the board's 5 V**. Feeding the board 5 V
