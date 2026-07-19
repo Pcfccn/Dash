@@ -138,3 +138,64 @@ validate before driving.
   P-FET that could turn the backlight *off*.
 - **Mounting:** secure the board and modules, insulate exposed pins (no shorts to
   chassis), and keep the LCDs out of direct sun-baked dash heat where possible.
+
+---
+
+## Appendix: full connection & power map
+
+### Power distribution
+
+```
+Car 12 V  (IGNITION/ACC, inline fuse 2-3 A)
+  │
+  └─►  12 V → 5 V buck  (automotive, ≥ 2 A)  ──►  5 V rail
+                                                   │
+        ┌──────────────────────┬───────────────────┴──────────────┐
+        ▼                      ▼                                   ▼
+  WeAct board 5V/USB in   4" ILI9488  VCC (5 V)          4" backlight LED+
+  (spec 3.3-5.5 V)        (module is 5 V; 3.3 V only     via Si4599 P-FET (high-side)
+        │                  if it has a 3V3 bypass)        source=5V, drain=LED+, LED-=GND
+        │
+        └─► board 3V3 rail  ──►  SN65HVD230 VCC = 3.3 V   ← NEVER 5 V (max 3.6 V)
+
+GND: one common star ground — buck GND · board GND · display GND · transceiver GND
+     · vehicle chassis (OBD pin 4/5).
+```
+
+### Signal wiring (all MCU I/O is 3.3 V logic — do not exceed ~3.6 V on any pin)
+
+| MCU pin | Function | Connect to |
+|---|---|---|
+| PB13 | SPI2 SCK | 4" ILI9488 **SCK** |
+| PB15 | SPI2 MOSI | 4" **SDI/MOSI** |
+| PB14 | SPI2 MISO | 4" **SDO/MISO** (optional — panel is write-only; may leave off) |
+| PC0 | GPIO | 4" **CS** |
+| PC4 | GPIO | 4" **DC/RS** |
+| PC5 | GPIO | 4" **RESET** |
+| PA8 | TIM1_CH1 PWM | **Si4599 gate** (backlight; active-LOW for the P-FET) |
+| PD1 | FDCAN1_TX | SN65HVD230 **TXD/D** |
+| PD0 | FDCAN1_RX | SN65HVD230 **RXD/R** |
+| — | CAN bus | SN65HVD230 **CANH → OBD pin 6**, **CANL → OBD pin 14** (twisted pair) |
+| — | transceiver mode | SN65HVD230 **Rs → GND** (high-speed) |
+
+**On-board already, nothing to wire:** 0.96" ST7735 status screen (SPI4: SCK PE12,
+MOSI PE14, CS PE11, DC PE13, backlight PE10), KEY button (PC13), heartbeat LED (PE3).
+
+### Voltage / current — how much can/should each take
+
+| Node | Feed it | Draw (typical) | Hard limit |
+|---|---|---|---|
+| 5 V rail (buck out) | 5 V | ~0.4–0.6 A total | size buck ≥ 2 A |
+| WeAct board input | 5 V (3.3–5.5 V ok) | — | onboard DC-DC 3V3 rail = **1 A max** |
+| STM32H743 (3V3) | 3.3 V (from board) | ~0.2–0.3 A | — |
+| 4" ILI9488 VCC + backlight | 5 V | ~50–150 mA | 3.3–5 V (5 V for full backlight) |
+| SN65HVD230 VCC | **3.3 V** | ~20 mA | **3.6 V max — never 5 V** |
+| OBD pin 16 (+12 V) | 12 V constant | bench test only, fuse it | drains battery if left on |
+
+Notes:
+- Feed the 4" module's VCC and backlight from the **5 V rail directly**, not through
+  the board's 3V3 — keep backlight current off the onboard 1 A DC-DC.
+- The transceiver, MCU and ST7735 all run off the board's own 3.3 V — no separate
+  3.3 V supply needed.
+- Backlight PWM sense is inverted (P-FET): `BACKLIGHT_DUTY_PCT 0` in `app_main.c`
+  holds PA8 LOW = backlight ON. Confirm on the bench before wiring in the car.

@@ -1938,6 +1938,50 @@
       "norm_label": "5. known gaps for a \"complete\" in-car build"
     },
     {
+      "label": "Appendix: full connection & power map",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L144",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_appendix_full_connection_power_map",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "appendix: full connection & power map"
+    },
+    {
+      "label": "Power distribution",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L146",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_power_distribution",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "power distribution"
+    },
+    {
+      "label": "Signal wiring (all MCU I/O is 3.3 V logic \u2014 do not exceed ~3.6 V on any pin)",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L165",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_signal_wiring_all_mcu_i_o_is_3_3_v_logic_do_not_exceed_3_6_v_on_any_pin",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "signal wiring (all mcu i/o is 3.3 v logic \u2014 do not exceed ~3.6 v on any pin)"
+    },
+    {
+      "label": "Voltage / current \u2014 how much can/should each take",
+      "file_type": "document",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L184",
+      "_origin": "ast",
+      "id": "docs_vehicle_install_voltage_current_how_much_can_should_each_take",
+      "community": 23,
+      "community_name": "Metric State Enum",
+      "norm_label": "voltage / current \u2014 how much can/should each take"
+    },
+    {
       "label": "wiring.md",
       "file_type": "document",
       "source_file": "docs/wiring.md",
@@ -5751,11 +5795,55 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/vehicle-install.md",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_in_vehicle_install_from_bench_demo_to_a_live_car",
+      "target": "docs_vehicle_install_appendix_full_connection_power_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
       "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast",
       "source": "docs_vehicle_install_2_connecting_to_the_can_bus_obd_ii_port",
       "target": "docs_vehicle_install_bus_termination_the_1_thing_to_get_right",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L146",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_appendix_full_connection_power_map",
+      "target": "docs_vehicle_install_power_distribution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L165",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_appendix_full_connection_power_map",
+      "target": "docs_vehicle_install_signal_wiring_all_mcu_i_o_is_3_3_v_logic_do_not_exceed_3_6_v_on_any_pin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/vehicle-install.md",
+      "source_location": "L184",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "docs_vehicle_install_appendix_full_connection_power_map",
+      "target": "docs_vehicle_install_voltage_current_how_much_can_should_each_take",
       "confidence_score": 1.0
     },
     {
@@ -6102,5 +6190,5 @@
       "source_file": "design/Diesel_Cluster_v2_3.html"
     }
   ],
-  "built_at_commit": "a4533a799645ecef5ca836325c1c62cc8329aa9d"
+  "built_at_commit": "8b0a2b7f0e58e2a6813030fa1942394864990699"
 }
