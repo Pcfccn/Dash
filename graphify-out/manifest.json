@@ -100,9 +100,9 @@
     "semantic_hash": "5133935a2686ee7e518c22f468a95bc5"
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1784347277.0791633,
-    "ast_hash": "1525b78d6e30fa02685e8ce9a14573be",
-    "semantic_hash": "1525b78d6e30fa02685e8ce9a14573be"
+    "mtime": 1784434172.7783515,
+    "ast_hash": "0976553bc421e9b2345f3e1a683b9616",
+    "semantic_hash": "0976553bc421e9b2345f3e1a683b9616"
   },
   "Core/Src/fdcan.c": {
     "mtime": 1784028295.3688867,
@@ -178,5 +178,65 @@
     "mtime": 1784346220.3380976,
     "ast_hash": "81051bcc2cf1bedf378224b0a93e2877",
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
+  },
+  ".vscode/c_cpp_properties.json": {
+    "mtime": 1784436565.9952278,
+    "ast_hash": "71a39ed7118fed1c06692ea792a7d583",
+    "semantic_hash": "71a39ed7118fed1c06692ea792a7d583"
+  },
+  ".vscode/launch.json": {
+    "mtime": 1784436547.2177644,
+    "ast_hash": "bddcc369f3c6e74ae15e0779620d1938",
+    "semantic_hash": "bddcc369f3c6e74ae15e0779620d1938"
+  },
+  ".vscode/tasks.json": {
+    "mtime": 1784436528.3714566,
+    "ast_hash": "4e4d392a0dba505809cdad96370497b7",
+    "semantic_hash": "4e4d392a0dba505809cdad96370497b7"
+  },
+  "Core/Src/montserrat_bold_72.c": {
+    "mtime": 1784433348.9255812,
+    "ast_hash": "e26756c27a1de44b1c22d870149f30e5",
+    "semantic_hash": "e26756c27a1de44b1c22d870149f30e5"
+  },
+  "CLAUDE.md": {
+    "mtime": 1784436611.4921439,
+    "ast_hash": "7e9026d0cc75c9f9141bffaf9843cfec",
+    "semantic_hash": "7e9026d0cc75c9f9141bffaf9843cfec"
+  },
+  "docs/wiring.md": {
+    "mtime": 1784431792.6225262,
+    "ast_hash": "547eb2280c7de25fe59167789ef6e5a9",
+    "semantic_hash": "547eb2280c7de25fe59167789ef6e5a9"
+  },
+  "design/Photos/IMG_2420.jpeg": {
+    "mtime": 1784432335.1295638,
+    "ast_hash": "467c5098055898988cec77e024ea97cf",
+    "semantic_hash": "467c5098055898988cec77e024ea97cf"
+  },
+  "design/Photos/IMG_2421.jpeg": {
+    "mtime": 1784432335.7630644,
+    "ast_hash": "bf978a37798675eebd03d29c7627cb51",
+    "semantic_hash": "bf978a37798675eebd03d29c7627cb51"
+  },
+  "design/Photos/IMG_2422.jpeg": {
+    "mtime": 1784432336.4042878,
+    "ast_hash": "0b9666ecf685eca666de1dfa7084c606",
+    "semantic_hash": "0b9666ecf685eca666de1dfa7084c606"
+  },
+  "design/Photos/ref_diag.png": {
+    "mtime": 1784433140.1409962,
+    "ast_hash": "6f014efb95a36d03f759ba985dbb8ae8",
+    "semantic_hash": "6f014efb95a36d03f759ba985dbb8ae8"
+  },
+  "design/Photos/ref_dpf.png": {
+    "mtime": 1784433101.6580048,
+    "ast_hash": "e2939708aa6b6acd4ba8cc0b53ddd1f2",
+    "semantic_hash": "e2939708aa6b6acd4ba8cc0b53ddd1f2"
+  },
+  "design/Photos/ref_drive.png": {
+    "mtime": 1784433045.6328168,
+    "ast_hash": "4a860e76c8e2db02372a4a7d05931854",
+    "semantic_hash": "4a860e76c8e2db02372a4a7d05931854"
   }
 }
