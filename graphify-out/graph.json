@@ -93,7 +93,7 @@
       "label": "metric_state()",
       "file_type": "code",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L103",
+      "source_location": "L109",
       "_origin": "ast",
       "id": "core_inc_cluster_config_metric_state",
       "community": 1,
@@ -2269,7 +2269,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L103",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_inc_cluster_config",
@@ -2316,7 +2316,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L103",
+      "source_location": "L109",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -2328,7 +2328,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L103",
+      "source_location": "L109",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast",
@@ -5998,5 +5998,5 @@
       "source_file": "design/Diesel_Cluster_v2_3.html"
     }
   ],
-  "built_at_commit": "5f7aa9dd958cf456945df45143d8a816fe0a6ce9"
+  "built_at_commit": "2cdc031a1d02aa945e95059875bbdd5938bef4bd"
 }
