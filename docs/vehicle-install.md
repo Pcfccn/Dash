@@ -114,12 +114,21 @@ validate before driving.
 
 ## 5. Known gaps for a "complete" in-car build
 
-- **Enhanced metrics are not live yet.** ATF temp, DPF soot %, DPF ΔP, distance
-  since regen, EGR temp and current gear are enhanced (mode 22) DIDs still set to
-  `0x0000 "TBD"` in `cluster_config.h`. They read nothing until you fill the real
-  DIDs from an **E98/TCM definition (EFILive / HP Tuners)** for this RG
-  calibration. Everything on standard J1979 (speed, RPM, coolant, modelled oil,
-  IAT, load, MAP/boost, rail, EGT sensor, battery) works as-is.
+- **Enhanced metrics — partially wired, unverified on the car.** The poller now
+  requests, with community-sourced (not yet car-verified) DIDs:
+  - **ATF / trans fluid temp** — mode 22 DID `0x1940` on the trans controller
+    (`0x7E2` → `0x7EA`), `A − 40 °C`.
+  - **Current gear** — mode 22 DID `0x199A` on `0x7E2`, raw index in byte A.
+  - **EGR temp** — standard J1979 mode 01 PID `0x6B`, sensor 1 = `B − 40 °C`.
+
+  If any of these stay blank in the car, the module/DID/scaling is wrong for this
+  truck — the request is in `obd_poll_tick()` and the decode in `decode_mode22()`
+  / `decode_mode01()` (`fdcan_obd.c`); adjust there. **DPF soot %, DPF ΔP and
+  distance-since-regen are NOT polled** — GM guards those and the DIDs vary by
+  model year, so discover the working DIDs on the actual truck (BiScan for GM /
+  Gretio / Torque GM set) and add them. Everything on standard J1979 (speed, RPM,
+  coolant, modelled oil, IAT, load, MAP/boost, rail, EGT sensor, battery) works
+  as-is.
 - **Main-display backlight polarity.** `BACKLIGHT_DUTY_PCT` in `app_main.c` is
   `0` for hardware diagnosis. With the Si4599 **P-channel** (high-side) MOSFET the
   gate is **active-low**, so 0 % duty holds PA8 LOW = backlight **ON**. Confirm on

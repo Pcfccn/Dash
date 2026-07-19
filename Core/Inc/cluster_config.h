@@ -33,11 +33,12 @@
 #define OBD_RESP_ECM           0x7E8u   /* ECM response (req + 8)              */
 #define OBD_RESP_TCM           0x7E9u   /* TCM response                        */
 
-/* NOTE (RG Colorado, community-confirmed — verify on the car): the transmission
- * controller that serves ATF temp (DID 0x1940) and current gear (DID 0x199A)
- * answers on the 7E2/7EA pair, NOT 7E1/7E9. When mode-22 TCM polling is added,
- * request the TCM at 0x7E2, expect the response on 0x7EA, and widen the RX
- * filter in obd_init() (currently 0x7E8/0x7E9 only) to also accept 0x7EA. */
+/* On the RG Colorado the transmission controller that serves ATF temp
+ * (DID 0x1940) and current gear (DID 0x199A) answers on the 7E2/7EA pair,
+ * NOT 7E1/7E9 (community-confirmed; verify on the car). The mode-22 poller in
+ * fdcan_obd.c requests the TCM here and the RX filter accepts 0x7E8..0x7EA. */
+#define OBD_REQ_TCM2           0x7E2u   /* physical request to trans (ATF/gear)*/
+#define OBD_RESP_TCM2          0x7EAu   /* its response                        */
 
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
@@ -152,18 +153,18 @@ static const pid_map_t pid_map[] = {
   { M_EGT,          SRC_ECM, OBD_MODE_CURRENT, 0x0078, "sensor bank1; ((A*256+B)/10)-40, pick DPF-zone sensor" },
   { M_BATTERY,      SRC_ECM, OBD_MODE_CURRENT, 0x0042, "((A*256)+B)/1000  (V)" },
 
-  /* ENHANCED / non-standard. DIDs below are from GM/Torque/EFILive community
-   * configs for the 2.8 LWN + E98 — NOT yet verified on this car. IMPORTANT:
-   * the current poller (fdcan_obd.c) implements only mode 01, never polls the
-   * TCM, and does not read this table, so filling these in does NOT make them
-   * live on its own — mode-22 requests, TCM(7E2/7EA) polling and a 0x62 decoder
-   * still have to be written. Confidence tags: [H]igh / [M]ed / [L]ow. */
-  { M_ATF,          SRC_TCM, OBD_MODE_ENHANCED, 0x1940, "[H] TCM@7E2 A-40 degC — trans fluid temp (Torque 221940)" },
-  { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x199A, "[M] TCM@7E2 current gear — scaling to verify on car" },
-  { M_EGR_T,        SRC_ECM, OBD_MODE_CURRENT,  0x006B, "[M] standard J1979 PID 6B EGR temp (multi-byte; sensor = A-40 degC)" },
-  { M_SOOT,         SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF soot %% — reads on GM apps but DID varies by year; discover on car (BiScan/Gretio)" },
-  { M_DPF_DP,       SRC_ECM, OBD_MODE_CURRENT,  0x008B, "[L] try standard PID 8B 'diesel aftertreatment' (7B) for DPF delta-p; GM enhanced DID is guarded" },
-  { M_SINCE_REGEN,  SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] distance since regen — GM-guarded, flaky across model years; discover on car or skip" },
+  /* ENHANCED / non-standard. DIDs from GM/Torque/EFILive community configs for
+   * the 2.8 LWN + E98 — NOT yet verified on this car. Confidence: [H]/[M]/[L].
+   * This table is documentation; the actual requests are hardcoded in
+   * fdcan_obd.c's obd_poll_tick()/decoders. ATF, GEAR and EGR_T are now polled;
+   * SOOT / DPF_DP / SINCE_REGEN are left for on-car DID discovery (BiScan/Gretio)
+   * and are not requested until a real DID is known. */
+  { M_ATF,          SRC_TCM, OBD_MODE_ENHANCED, 0x1940, "[H] TCM@7E2 A-40 degC — trans fluid temp (Torque 221940) — POLLED" },
+  { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x199A, "[M] TCM@7E2 current gear = A — verify scaling on car — POLLED" },
+  { M_EGR_T,        SRC_ECM, OBD_MODE_CURRENT,  0x006B, "[M] std J1979 PID 6B EGR temp, sensor1 = B-40 degC — POLLED" },
+  { M_SOOT,         SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF soot %% — DID varies by year; discover on car — NOT polled" },
+  { M_DPF_DP,       SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF delta-p — GM enhanced DID guarded; discover on car — NOT polled" },
+  { M_SINCE_REGEN,  SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] distance since regen — GM-guarded; discover on car — NOT polled" },
 };
 
 /*

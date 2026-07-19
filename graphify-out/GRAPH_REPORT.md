@@ -1,16 +1,16 @@
 # Graph Report - Dash  (2026-07-19)
 
 ## Corpus Check
-- 39 files · ~34,041 words
+- 39 files · ~34,495 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 198 nodes · 323 edges · 27 communities (26 shown, 1 thin omitted)
-- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.8)
+- 200 nodes · 330 edges · 27 communities (26 shown, 1 thin omitted)
+- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 39 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2cdc031a`
+- Built from commit: `a4533a79`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -39,8 +39,6 @@
 10. `Error_Handler()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `main()` --calls--> `MX_FREERTOS_Init()`  [INFERRED]
-  Core/Src/main.c → Core/Src/freertos.c
 - `cluster_ui_refresh()` --calls--> `metric_state()`  [INFERRED]
   Core/Src/cluster_ui.c → Core/Inc/cluster_config.h
 - `set_metric()` --calls--> `metric_state()`  [INFERRED]
@@ -49,6 +47,8 @@
   Core/Src/app_main.c → Core/Src/cluster_app.c
 - `AppMain_Init()` --calls--> `lv_port_disp_init()`  [INFERRED]
   Core/Src/app_main.c → Core/Src/lv_port_disp.c
+- `StartDefaultTask()` --calls--> `AppMain_Init()`  [INFERRED]
+  Core/Src/freertos.c → Core/Src/app_main.c
 
 ## Import Cycles
 - None detected.
@@ -60,16 +60,16 @@
 ## Communities (27 total, 1 thin omitted)
 
 ### Community 0 - "FDCAN & OBD Bus Init"
-Cohesion: 0.12
-Nodes (20): FDCAN_HandleTypeDef, HAL_FDCAN_MspDeInit(), HAL_FDCAN_MspInit(), MX_FDCAN1_Init(), MX_GPIO_Init(), TIM_HandleTypeDef, Error_Handler(), HAL_TIM_PeriodElapsedCallback() (+12 more)
+Cohesion: 0.11
+Nodes (22): FDCAN_HandleTypeDef, HAL_FDCAN_MspDeInit(), HAL_FDCAN_MspInit(), MX_FDCAN1_Init(), MX_FREERTOS_Init(), StartDefaultTask(), MX_GPIO_Init(), TIM_HandleTypeDef (+14 more)
 
 ### Community 1 - "Metric Model & App Glue"
 Cohesion: 0.15
-Nodes (20): metric_key_t, metric_state_t, metric_state(), FDCAN_HandleTypeDef, cluster_app_init(), cluster_app_run(), obd_on_update(), FDCAN_HandleTypeDef (+12 more)
+Nodes (22): metric_key_t, metric_state_t, metric_state(), FDCAN_HandleTypeDef, cluster_app_init(), cluster_app_run(), obd_on_update(), FDCAN_HandleTypeDef (+14 more)
 
 ### Community 2 - "App Main & Superloop"
-Cohesion: 0.16
-Nodes (21): AppMain_Init(), AppMain_Run(), backlight_set(), heartbeat_led_init(), heartbeat_led_tick(), key_button_init(), cluster_ui_get_page(), MX_FREERTOS_Init() (+13 more)
+Cohesion: 0.19
+Nodes (19): AppMain_Init(), AppMain_Run(), backlight_set(), heartbeat_led_init(), heartbeat_led_tick(), key_button_init(), cluster_ui_get_page(), lv_display_t (+11 more)
 
 ### Community 3 - "UI Page Builders"
 Cohesion: 0.19
@@ -103,10 +103,10 @@ Nodes (7): 1. Powering the board in the car, 2. Connecting to the CAN bus (OBD-I
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppMain_Init()` connect `App Main & Superloop` to `Metric Model & App Glue`, `LVGL Display Port`?**
+- **Why does `AppMain_Init()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `LVGL Display Port`?**
   _High betweenness centrality (0.118) - this node is a cross-community bridge._
-- **Why does `AppMain_Run()` connect `App Main & Superloop` to `Metric Model & App Glue`, `UI Page Builders`?**
-  _High betweenness centrality (0.115) - this node is a cross-community bridge._
+- **Why does `AppMain_Run()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `UI Page Builders`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `Error_Handler()` connect `FDCAN & OBD Bus Init` to `App Main & Superloop`?**
   _High betweenness centrality (0.083) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `AppMain_Run()` (e.g. with `cluster_app_run()` and `cluster_ui_get_page()`) actually correct?**
@@ -114,6 +114,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `What this is`, `Git workflow: commit and push automatically`, `Build / flash / debug` to the rest of the system?**
   _22 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `FDCAN & OBD Bus Init` be split into smaller, more focused modules?**
-  _Cohesion score 0.11692307692307692 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10591133004926108 - nodes in this community are weakly interconnected._
 - **Should `UI Refresh & Metric Helpers` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

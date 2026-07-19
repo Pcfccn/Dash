@@ -54,6 +54,18 @@ static void req_mode03(void) {
     can_send(OBD_REQ_ECM, d);
 }
 
+/* mode 22 (UDS ReadDataByIdentifier): request one 2-byte DID from a module.
+ * Used for the GM-enhanced values (ATF temp, gear) the trans controller serves
+ * on 0x7E2. Responses come back as [0x62][DID_hi][DID_lo][data...]. */
+static void req_mode22(uint32_t req_id, uint16_t did) {
+    uint8_t d[8] = {0};
+    d[0] = 0x03;                     /* PCI length: SID + 2 DID bytes           */
+    d[1] = 0x22;                     /* service                                 */
+    d[2] = (uint8_t)(did >> 8);
+    d[3] = (uint8_t)(did & 0xFFu);
+    can_send(req_id, d);
+}
+
 /* Flow Control: clear-to-send, no block, no separation */
 static void send_flow_control(uint32_t resp_id) {
     uint8_t d[8] = { 0x30, 0x00, 0x00, 0,0,0,0,0 };
@@ -83,6 +95,11 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x23: set_f(&g_obd.rail,    ((A * 256) + B) * 10 / 1000.0f); i += 2; break; /* MPa */
             case 0x78: set_f(&g_obd.egt,     ((A * 256 + B) / 10.0f) - 40); i += 2; break;
             case 0x42: set_f(&g_obd.battery, ((A * 256) + B) / 1000.0f);i += 2; break;
+            /* Standard J1979 diesel EGR temperature: A = supported-sensor bits,
+             * B = EGR temp sensor 1 (bank1) as B-40 degC. 5 data bytes total
+             * (A + up to 4 sensors); we take sensor 1 and skip the rest.
+             * MUST be requested in its own frame (see obd_poll_tick). */
+            case 0x6B: set_f(&g_obd.egr_t, (float)B - 40.0f);           i += 5; break;
             case 0x01: g_obd.mil = (A & 0x80) != 0;
                        g_obd.dtc_count = A & 0x7F; obd_on_update();     i += 4; break;
             default:   i += 2; break; /* unknown: assume 2 data bytes          */
@@ -90,10 +107,31 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
     }
 }
 
+/* Decode a mode-22 payload: [0x62][DID_hi][DID_lo][data...]. Scaling for the
+ * GM-enhanced DIDs is community-sourced and unverified on this car -- if a value
+ * looks wrong, the fix is here (the formula), not the request. */
+static void decode_mode22(const uint8_t *p, uint16_t n) {
+    if (n < 4) return;                          /* need SID + DID + >=1 data     */
+    uint16_t did = ((uint16_t)p[1] << 8) | p[2];
+    uint8_t  A   = p[3];
+    switch (did) {
+        case 0x1940:                            /* trans fluid (ATF) temp        */
+            set_f(&g_obd.atf, (float)A - 40.0f);
+            break;
+        case 0x199A: {                          /* current gear (raw index in A) */
+            int8_t g = (int8_t)A;
+            if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
+            break;
+        }
+        default: break;
+    }
+}
+
 static void dispatch(const uint8_t *p, uint16_t n) {
     if (n == 0) return;
     if (p[0] == 0x41) decode_mode01(p, n);
-    /* p[0] == 0x43 (mode 03 DTC list) can be decoded here later */
+    else if (p[0] == 0x62) decode_mode22(p, n);
+    /* 0x43 (DTC list) / 0x7F (negative response) intentionally ignored */
 }
 
 /* =============================== RX (polled) ============================= */
@@ -102,7 +140,8 @@ void obd_rx_poll(void) {
     uint8_t d[8];
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
-        if (rh.Identifier != OBD_RESP_ECM && rh.Identifier != OBD_RESP_TCM) continue;
+        /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */
+        if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) continue;
         last_rx_ms = HAL_GetTick();
         g_obd.can_ok = true;
 
@@ -135,10 +174,11 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     FDCAN_FilterTypeDef f = {0};
     f.IdType       = FDCAN_STANDARD_ID;
     f.FilterIndex  = 0;
-    f.FilterType   = FDCAN_FILTER_DUAL;          /* two exact IDs               */
+    f.FilterType   = FDCAN_FILTER_RANGE;         /* accept 0x7E8..0x7EA         */
     f.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    f.FilterID1    = OBD_RESP_ECM;               /* 0x7E8                       */
-    f.FilterID2    = OBD_RESP_TCM;               /* 0x7E9                       */
+    f.FilterID1    = OBD_RESP_ECM;               /* 0x7E8 (range low)           */
+    f.FilterID2    = OBD_RESP_TCM2;              /* 0x7EA (range high): ECM,     */
+                                                 /* TCM(7E9) and trans(7EA)      */
     HAL_FDCAN_ConfigFilter(hfd, &f);
     HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
                                  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
@@ -153,14 +193,22 @@ void obd_poll_tick(void) {
     static const uint8_t fast[]  = { 0x0C, 0x0D, 0x04, 0x0B };     /* rpm,speed,load,MAP */
     static const uint8_t temps[] = { 0x05, 0x5C, 0x0F, 0x78 };     /* cool,oil,iat,egt   */
     static const uint8_t misc[]  = { 0x23, 0x42, 0x33, 0x01 };     /* rail,batt,baro,mil */
+    static const uint8_t egr[]   = { 0x6B };  /* EGR temp: own frame (multi-byte) */
 
+    /* fast group is hit twice per cycle; enhanced (mode 22, GM-specific) and the
+     * DTC scan are interleaved. ATF temp + gear go to the trans controller on
+     * 0x7E2; if they never populate, that module/DID is wrong for this truck. */
     switch (step) {
-        case 0: req_mode01(fast,  sizeof fast);  break;
-        case 1: req_mode01(temps, sizeof temps); break;
-        case 2: req_mode01(misc,  sizeof misc);  break;
-        case 3: req_mode03();                    break; /* DTC list ~ once/cycle */
+        case 0: req_mode01(fast,  sizeof fast);   break;
+        case 1: req_mode22(OBD_REQ_TCM2, 0x1940); break; /* ATF / trans fluid temp */
+        case 2: req_mode01(temps, sizeof temps);  break;
+        case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
+        case 4: req_mode01(fast,  sizeof fast);   break;
+        case 5: req_mode01(misc,  sizeof misc);   break;
+        case 6: req_mode01(egr,   sizeof egr);    break; /* EGR temperature        */
+        case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */
     }
-    step = (step + 1) % 4;
+    step = (step + 1) % 8;
 }
 
 void obd_watchdog_tick_1hz(void) {
