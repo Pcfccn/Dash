@@ -10,6 +10,9 @@ Core/Src/system_stm32h7xx.c
 Core/Src/syscalls.c
 Core/Src/sysmem.c
 graphify-out/
+# Tooling/editor config — not firmware, produces zero-node warnings otherwise
+.claude/
+.vscode/
 *.o
 *.d
 *.su

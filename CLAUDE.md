@@ -68,3 +68,13 @@ Skip this for trivial edits (renaming a constant, fixing a typo, adjusting a thr
 - The onboard heartbeat LED (PE3, active-low) doubles as a backlight-level blink-code indicator once past init — see the comment block above `heartbeat_led_tick()` for the encoding, and above `AppMain_Init()`/`heartbeat_led_init()` for what "off / solid / blinking" mean during boot diagnosis.
 - The two displays are fully independent SPI buses/GPIO groups (SPI2 for the main ILI9488 via CubeMX, SPI4 for the ST7735 status screen via hand-written HAL init) and must stay that way — `st7735_status.c`'s header comment explains why it intentionally avoids the `.ioc`.
 - ILI9488 has no 16bpp SPI mode; `lv_port_disp.c` expands LVGL's RGB565 buffer to 3-byte RGB666 per row (`row_scratch`) on every flush.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

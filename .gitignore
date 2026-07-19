@@ -26,6 +26,12 @@ Desktop.ini
 # Graphify: commit the graph, but not its local rebuild cache
 graphify-out/cache/
 
+# Graphify: dated backup snapshots of the curated graph (created on every rebuild)
+graphify-out/20*/
+
+# Claude Code: per-machine permissions/allow-list (may contain secrets) — never commit
+.claude/settings.local.json
+
 # Graphify: transient intermediate files (deleted at end of a normal run;
 # ignored here in case a run is interrupted) and machine-specific paths
 graphify-out/.graphify_ast.json
