@@ -11,6 +11,12 @@ Firmware for a custom instrument cluster replacing the OEM dash in a Holden Colo
 
 This is a STM32CubeIDE-managed project (Eclipse `.project`/`.cproject`), not a CMake or plain-Makefile project.
 
+## Git workflow: commit and push automatically
+
+After completing a logical change (a feature, fix, or other coherent unit of work — not after every single line edit), commit it with a descriptive message and push to `origin main` immediately, without asking for confirmation first. This repo has no CI and no compile check reachable from a coding-agent shell (no `arm-none-eabi-gcc`/`make` on PATH — the build runs through STM32CubeIDE), so there is no automated gate to wait on; real validation only happens when the user flashes hardware. Push directly to `main` — this is a solo repo, no PR workflow.
+
+Still surface anything a reasonable collaborator would flag before pushing (e.g. a diagnostic/placeholder value left in place, like `BACKLIGHT_DUTY_PCT` being temporarily 0 for hardware debugging) in the commit message or a short note, so it's visible in the history — but do not block the push on it.
+
 ## Build / flash / debug
 
 There is no CLI build script — build via **STM32CubeIDE** (the `.project`/`.cproject`/`.mxproject` files are CubeIDE-managed). If building from the command line, use the CubeIDE-generated makefile in `Debug/` (or `Release/` after configuring it) with the `arm-none-eabi-gcc` toolchain that CubeIDE installs:
