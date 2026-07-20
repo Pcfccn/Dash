@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 04 — Phosphor Terminal</title>
+<style>
+:root {
+  --grn:#33ff44;--grn-d:#0d4010;--grn-m:#1a8020;--grn-dim:#1a4020;
+  --warn:#ccff00;--crit:#ff4444;
+  --bg:#000500;--txt:#33ff44;--dim:#1a6020;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000300;color:var(--grn);font-family:'Courier New',Courier,monospace;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font-family:'Courier New',monospace;font-size:10px;letter-spacing:.12em;
+     color:var(--dim);background:#000200;border:1px solid var(--grn-dim);padding:6px 12px;cursor:pointer;}
+.tabs button.on{color:var(--grn);border-color:var(--grn-m);text-shadow:0 0 8px var(--grn);}
+.bezel{padding:8px;background:#000200;border:1px solid var(--grn-dim);
+       box-shadow:0 0 40px rgba(51,255,68,.06),0 20px 50px rgba(0,0,0,.8);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;background:var(--bg);}
+
+/* CRT scanline overlay */
+.dev::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:10;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.18) 2px,rgba(0,0,0,.18) 4px);
+}
+
+/* TERMINAL RAIL */
+.rail{position:absolute;inset:0 0 auto;height:36px;display:flex;flex-direction:column;
+      justify-content:center;padding:4px 8px;border-bottom:1px solid var(--grn-dim);
+      background:var(--bg);z-index:5;font-size:9px;letter-spacing:.06em;color:var(--dim);}
+.rail .l1{color:var(--grn);}
+.rail .l2{margin-top:2px;color:var(--grn-m);}
+
+.brow{margin-top:36px;height:16px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 8px;border-bottom:1px solid var(--grn-dim);font-size:9px;letter-spacing:.06em;}
+.brow .id{color:var(--dim);}
+.brow .pg{color:var(--grn);}
+
+.page{position:absolute;inset:52px 0 0;display:none;flex-direction:column;}
+.page.on{display:flex;}
+
+/* TOP BLOCK: speed + gear inline */
+.top-block{padding:8px;border-bottom:1px solid var(--grn-dim);}
+.top-block .t-row{display:flex;align-items:baseline;gap:8px;}
+.top-block .t-label{font-size:9px;letter-spacing:.1em;color:var(--dim);width:52px;}
+.top-block .t-val{font-size:14px;font-weight:bold;color:var(--grn);}
+.top-block .t-val.big{font-size:42px;line-height:1;}
+.top-block .t-unit{font-size:9px;color:var(--dim);}
+
+/* SENSOR LIST */
+.sensors{flex:1;display:flex;flex-direction:column;padding:6px 8px;gap:0;font-size:11px;}
+.srow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #001a04;
+      letter-spacing:.04em;}
+.srow:last-child{border-bottom:0;}
+.srow .sl{color:var(--grn-m);width:42px;flex-shrink:0;font-size:10px;letter-spacing:.08em;}
+.srow .sl::before{content:'[';color:var(--dim);}
+.srow .sl::after{content:']';color:var(--dim);}
+.bar-wrap{flex:1;position:relative;}
+.abar{font-size:9px;letter-spacing:0;color:var(--grn);}
+.srow .sv{width:54px;text-align:right;flex-shrink:0;color:var(--grn);}
+.srow .sv small{font-size:8px;color:var(--dim);}
+.srow .ss{width:18px;flex-shrink:0;font-size:9px;color:var(--grn-m);}
+
+/* DPF text-based layout */
+.dpf-block{padding:8px;border-bottom:1px solid var(--grn-dim);font-size:10px;letter-spacing:.04em;}
+.dpf-ring-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.dpf-ring-txt{line-height:1.8;}
+.dpf-arc{font-size:38px;font-weight:bold;color:var(--grn);line-height:1;}
+.dpf-arc small{font-size:12px;color:var(--dim);}
+.dpf-bar-wrap{flex:1;}
+.dpf-bar-label{font-size:9px;color:var(--dim);margin-bottom:3px;}
+.dpf-bigbar{height:12px;background:var(--grn-dim);position:relative;border:1px solid var(--grn-m);}
+.dpf-bigbar span{display:block;height:100%;background:var(--grn);}
+.dpf-bigbar i{position:absolute;top:0;bottom:0;width:1px;background:var(--warn);}
+.dpf-bigbar i.c{background:var(--crit);}
+.dpf-info{font-size:9px;color:var(--dim);margin-top:4px;}
+.dpf-info b{color:var(--grn-m);}
+.dpf-mini{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;}
+.dm{padding:6px 0;border-top:1px solid var(--grn-dim);}
+.dm .dl{color:var(--dim);font-size:9px;letter-spacing:.06em;}
+.dm .dv{color:var(--grn);font-size:14px;font-weight:bold;margin-top:2px;}
+.dm .dv small{font-size:9px;color:var(--dim);}
+
+/* DIAG terminal */
+.diag-block{flex:1;padding:6px 8px;font-size:10px;letter-spacing:.04em;
+            display:flex;flex-direction:column;gap:4px;}
+.drow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #001a04;}
+.drow .dl{color:var(--dim);width:62px;flex-shrink:0;font-size:9px;}
+.drow .dv{color:var(--grn);font-weight:bold;}
+.drow .ds{margin-left:auto;font-size:9px;color:var(--grn-m);}
+.codes-txt{padding:8px;border:1px solid var(--grn-dim);margin:4px 0;text-align:center;}
+.codes-txt .big-ok{font-size:28px;font-weight:bold;color:var(--grn);line-height:1;}
+.codes-txt .ok-txt{font-size:10px;color:var(--grn-m);margin-top:2px;letter-spacing:.08em;}
+.stat-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;}
+.sg{border:1px solid var(--grn-dim);padding:6px;}
+.sg .sl{font-size:9px;color:var(--dim);letter-spacing:.08em;}
+.sg .sv{font-size:22px;font-weight:bold;color:var(--grn);margin-top:2px;}
+.sg .sv small{font-size:9px;color:var(--dim);}
+
+.pager{height:22px;display:flex;align-items:center;justify-content:center;gap:8px;
+       border-top:1px solid var(--grn-dim);font-size:9px;color:var(--grn-m);}
+.pager span{font-size:9px;letter-spacing:.06em;}
+.pager span.on{color:var(--grn);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">DRIVE_</button>
+  <button data-p="dpf">DPF_</button>
+  <button data-p="diag">DIAG_</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <div class="l1">> SYS: MIL=OFF CLT=OK OIL=OK ATF=OK EGT=OK DPF=OK BAT=OK DTC=NONE CAN=OK</div>
+    <div class="l2">> STATUS: NOMINAL | E98 ECM | 500 kbit/s | 0 DTC</div>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 / E98 / 500k</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="top-block">
+      <div class="t-row">
+        <span class="t-label">SPEED</span>
+        <span class="t-val big">95</span>
+        <span class="t-unit">KM/H</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--dim)">GEAR: <b style="color:var(--grn)">D6</b></span>
+      </div>
+      <div class="t-row" style="margin-top:4px;">
+        <span class="t-label">BOOST</span>
+        <span class="t-val">1.4</span>
+        <span class="t-unit">bar</span>
+        <span style="margin-left:auto;font-size:9px;color:var(--dim)">RPM: <b style="color:var(--grn)">2150</b></span>
+      </div>
+    </div>
+    <div class="sensors">
+      <div class="srow">
+        <span class="sl">COOL</span>
+        <div class="bar-wrap"><span class="abar">████████████░░░░░░░░</span></div>
+        <span class="sv">89<small>°C</small></span>
+        <span class="ss">▲OK</span>
+      </div>
+      <div class="srow">
+        <span class="sl">OIL</span>
+        <div class="bar-wrap"><span class="abar">███████████░░░░░░░░░</span></div>
+        <span class="sv">98<small>°C</small></span>
+        <span class="ss">▲OK</span>
+      </div>
+      <div class="srow">
+        <span class="sl">ATF</span>
+        <div class="bar-wrap"><span class="abar">███████░░░░░░░░░░░░░</span></div>
+        <span class="sv">82<small>°C</small></span>
+        <span class="ss">▲OK</span>
+      </div>
+      <div class="srow">
+        <span class="sl">EGT</span>
+        <div class="bar-wrap"><span class="abar">██████████░░░░░░░░░░</span></div>
+        <span class="sv">421<small>°C</small></span>
+        <span class="ss">▲OK</span>
+      </div>
+    </div>
+    <div style="padding:6px 8px;border-top:1px solid var(--grn-dim);font-size:9px;color:var(--grn-m);">
+      > UPTIME 00:14:22 | RX 1402 | TX 701 | ERR 0 | CAN OK_<span style="animation:blink 1s step-end infinite">█</span>
+    </div>
+    <div class="pager">
+      <span class="on">[ DRIVE ]</span>
+      <span>  DPF  </span>
+      <span>  DIAG </span>
+    </div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-block">
+      <div style="font-size:9px;color:var(--dim);margin-bottom:6px;">> DPF SOOT MONITOR</div>
+      <div class="dpf-ring-row">
+        <div>
+          <div class="dpf-arc">42<small>%</small></div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px;">SOOT LOAD</div>
+        </div>
+        <div class="dpf-bar-wrap">
+          <div class="dpf-bar-label">0%          70% 85%       100%</div>
+          <div class="dpf-bigbar">
+            <span style="width:42%"></span>
+            <i style="left:70%"></i>
+            <i class="c" style="left:85%"></i>
+          </div>
+          <div class="dpf-info"><b>REGEN: INACTIVE</b> — no ECM request</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:6px 8px;font-size:10px;letter-spacing:.04em;border-bottom:1px solid var(--grn-dim);">
+      <div style="color:var(--dim);font-size:9px;margin-bottom:4px;">> THERMAL DATA</div>
+      <div class="dpf-mini">
+        <div class="dm"><span class="dl">EGT</span><div class="dv">421<small>°C</small></div></div>
+        <div class="dm"><span class="dl">ΔP DPF</span><div class="dv">3.1<small>kPa</small></div></div>
+        <div class="dm"><span class="dl">SINCE REGEN</span><div class="dv">180<small>km</small></div></div>
+        <div class="dm"><span class="dl">EGR T°</span><div class="dv">96<small>°C</small></div></div>
+      </div>
+    </div>
+    <div style="flex:1;padding:8px;font-size:9px;color:var(--dim);line-height:1.7;">
+      <div style="color:var(--grn);margin-bottom:4px;">> REGEN THRESHOLDS</div>
+      <div>WARN  <span style="color:var(--warn)">70%</span>  — alert driver, monitor</div>
+      <div>CRIT  <span style="color:var(--crit)">85%</span>  — regen requested by ECM</div>
+      <div>FORCE <span style="color:var(--crit)">95%</span>  — emergency regen</div>
+    </div>
+    <div class="pager">
+      <span>  DRIVE </span>
+      <span class="on">[ DPF ]</span>
+      <span>  DIAG  </span>
+    </div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag-block">
+      <div style="font-size:9px;color:var(--dim);margin-bottom:4px;">> DIAGNOSTIC MONITOR</div>
+      <div class="drow">
+        <span class="dl">MIL STATUS</span>
+        <span class="dv" style="color:var(--grn)">OFF</span>
+        <span class="ds">CLEAR</span>
+      </div>
+      <div class="codes-txt">
+        <div class="big-ok">✓ OK</div>
+        <div class="ok-txt">NO STORED FAULT CODES</div>
+      </div>
+      <div class="stat-grid">
+        <div class="sg"><span class="sl">BATT</span><div class="sv" style="color:var(--grn)">14.1<small>V</small></div></div>
+        <div class="sg"><span class="sl">IAT</span><div class="sv">45<small>°C</small></div></div>
+        <div class="sg"><span class="sl">LOAD</span><div class="sv">67<small>%</small></div></div>
+        <div class="sg"><span class="sl">RAIL</span><div class="sv">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager">
+      <span>  DRIVE </span>
+      <span>  DPF   </span>
+      <span class="on">[ DIAG ]</span>
+    </div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+<style>@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}</style>
+</body>
+</html>

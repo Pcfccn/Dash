@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 06 — Copper Analog</title>
+<style>
+:root {
+  --bg:#0d0905;--sur:#141007;--brd:#2a1e0a;
+  --cop:#d97706;--cop-l:#f5a623;--cop-d:#7a3e00;
+  --data:#fbbf24;--warn:#ef4444;--crit:#dc2626;
+  --txt:#f5ddb3;--dim:#5c3e1a;--trk:#1a1005;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0703;color:var(--txt);font-family:system-ui,sans-serif;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font:600 10px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);background:#0a0703;border:1px solid var(--brd);border-radius:6px;padding:7px 14px;cursor:pointer;}
+.tabs button.on{color:var(--cop-l);border-color:var(--cop-d);background:#130e05;}
+.bezel{padding:8px;border-radius:22px;
+       background:radial-gradient(ellipse at top,#1c1207,#0a0703);
+       box-shadow:0 20px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(200,130,0,.1);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;border-radius:14px;background:var(--bg);}
+
+/* VINTAGE RAIL */
+.rail{position:absolute;inset:0 0 auto;height:32px;display:flex;align-items:center;
+      gap:7px;padding:0 10px;border-bottom:1px solid var(--brd);background:var(--sur);z-index:5;}
+.sys{font:600 10px/1 system-ui;letter-spacing:.07em;color:var(--dim);padding-bottom:3px;position:relative;}
+.sys::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--brd);}
+.sys[data-s="ok"]{color:var(--cop-l)}.sys[data-s="ok"]::after{background:var(--cop);}
+.sys[data-s="warn"]{color:var(--warn)}.sys[data-s="warn"]::after{background:var(--warn);}
+.sys[data-s="crit"]{color:var(--crit)}.sys[data-s="crit"]::after{background:var(--crit);}
+.rail .state{margin-left:auto;font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--cop-l);}
+
+.brow{margin-top:32px;height:19px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 10px;border-bottom:1px solid var(--brd);background:var(--sur);}
+.brow .id{font:500 9px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font:700 9px/1 system-ui;letter-spacing:.18em;color:var(--cop);}
+
+.page{position:absolute;inset:51px 0 22px;display:none;flex-direction:column;}
+.page.on{display:flex;}
+
+/* HERO: gear | big speed | boost+rpm */
+.hero{display:grid;grid-template-columns:70px 1fr 88px;border-bottom:1px solid var(--brd);height:106px;}
+.gear-cell{border-right:1px solid var(--brd);display:flex;flex-direction:column;
+           align-items:center;justify-content:center;gap:4px;padding:8px;}
+.gear-label{font:600 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.gear-num{font:800 40px/1 system-ui;color:var(--txt);}
+.gear-num b{color:var(--cop);}
+.spd-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;
+          background:var(--sur);}
+.spd-num{font:800 70px/.85 system-ui;color:#fff;}
+.spd-unit{font:600 9px/1 system-ui;letter-spacing:.18em;color:var(--dim);margin-top:4px;}
+.work-cell{border-left:1px solid var(--brd);display:flex;flex-direction:column;
+           justify-content:center;gap:10px;padding:10px 8px;}
+.wrow{display:flex;flex-direction:column;gap:2px;}
+.wlabel{font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
+.wval{font:700 20px/1 system-ui;}
+.wval small{font:500 9px/1 system-ui;color:var(--dim);}
+
+/* ARC GAUGE GRID - 2x2 with conic arc gauges */
+.arc-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+          gap:1px;background:var(--brd);}
+.arc-cell{background:var(--bg);display:flex;flex-direction:column;align-items:center;
+          justify-content:center;padding:6px 4px;gap:3px;}
+.arc-label{font:600 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+/* Arc gauge: 270° sweep from 135° to 405°(=45°) */
+.arc-gauge{position:relative;width:80px;height:80px;}
+.arc-gauge .arc-bg{position:absolute;inset:0;border-radius:50%;}
+.arc-gauge .arc-center{position:absolute;inset:11px;border-radius:50%;background:var(--bg);
+                        display:flex;align-items:center;justify-content:center;}
+.arc-gauge .arc-val{font:800 20px/1 system-ui;}
+.arc-gauge .arc-val small{font:500 9px/1 system-ui;color:var(--dim);}
+.arc-gauge .arc-unit{font:500 8px/1 system-ui;letter-spacing:.06em;color:var(--dim);margin-top:1px;}
+.arc-gauge .arc-status{position:absolute;bottom:-2px;right:0;width:8px;height:8px;border-radius:50%;}
+
+/* CLT: 89/120 = 74%  → 74%×270/360 = 55.5% of full circle */
+/* OIL: 98/140 = 70%  → 70%×270/360 = 52.5% */
+/* ATF: 82/150 = 55%  → 55%×270/360 = 41.25% */
+/* EGT: 421/800 = 52.6% → 52.6%×270/360 = 39.5% */
+
+.pager{position:absolute;bottom:0;left:0;right:0;height:22px;
+       display:flex;align-items:center;justify-content:center;gap:8px;
+       border-top:1px solid var(--brd);}
+.pager b{width:7px;height:7px;border-radius:50%;background:var(--dim);}
+.pager b.on{width:20px;border-radius:4px;background:var(--cop);}
+
+/* DPF */
+.dpf-wrap{display:grid;grid-template-columns:134px 1fr;gap:0;height:174px;border-bottom:1px solid var(--brd);}
+.dpf-left{padding:12px;display:flex;align-items:center;justify-content:center;
+          border-right:1px solid var(--brd);}
+.ring{position:relative;width:116px;height:116px;border-radius:50%;
+      background:conic-gradient(from -90deg,var(--cop) 42%,var(--trk) 0);
+      display:grid;place-items:center;}
+.ring::before{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--bg);}
+.ring .c{position:relative;text-align:center;}
+.ring .rn{font:800 40px/1 system-ui;color:var(--cop);}
+.ring .rn small{font-size:12px;color:var(--dim);}
+.reg{padding:14px 10px;display:flex;flex-direction:column;justify-content:center;}
+.reg-label{font:600 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.reg h3{margin:5px 0 7px;font:700 18px/1 system-ui;}
+.reg p{font:400 11px/1.4 system-ui;color:var(--dim);}
+.th{display:grid;gap:5px;margin-top:8px;font-size:10px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:14px;height:3px;border-radius:2px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;padding:10px;}
+.mc{border:1px solid var(--brd);border-radius:10px;background:var(--sur);padding:9px;}
+.mc .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mc .mv{font:700 24px/1 system-ui;margin-top:5px;}
+.mc .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:8px;padding:9px 10px 24px;}
+.mil{border:1px solid var(--brd);border-radius:10px;background:var(--sur);padding:8px 10px;}
+.mil .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mil .mv{font:700 17px/1 system-ui;margin-top:4px;}
+.codes{flex:0 0 100px;border:1px solid var(--brd);border-radius:10px;background:var(--sur);
+       display:grid;place-items:center;align-content:center;gap:7px;}
+.codes .ic{width:38px;height:38px;border-radius:50%;border:2px solid var(--cop);
+           color:var(--cop);display:grid;place-items:center;font-size:22px;font-weight:700;}
+.codes strong{font:700 13px/1 system-ui;letter-spacing:.04em;}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;}
+.st{border:1px solid var(--brd);border-radius:10px;background:var(--sur);padding:8px 10px;}
+.st .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.st .mv{font:700 27px/1 system-ui;margin-top:3px;}
+.st .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">Drive</button>
+  <button data-p="dpf">DPF</button>
+  <button data-p="diag">Diag</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off">MIL</span>
+    <span class="sys" data-s="ok">CLT</span>
+    <span class="sys" data-s="ok">OIL</span>
+    <span class="sys" data-s="ok">ATF</span>
+    <span class="sys" data-s="ok">EGT</span>
+    <span class="sys" data-s="ok">DPF</span>
+    <span class="sys" data-s="ok">BAT</span>
+    <span class="sys" data-s="off">DTC</span>
+    <span class="sys" data-s="ok">CAN</span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="gear-cell">
+        <span class="gear-label">GEAR</span>
+        <span class="gear-num">D<b>6</b></span>
+      </div>
+      <div class="spd-cell">
+        <span class="spd-num">95</span>
+        <span class="spd-unit">KM / H</span>
+      </div>
+      <div class="work-cell">
+        <div class="wrow"><span class="wlabel">BOOST</span><span class="wval" style="color:var(--cop)">1.4<small>bar</small></span></div>
+        <div class="wrow"><span class="wlabel">RPM</span><span class="wval" style="color:#fff">2150</span></div>
+      </div>
+    </div>
+    <div class="arc-grid">
+      <!-- CLT: 55.5% fill -->
+      <div class="arc-cell">
+        <span class="arc-label">COOLANT</span>
+        <div class="arc-gauge">
+          <div class="arc-bg" style="background:conic-gradient(from 135deg,var(--cop) 0% 55.5%,rgba(210,140,0,.2) 55.5% 75%,transparent 75%)"></div>
+          <div class="arc-center">
+            <div>
+              <div class="arc-val" style="color:var(--cop)">89<small>°</small></div>
+              <div class="arc-unit">°C</div>
+            </div>
+          </div>
+          <span class="arc-status" style="background:var(--cop)"></span>
+        </div>
+      </div>
+      <!-- OIL: 52.5% fill -->
+      <div class="arc-cell">
+        <span class="arc-label">OIL TEMP</span>
+        <div class="arc-gauge">
+          <div class="arc-bg" style="background:conic-gradient(from 135deg,var(--cop) 0% 52.5%,rgba(210,140,0,.2) 52.5% 75%,transparent 75%)"></div>
+          <div class="arc-center">
+            <div>
+              <div class="arc-val" style="color:var(--cop)">98<small>°</small></div>
+              <div class="arc-unit">°C</div>
+            </div>
+          </div>
+          <span class="arc-status" style="background:var(--cop)"></span>
+        </div>
+      </div>
+      <!-- ATF: 41.25% fill -->
+      <div class="arc-cell">
+        <span class="arc-label">ATF TEMP</span>
+        <div class="arc-gauge">
+          <div class="arc-bg" style="background:conic-gradient(from 135deg,var(--cop) 0% 41%,rgba(210,140,0,.2) 41% 75%,transparent 75%)"></div>
+          <div class="arc-center">
+            <div>
+              <div class="arc-val" style="color:var(--cop)">82<small>°</small></div>
+              <div class="arc-unit">°C</div>
+            </div>
+          </div>
+          <span class="arc-status" style="background:var(--cop)"></span>
+        </div>
+      </div>
+      <!-- EGT: 39.5% fill -->
+      <div class="arc-cell">
+        <span class="arc-label">EGT</span>
+        <div class="arc-gauge">
+          <div class="arc-bg" style="background:conic-gradient(from 135deg,var(--cop) 0% 39.5%,rgba(210,140,0,.2) 39.5% 75%,transparent 75%)"></div>
+          <div class="arc-center">
+            <div>
+              <div class="arc-val" style="color:var(--cop)">421<small>°</small></div>
+              <div class="arc-unit">°C</div>
+            </div>
+          </div>
+          <span class="arc-status" style="background:var(--cop)"></span>
+        </div>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-wrap">
+      <div class="dpf-left">
+        <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span style="font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);display:block;margin-top:3px">SOOT</span></div></div>
+      </div>
+      <div class="reg">
+        <span class="reg-label">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% threshold</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="ml">EGT</span><div class="mv" style="color:var(--cop)">421<small>°C</small></div></div>
+      <div class="mc"><span class="ml">ΔP DPF</span><div class="mv" style="color:var(--data)">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="ml">SINCE REGEN</span><div class="mv" style="color:var(--data)">180<small>km</small></div></div>
+      <div class="mc"><span class="ml">EGR T°</span><div class="mv" style="color:var(--cop)">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="ml">MIL / CHECK ENGINE</span><div class="mv" style="color:var(--cop)">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="ml">BATT</span><div class="mv" style="color:var(--cop)">14.1<small>V</small></div></div>
+        <div class="st"><span class="ml">IAT</span><div class="mv" style="color:var(--data)">45<small>°C</small></div></div>
+        <div class="st"><span class="ml">LOAD</span><div class="mv" style="color:var(--data)">67<small>%</small></div></div>
+        <div class="st"><span class="ml">RAIL</span><div class="mv" style="color:var(--data)">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>

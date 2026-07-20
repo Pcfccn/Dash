@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 08 — Daylight Clean</title>
+<style>
+:root {
+  --bg:#eef1f5;--sur:#ffffff;--sur2:#f5f8fc;--brd:#d8e0ea;--brd2:#c4cfdb;
+  --nom:#059669;--nom-bg:#ecfdf5;--nom-brd:#a7f3d0;
+  --data:#0369a1;--data-bg:#eff6ff;
+  --warn:#d97706;--crit:#dc2626;
+  --txt:#111827;--sub:#374151;--dim:#9ca3af;--trk:#e5e7eb;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#dde3ec;color:var(--txt);font-family:system-ui,-apple-system,sans-serif;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font:600 10px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);background:#e8ecf3;border:1px solid var(--brd);border-radius:20px;
+     padding:7px 16px;cursor:pointer;}
+.tabs button.on{color:var(--nom);border-color:var(--nom-brd);background:var(--nom-bg);}
+.bezel{padding:10px;border-radius:28px;
+       background:linear-gradient(145deg,#f0f4f8,#dde3ec);
+       box-shadow:0 20px 50px rgba(0,0,0,.15),0 2px 4px rgba(0,0,0,.1),
+                  inset 0 1px 0 rgba(255,255,255,.8);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;border-radius:18px;background:var(--bg);}
+
+/* LIGHT RAIL */
+.rail{position:absolute;inset:0 0 auto;height:38px;display:flex;align-items:center;
+      gap:4px;padding:0 10px;background:var(--sur);border-bottom:1px solid var(--brd);
+      box-shadow:0 1px 3px rgba(0,0,0,.05);z-index:5;}
+.sys{font:600 8px/1 system-ui;letter-spacing:.06em;padding:3px 7px;border-radius:10px;
+     background:var(--trk);color:var(--dim);}
+.sys[data-s="ok"]{background:var(--nom-bg);color:var(--nom);border:1px solid var(--nom-brd);}
+.sys[data-s="warn"]{background:#fffbeb;color:var(--warn);border:1px solid #fde68a;}
+.sys[data-s="crit"]{background:#fef2f2;color:var(--crit);border:1px solid #fecaca;}
+.rail .state{margin-left:auto;font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--nom);}
+
+.brow{margin-top:38px;height:22px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 12px;border-bottom:1px solid var(--brd);background:var(--sur2);}
+.brow .id{font:500 9px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font:700 9px/1 system-ui;letter-spacing:.18em;color:var(--data);}
+
+.page{position:absolute;inset:60px 0 0;display:none;flex-direction:column;gap:0;overflow:hidden;}
+.page.on{display:flex;}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:76px 1fr 90px;height:112px;
+      background:var(--sur);border-bottom:1px solid var(--brd);
+      box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.gear-cell{border-right:1px solid var(--brd);display:flex;flex-direction:column;
+           align-items:center;justify-content:center;gap:4px;padding:8px;}
+.gear-label{font:600 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.gear-num{font:800 42px/1 system-ui;color:var(--sub);}
+.gear-num b{color:var(--nom);}
+.spd-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;
+          background:var(--sur);gap:2px;}
+.spd-num{font:800 70px/.85 system-ui;color:var(--txt);}
+.spd-unit{font:600 9px/1 system-ui;letter-spacing:.2em;color:var(--dim);}
+.work-cell{border-left:1px solid var(--brd);display:flex;flex-direction:column;
+           justify-content:center;gap:10px;padding:10px 10px;}
+.wrow{display:flex;flex-direction:column;gap:2px;}
+.wlabel{font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
+.wval{font:700 20px/1 system-ui;color:var(--sub);}
+.wval small{font:500 9px/1 system-ui;color:var(--dim);}
+
+/* 2x2 CLEAN GAUGE CARDS */
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+      gap:1px;background:var(--brd);}
+.m{background:var(--sur);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;}
+.mtop{display:flex;align-items:center;justify-content:space-between;}
+.mlabel{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mbadge{font:700 8px/1 system-ui;letter-spacing:.06em;padding:2px 5px;border-radius:4px;}
+.mbadge.ok{background:var(--nom-bg);color:var(--nom);}
+.mval{font:800 38px/1 system-ui;text-align:center;color:var(--txt);}
+.mval small{font:500 12px/1 system-ui;color:var(--dim);}
+.bar-l{height:5px;background:var(--trk);border-radius:3px;position:relative;}
+.bar-l span{display:block;height:100%;border-radius:3px;}
+.bar-l i{position:absolute;top:-4px;width:2px;height:13px;border-radius:1px;}
+.tk{display:flex;justify-content:space-between;font:500 9px/1 system-ui;color:var(--dim);margin-top:3px;}
+
+.pager{height:28px;display:flex;align-items:center;justify-content:center;gap:8px;
+       background:var(--sur);border-top:1px solid var(--brd);}
+.pager b{width:6px;height:6px;border-radius:50%;background:var(--trk);}
+.pager b.on{width:20px;border-radius:3px;background:var(--data);}
+
+/* DPF */
+.dpf-outer{background:var(--sur);border-bottom:1px solid var(--brd);
+           display:grid;grid-template-columns:136px 1fr;height:174px;
+           box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.dpf-left{padding:12px;display:flex;align-items:center;justify-content:center;
+          border-right:1px solid var(--brd);}
+.ring{position:relative;width:118px;height:118px;border-radius:50%;
+      background:conic-gradient(from -90deg,var(--nom) 42%,var(--trk) 0);
+      display:grid;place-items:center;
+      box-shadow:0 2px 8px rgba(5,150,105,.2);}
+.ring::before{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--sur);}
+.ring .c{position:relative;text-align:center;}
+.ring .rn{font:800 42px/1 system-ui;color:var(--nom);}
+.ring .rn small{font-size:13px;color:var(--dim);}
+.reg{padding:14px 12px;display:flex;flex-direction:column;justify-content:center;}
+.reg-label{font:600 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.reg h3{margin:5px 0 6px;font:700 18px/1 system-ui;color:var(--txt);}
+.reg p{font:400 11px/1.4 system-ui;color:var(--dim);}
+.th{display:grid;gap:5px;margin-top:8px;font-size:10px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:14px;height:3px;border-radius:2px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+      gap:1px;background:var(--brd);}
+.mc{background:var(--sur);padding:10px 12px;}
+.mc .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mc .mv{font:700 24px/1 system-ui;color:var(--txt);margin-top:5px;}
+.mc .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:0;background:var(--bg);}
+.mil{background:var(--sur);padding:10px 12px;border-bottom:1px solid var(--brd);}
+.mil .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mil .mv{font:700 18px/1 system-ui;color:var(--txt);margin-top:4px;}
+.codes{flex:0 0 108px;background:var(--nom-bg);border-bottom:1px solid var(--nom-brd);
+       display:grid;place-items:center;align-content:center;gap:8px;}
+.codes .ic{width:38px;height:38px;border-radius:50%;background:var(--nom);color:#fff;
+           display:grid;place-items:center;font-size:22px;font-weight:700;
+           box-shadow:0 4px 12px rgba(5,150,105,.3);}
+.codes strong{font:700 13px/1 system-ui;letter-spacing:.04em;color:var(--nom);}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--brd);}
+.st{background:var(--sur);padding:10px 12px;}
+.st .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.st .mv{font:700 27px/1 system-ui;color:var(--txt);margin-top:3px;}
+.st .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">Drive</button>
+  <button data-p="dpf">DPF</button>
+  <button data-p="diag">Diag</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off">MIL</span>
+    <span class="sys" data-s="ok">CLT</span>
+    <span class="sys" data-s="ok">OIL</span>
+    <span class="sys" data-s="ok">ATF</span>
+    <span class="sys" data-s="ok">EGT</span>
+    <span class="sys" data-s="ok">DPF</span>
+    <span class="sys" data-s="ok">BAT</span>
+    <span class="sys" data-s="off">DTC</span>
+    <span class="sys" data-s="ok">CAN</span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="gear-cell">
+        <span class="gear-label">GEAR</span>
+        <span class="gear-num">D<b>6</b></span>
+      </div>
+      <div class="spd-cell">
+        <span class="spd-num">95</span>
+        <span class="spd-unit">KM / H</span>
+      </div>
+      <div class="work-cell">
+        <div class="wrow"><span class="wlabel">BOOST</span><span class="wval" style="color:var(--data)">1.4<small>bar</small></span></div>
+        <div class="wrow"><span class="wlabel">RPM</span><span class="wval">2150</span></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="m">
+        <div class="mtop"><span class="mlabel">COOLANT</span><span class="mbadge ok">OK</span></div>
+        <div class="mval" style="color:var(--nom)">89<small>°C</small></div>
+        <div><div class="bar-l"><span style="width:61%;background:var(--nom)"></span><i style="left:66%;background:var(--warn)"></i><i style="left:71%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>120</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">OIL</span><span class="mbadge ok">OK</span></div>
+        <div class="mval" style="color:var(--nom)">98<small>°C</small></div>
+        <div><div class="bar-l"><span style="width:58%;background:var(--nom)"></span><i style="left:80%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>140</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">ATF</span><span class="mbadge ok">OK</span></div>
+        <div class="mval" style="color:var(--nom)">82<small>°C</small></div>
+        <div><div class="bar-l"><span style="width:38%;background:var(--nom)"></span></div>
+        <div class="tk"><span>40</span><span>150</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">EGT</span><span class="mbadge ok">OK</span></div>
+        <div class="mval" style="color:var(--nom)">421<small>°C</small></div>
+        <div><div class="bar-l"><span style="width:53%;background:var(--nom)"></span><i style="left:81%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>0</span><span>800</span></div></div>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-outer">
+      <div class="dpf-left">
+        <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span style="font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);display:block;margin-top:3px">SOOT</span></div></div>
+      </div>
+      <div class="reg">
+        <span class="reg-label">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% threshold</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="ml">EGT</span><div class="mv" style="color:var(--nom)">421<small>°C</small></div></div>
+      <div class="mc"><span class="ml">ΔP DPF</span><div class="mv" style="color:var(--data)">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="ml">SINCE REGEN</span><div class="mv" style="color:var(--data)">180<small>km</small></div></div>
+      <div class="mc"><span class="ml">EGR T°</span><div class="mv" style="color:var(--nom)">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="ml">MIL / CHECK ENGINE</span><div class="mv" style="color:var(--txt)">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="ml">BATT</span><div class="mv" style="color:var(--nom)">14.1<small>V</small></div></div>
+        <div class="st"><span class="ml">IAT</span><div class="mv" style="color:var(--data)">45<small>°C</small></div></div>
+        <div class="st"><span class="ml">LOAD</span><div class="mv" style="color:var(--data)">67<small>%</small></div></div>
+        <div class="st"><span class="ml">RAIL</span><div class="mv" style="color:var(--data)">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 03 — Race Telemetry</title>
+<style>
+:root {
+  --bg:#080808;--sur:#101010;--brd:#1e1e1e;
+  --acc:#ffffff;--red:#ff1f4b;--data:#e0e0e0;
+  --warn:#ff7700;--crit:#ff0000;
+  --txt:#ffffff;--dim:#555;--trk:#1a1a1a;
+  --bar-h:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#050505;color:var(--txt);font-family:system-ui,sans-serif;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:4px;margin-bottom:14px;}
+.tabs button{font:700 10px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);background:#0a0a0a;border:1px solid #1a1a1a;padding:7px 16px;cursor:pointer;}
+.tabs button.on{color:#fff;border-color:var(--red);background:#0d0005;}
+.bezel{padding:6px;background:#060606;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;background:var(--bg);}
+
+/* RACE HEADER BAR */
+.rail{position:absolute;inset:0 0 auto;height:38px;display:flex;align-items:center;
+      padding:0 10px;border-bottom:2px solid var(--red);background:#000;z-index:5;gap:6px;}
+.sys{font:700 9px/1 system-ui;letter-spacing:.08em;padding:2px 5px;background:var(--brd);
+     border-radius:2px;color:var(--dim);}
+.sys[data-s="ok"]{background:#0d1a0a;color:#55ff55;}
+.sys[data-s="warn"]{background:#1a0e00;color:var(--warn);}
+.sys[data-s="crit"]{background:#1a0000;color:var(--crit);}
+.rail .state{margin-left:auto;font:900 11px/1 system-ui;letter-spacing:.12em;color:var(--red);}
+
+.brow{margin-top:38px;height:18px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 10px;border-bottom:1px solid var(--brd);background:#000;}
+.brow .id{font:500 9px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font:900 9px/1 system-ui;letter-spacing:.2em;color:var(--red);}
+
+.page{position:absolute;inset:56px 0 0;display:none;flex-direction:column;}
+.page.on{display:flex;}
+
+/* HERO: massive speed + side data */
+.hero{border-bottom:1px solid var(--brd);padding:0;display:grid;
+      grid-template-columns:70px 1fr 80px;height:116px;}
+.g-gear{border-right:1px solid var(--brd);display:flex;flex-direction:column;
+        justify-content:center;align-items:center;gap:4px;padding:8px;}
+.glb{font:700 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.gnum{font:900 44px/1 system-ui;color:#fff;}
+.gnum span{color:var(--red);}
+.spd-big{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.spd-val{font:900 80px/.9 system-ui;color:#fff;line-height:.85;}
+.spd-unit{font:700 10px/1 system-ui;letter-spacing:.2em;color:var(--dim);margin-top:4px;}
+.g-right{border-left:1px solid var(--brd);display:flex;flex-direction:column;
+         justify-content:center;gap:12px;padding:10px 8px;}
+.gr-row{display:flex;flex-direction:column;gap:2px;}
+.grl{font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
+.grv{font:900 21px/1 system-ui;}
+.grv small{font:500 9px/1 system-ui;color:var(--dim);}
+
+/* HORIZONTAL GAUGE ROWS */
+.gauges{flex:1;display:flex;flex-direction:column;background:var(--bg);}
+.grow{flex:1;display:flex;align-items:center;padding:0 10px;gap:10px;
+      border-bottom:1px solid var(--brd);position:relative;}
+.grow:last-child{border-bottom:0;}
+.grow .label{font:700 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);
+             width:44px;flex-shrink:0;text-transform:uppercase;}
+.grow .track{flex:1;height:var(--bar-h);background:var(--trk);border-radius:0;position:relative;overflow:visible;}
+.grow .fill{height:100%;display:block;}
+.grow .marker{position:absolute;top:-4px;width:2px;height:calc(var(--bar-h) + 8px);border-radius:1px;}
+.grow .value{font:900 19px/1 system-ui;width:56px;text-align:right;flex-shrink:0;}
+.grow .value small{font:500 9px/1 system-ui;color:var(--dim);}
+.grow .status{font:700 8px/1 system-ui;letter-spacing:.06em;width:16px;flex-shrink:0;color:var(--dim);}
+
+.pager{height:22px;display:flex;align-items:center;justify-content:center;gap:10px;
+       border-top:1px solid var(--brd);}
+.pager b{width:20px;height:2px;background:var(--dim);}
+.pager b.on{background:var(--red);}
+
+/* DPF */
+.dpf-wrap{display:grid;grid-template-columns:136px 1fr;gap:0;border-bottom:1px solid var(--brd);
+          height:178px;align-items:stretch;}
+.ring{position:relative;width:126px;height:126px;margin:auto;border-radius:50%;
+      background:conic-gradient(from -90deg,#fff 42%,var(--trk) 0);
+      display:grid;place-items:center;}
+.ring::before{content:'';position:absolute;inset:12px;border-radius:50%;background:var(--bg);}
+.ring .c{position:relative;text-align:center;}
+.ring .c .rn{font:900 44px/1 system-ui;color:#fff;}
+.ring .c .rn small{font-size:13px;color:var(--dim);}
+.reg{padding:14px 12px 14px 0;display:flex;flex-direction:column;justify-content:center;}
+.reg .rl{font:700 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.reg h3{margin:5px 0 7px;font:900 21px/1 system-ui;}
+.reg p{font-size:11px;color:var(--dim);line-height:1.4;}
+.th{display:grid;gap:4px;margin-top:8px;font-size:10px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:12px;height:3px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--brd);}
+.mc{background:var(--sur);padding:10px;}
+.mc .ml{font:700 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mc .mv{font:900 26px/1 system-ui;margin-top:5px;}
+.mc .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:1px;background:var(--brd);}
+.mil{background:var(--sur);padding:9px 12px;}
+.mil .ml{font:700 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mil .mv{font:900 20px/1 system-ui;margin-top:4px;}
+.codes{flex:0 0 110px;background:var(--sur);display:grid;
+       place-items:center;align-content:center;gap:8px;}
+.codes .ic{width:40px;height:40px;border:2px solid #fff;color:#fff;
+           display:grid;place-items:center;font-size:24px;font-weight:900;}
+.codes strong{font:700 13px/1 system-ui;letter-spacing:.04em;}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--brd);}
+.st{background:var(--sur);padding:9px 12px;}
+.st .ml{font:700 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.st .mv{font:900 29px/1 system-ui;margin-top:3px;}
+.st .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">Drive</button>
+  <button data-p="dpf">DPF</button>
+  <button data-p="diag">Diag</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off">MIL</span>
+    <span class="sys" data-s="ok">CLT</span>
+    <span class="sys" data-s="ok">OIL</span>
+    <span class="sys" data-s="ok">ATF</span>
+    <span class="sys" data-s="ok">EGT</span>
+    <span class="sys" data-s="ok">DPF</span>
+    <span class="sys" data-s="ok">BAT</span>
+    <span class="sys" data-s="off">DTC</span>
+    <span class="sys" data-s="ok">CAN</span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="g-gear">
+        <span class="glb">GEAR</span>
+        <span class="gnum">D<span>6</span></span>
+      </div>
+      <div class="spd-big">
+        <div class="spd-val">95</div>
+        <div class="spd-unit">KM / H</div>
+      </div>
+      <div class="g-right">
+        <div class="gr-row"><span class="grl">BOOST</span><span class="grv" style="color:#fff">1.4<small>bar</small></span></div>
+        <div class="gr-row"><span class="grl">RPM</span><span class="grv" style="color:var(--red)">2150</span></div>
+      </div>
+    </div>
+    <div class="gauges">
+      <div class="grow">
+        <span class="label">CLT</span>
+        <div class="track">
+          <span class="fill" style="width:61%;background:#fff"></span>
+          <span class="marker" style="left:66%;background:var(--warn)"></span>
+          <span class="marker" style="left:71%;background:var(--crit)"></span>
+        </div>
+        <span class="value" style="color:#fff">89<small>°C</small></span>
+        <span class="status" style="color:#55ff55">OK</span>
+      </div>
+      <div class="grow">
+        <span class="label">OIL</span>
+        <div class="track">
+          <span class="fill" style="width:58%;background:#fff"></span>
+          <span class="marker" style="left:80%;background:var(--warn)"></span>
+          <span class="marker" style="left:90%;background:var(--crit)"></span>
+        </div>
+        <span class="value" style="color:#fff">98<small>°C</small></span>
+        <span class="status" style="color:#55ff55">OK</span>
+      </div>
+      <div class="grow">
+        <span class="label">ATF</span>
+        <div class="track">
+          <span class="fill" style="width:38%;background:#fff"></span>
+        </div>
+        <span class="value" style="color:#fff">82<small>°C</small></span>
+        <span class="status" style="color:#55ff55">OK</span>
+      </div>
+      <div class="grow">
+        <span class="label">EGT</span>
+        <div class="track">
+          <span class="fill" style="width:53%;background:#fff"></span>
+          <span class="marker" style="left:81%;background:var(--warn)"></span>
+          <span class="marker" style="left:90%;background:var(--crit)"></span>
+        </div>
+        <span class="value" style="color:#fff">421<small>°C</small></span>
+        <span class="status" style="color:#55ff55">OK</span>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-wrap">
+      <div style="display:flex;align-items:center;justify-content:center;padding:12px;">
+        <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span style="font:700 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);display:block;margin-top:3px">SOOT</span></div></div>
+      </div>
+      <div class="reg">
+        <span class="rl">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% regen</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="ml">EGT</span><div class="mv" style="color:#fff">421<small>°C</small></div></div>
+      <div class="mc"><span class="ml">ΔP DPF</span><div class="mv" style="color:#ccc">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="ml">SINCE REGEN</span><div class="mv" style="color:#ccc">180<small>km</small></div></div>
+      <div class="mc"><span class="ml">EGR T°</span><div class="mv" style="color:#fff">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="ml">MIL / CHECK ENGINE</span><div class="mv" style="color:#fff">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="ml">BATT</span><div class="mv" style="color:#fff">14.1<small>V</small></div></div>
+        <div class="st"><span class="ml">IAT</span><div class="mv" style="color:#ccc">45<small>°C</small></div></div>
+        <div class="st"><span class="ml">LOAD</span><div class="mv" style="color:#ccc">67<small>%</small></div></div>
+        <div class="st"><span class="ml">RAIL</span><div class="mv" style="color:#ccc">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>

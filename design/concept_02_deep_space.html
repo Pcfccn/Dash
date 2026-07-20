@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 02 — Deep Space Cyan</title>
+<style>
+:root {
+  --bg:#030b14;--sur:#060f1a;--brd:#0d2235;
+  --cyn:#00d4ff;--cyn-d:#005f7a;--data:#7dd3fc;
+  --warn:#ffb700;--crit:#ff3b5c;
+  --txt:#c8e8f5;--dim:#3a6070;--trk:#0a1e2b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#020810;color:var(--txt);font-family:system-ui,sans-serif;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font:600 10px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);background:#040c16;border:1px solid var(--brd);border-radius:4px;padding:7px 14px;cursor:pointer;}
+.tabs button.on{color:var(--cyn);border-color:var(--cyn-d);background:#040f1c;}
+.bezel{padding:8px;border-radius:20px;background:linear-gradient(145deg,#0c1a28,#040d16);
+       box-shadow:0 0 60px rgba(0,212,255,.08),0 20px 50px rgba(0,0,0,.6);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;border-radius:12px;background:var(--bg);}
+
+/* DOT RAIL */
+.rail{position:absolute;inset:0 0 auto;height:32px;display:flex;align-items:center;
+      gap:5px;padding:0 10px;border-bottom:1px solid var(--brd);z-index:5;background:var(--bg);}
+.sys{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.sys .sl{font-size:8px;letter-spacing:.04em;color:var(--dim);}
+.sys .sd{width:6px;height:6px;border-radius:50%;background:var(--trk);}
+.sys[data-s="ok"] .sl{color:var(--cyn);}.sys[data-s="ok"] .sd{background:var(--cyn);box-shadow:0 0 6px var(--cyn);}
+.sys[data-s="warn"] .sl{color:var(--warn);}.sys[data-s="warn"] .sd{background:var(--warn);}
+.sys[data-s="crit"] .sl{color:var(--crit);}.sys[data-s="crit"] .sd{background:var(--crit);}
+.rail .state{margin-left:auto;font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--cyn);}
+
+.brow{margin-top:32px;height:20px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 10px;border-bottom:1px solid var(--brd);}
+.brow .id{font:500 9px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font:700 9px/1 system-ui;letter-spacing:.18em;color:var(--cyn);}
+
+.page{position:absolute;inset:52px 0 20px;display:none;flex-direction:column;}
+.page.on{display:flex;}
+
+/* HERO: centered speed with thin ring, gear left, boost right */
+.hero{height:130px;border-bottom:1px solid var(--brd);display:grid;
+      grid-template-columns:72px 1fr 88px;align-items:center;padding:8px 6px;gap:6px;}
+.g-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.g-left .glabel{font:600 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.g-left .gnum{font:800 42px/1 system-ui;color:var(--txt);}
+.g-left .gnum b{color:var(--cyn);}
+.spd-ring{position:relative;width:110px;height:110px;border-radius:50%;
+          background:conic-gradient(from -90deg,var(--cyn) 46%,var(--trk) 0);
+          display:grid;place-items:center;margin:0 auto;}
+.spd-ring::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--bg);}
+.spd-ring .sc{position:relative;text-align:center;}
+.spd-ring .sn{font:800 42px/1 system-ui;color:#fff;}
+.spd-ring .su{font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);margin-top:2px;}
+.g-right{display:flex;flex-direction:column;justify-content:center;gap:10px;}
+.g-right .row{display:flex;flex-direction:column;gap:2px;}
+.g-right .rl{font:600 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.g-right .rv{font:700 20px/1 system-ui;}
+.g-right .rv small{font-size:9px;color:var(--dim);font-weight:500;}
+
+/* HORIZONTAL SENSOR ROWS */
+.sensors{flex:1;display:flex;flex-direction:column;padding:8px 10px;gap:0;}
+.row-s{display:flex;align-items:center;gap:8px;flex:1;border-bottom:1px solid var(--brd);padding:4px 0;}
+.row-s:last-child{border-bottom:0;}
+.row-s .rl{font:600 10px/1 system-ui;letter-spacing:.1em;color:var(--dim);width:38px;flex-shrink:0;}
+.row-s .bar{flex:1;height:4px;background:var(--trk);border-radius:2px;position:relative;}
+.row-s .bar span{display:block;height:100%;border-radius:2px;}
+.row-s .bar i{position:absolute;top:-4px;width:1px;height:12px;}
+.row-s .rv{font:700 18px/1 system-ui;width:60px;text-align:right;flex-shrink:0;}
+.row-s .rv small{font:500 9px/1 system-ui;color:var(--dim);}
+.row-s .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+.pager{position:absolute;bottom:0;left:0;right:0;height:20px;display:flex;align-items:center;
+       justify-content:center;gap:8px;border-top:1px solid var(--brd);}
+.pager b{width:6px;height:6px;border-radius:50%;background:var(--trk);}
+.pager b.on{background:var(--cyn);box-shadow:0 0 8px var(--cyn);}
+
+/* DPF */
+.dpf-wrap{display:grid;grid-template-columns:136px 1fr;gap:8px;
+          padding:12px;height:176px;border-bottom:1px solid var(--brd);align-items:center;}
+.ring{position:relative;width:126px;height:126px;border-radius:50%;
+      background:conic-gradient(from -90deg,var(--cyn) 42%,var(--trk) 0);
+      display:grid;place-items:center;}
+.ring::before{content:'';position:absolute;inset:12px;border-radius:50%;background:var(--bg);}
+.ring .c{position:relative;text-align:center;}
+.ring .c .rn{font:800 44px/1 system-ui;color:var(--cyn);}
+.ring .c .rn small{font-size:13px;color:var(--dim);}
+.reg h3{margin:4px 0 6px;font:700 19px/1 system-ui;}
+.reg p{font-size:11px;color:var(--dim);line-height:1.4;}
+.th{display:grid;gap:5px;margin-top:8px;font-size:10px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:13px;height:2px;border-radius:1px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+      gap:6px;padding:10px;}
+.mc{border:1px solid var(--brd);border-radius:8px;padding:9px;background:var(--sur);}
+.mc .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mc .mv{font:700 26px/1 system-ui;margin-top:5px;}
+.mc .mv small{font:500 11px/1 system-ui;color:var(--dim);}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:8px;padding:10px 10px 24px;}
+.mil{border:1px solid var(--brd);border-radius:8px;background:var(--sur);padding:8px 10px;}
+.mil .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mil .mv{font:700 18px/1 system-ui;margin-top:4px;}
+.codes{flex:0 0 104px;border:1px solid var(--brd);border-radius:8px;
+       display:grid;place-items:center;align-content:center;gap:7px;background:var(--sur);}
+.codes .ic{width:38px;height:38px;border-radius:50%;border:2px solid var(--cyn);color:var(--cyn);
+           display:grid;place-items:center;font-size:22px;font-weight:700;
+           box-shadow:0 0 12px rgba(0,212,255,.3);}
+.codes strong{font-size:13px;font-weight:700;letter-spacing:.04em;}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}
+.st{border:1px solid var(--brd);border-radius:8px;background:var(--sur);padding:8px 10px;}
+.st .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.st .mv{font:700 28px/1 system-ui;margin-top:3px;}
+.st .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">Drive</button>
+  <button data-p="dpf">DPF</button>
+  <button data-p="diag">Diag</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off"><span class="sl">MIL</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">CLT</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">OIL</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">ATF</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">EGT</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">DPF</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">BAT</span><span class="sd"></span></span>
+    <span class="sys" data-s="off"><span class="sl">DTC</span><span class="sd"></span></span>
+    <span class="sys" data-s="ok"><span class="sl">CAN</span><span class="sd"></span></span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="g-left">
+        <span class="glabel">GEAR</span>
+        <span class="gnum">D<b>6</b></span>
+      </div>
+      <div class="spd-ring">
+        <div class="sc">
+          <div class="sn">95</div>
+          <div class="su">KM/H</div>
+        </div>
+      </div>
+      <div class="g-right">
+        <div class="row"><span class="rl">BOOST</span><span class="rv" style="color:var(--cyn)">1.4<small>bar</small></span></div>
+        <div class="row"><span class="rl">RPM</span><span class="rv" style="color:#fff">2150</span></div>
+      </div>
+    </div>
+    <div class="sensors">
+      <div class="row-s">
+        <span class="rl">CLT</span>
+        <div class="bar"><span style="width:61%;background:var(--cyn)"></span><i style="left:66%;background:var(--warn)"></i><i style="left:71%;background:var(--crit)"></i></div>
+        <span class="rv" style="color:var(--cyn)">89<small>°C</small></span>
+        <span class="dot" style="background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span>
+      </div>
+      <div class="row-s">
+        <span class="rl">OIL</span>
+        <div class="bar"><span style="width:58%;background:var(--cyn)"></span><i style="left:80%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <span class="rv" style="color:var(--cyn)">98<small>°C</small></span>
+        <span class="dot" style="background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span>
+      </div>
+      <div class="row-s">
+        <span class="rl">ATF</span>
+        <div class="bar"><span style="width:38%;background:var(--cyn)"></span></div>
+        <span class="rv" style="color:var(--cyn)">82<small>°C</small></span>
+        <span class="dot" style="background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span>
+      </div>
+      <div class="row-s">
+        <span class="rl">EGT</span>
+        <div class="bar"><span style="width:53%;background:var(--cyn)"></span><i style="left:81%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <span class="rv" style="color:var(--cyn)">421<small>°C</small></span>
+        <span class="dot" style="background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-wrap">
+      <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span class="ml" style="display:block;margin-top:3px">SOOT</span></div></div>
+      <div class="reg">
+        <span class="ml" style="font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim)">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% regen</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="ml">EGT</span><div class="mv" style="color:var(--cyn)">421<small>°C</small></div></div>
+      <div class="mc"><span class="ml">ΔP DPF</span><div class="mv" style="color:var(--data)">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="ml">SINCE REGEN</span><div class="mv" style="color:var(--data)">180<small>km</small></div></div>
+      <div class="mc"><span class="ml">EGR T°</span><div class="mv" style="color:var(--cyn)">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="ml">MIL / CHECK ENGINE</span><div class="mv" style="color:var(--cyn)">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="ml">BATT</span><div class="mv" style="color:var(--cyn)">14.1<small>V</small></div></div>
+        <div class="st"><span class="ml">IAT</span><div class="mv" style="color:var(--data)">45<small>°C</small></div></div>
+        <div class="st"><span class="ml">LOAD</span><div class="mv" style="color:var(--data)">67<small>%</small></div></div>
+        <div class="st"><span class="ml">RAIL</span><div class="mv" style="color:var(--data)">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 01 — Military Amber</title>
+<style>
+:root {
+  --bg:#04030a;--sur:#08070e;--brd:#1c1608;
+  --amb:#f5a623;--amb-d:#7a5310;--data:#ffd580;
+  --warn:#ff8c00;--crit:#ff2020;
+  --txt:#e8d5a3;--dim:#6b5c3e;--trk:#130e04;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0905;color:var(--txt);font-family:'Courier New',monospace;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font-family:'Courier New',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+     color:var(--dim);background:#06050a;border:1px solid var(--brd);padding:6px 14px;cursor:pointer;}
+.tabs button.on{color:var(--amb);border-color:var(--amb-d);background:#0d0900;}
+.bezel{padding:6px;background:#060503;border:1px solid #120e04;box-shadow:0 20px 50px rgba(0,0,0,.7);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;background:var(--bg);}
+
+.rail{position:absolute;inset:0 0 auto;height:28px;display:flex;align-items:center;
+      gap:7px;padding:0 8px;border-bottom:1px solid var(--brd);background:#020200;z-index:5;}
+.sys{font-size:10px;letter-spacing:.08em;color:var(--dim);padding-bottom:3px;position:relative;}
+.sys::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--brd);}
+.sys[data-s="ok"]{color:var(--amb)}.sys[data-s="ok"]::after{background:var(--amb);}
+.sys[data-s="warn"]{color:var(--warn)}.sys[data-s="warn"]::after{background:var(--warn);}
+.sys[data-s="crit"]{color:var(--crit)}.sys[data-s="crit"]::after{background:var(--crit);}
+.rail .state{margin-left:auto;font-size:9px;letter-spacing:.12em;color:var(--amb);}
+
+.brow{margin-top:28px;height:18px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 8px;border-bottom:1px solid var(--brd);}
+.brow .id{font-size:9px;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font-size:9px;letter-spacing:.18em;color:var(--amb);}
+
+.page{position:absolute;inset:46px 0 20px;display:none;flex-direction:column;}
+.page.on{display:flex;}
+
+.hero{display:grid;grid-template-columns:72px 1fr 90px;gap:4px;
+      padding:6px;border-bottom:1px solid var(--brd);height:108px;}
+.cell{border:1px solid var(--brd);padding:7px;display:flex;flex-direction:column;justify-content:center;}
+.gear{align-items:center;gap:3px;}
+.gearn{font-size:38px;font-weight:bold;color:var(--txt);}
+.gearn b{color:var(--amb);}
+.spd{border:0;border-left:1px solid var(--brd);border-right:1px solid var(--brd);
+     align-items:center;justify-content:center;}
+.spdn{font-size:66px;font-weight:bold;color:#fff;}
+.work{gap:9px;}
+.work .row{display:flex;flex-direction:column;gap:1px;}
+.k{font-size:9px;letter-spacing:.1em;color:var(--dim);}
+.k::before{content:'[';color:var(--amb-d)}.k::after{content:']';color:var(--amb-d);}
+.v{font-size:21px;font-weight:bold;line-height:1;}
+.v small{font-size:9px;color:var(--dim);font-weight:normal;}
+
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+      gap:1px;background:var(--brd);}
+.m{background:var(--bg);padding:8px 10px;display:flex;flex-direction:column;justify-content:center;}
+.mtop{display:flex;justify-content:space-between;align-items:center;}
+.val{font-size:38px;font-weight:bold;text-align:center;margin:4px 0;}
+.val small{font-size:11px;color:var(--dim);font-weight:normal;}
+.g{position:relative;height:3px;background:var(--trk);}
+.g>span{display:block;height:100%;}
+.g i{position:absolute;top:-4px;width:1px;height:11px;}
+.tk{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:2px;}
+
+.pager{position:absolute;bottom:0;left:0;right:0;height:20px;display:flex;align-items:center;
+       justify-content:center;gap:7px;border-top:1px solid var(--brd);}
+.pager b{width:16px;height:1px;background:var(--dim);}
+.pager b.on{background:var(--amb);}
+
+/* DPF */
+.dpf-wrap{display:grid;grid-template-columns:128px 1fr;gap:8px;
+          padding:10px;height:170px;border-bottom:1px solid var(--brd);align-items:center;}
+.ring{position:relative;width:120px;height:120px;border-radius:50%;
+      background:conic-gradient(from -90deg,var(--amb) 42%,var(--trk) 0);
+      display:grid;place-items:center;}
+.ring::before{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--bg);}
+.ring .c{position:relative;text-align:center;}
+.ring .c .rn{font-size:42px;font-weight:bold;color:var(--amb);}
+.ring .c .rn small{font-size:12px;color:var(--dim);}
+.reg h3{margin:4px 0 5px;font-size:17px;font-weight:bold;color:var(--amb);}
+.reg p{font-size:10px;color:var(--dim);line-height:1.4;}
+.th{display:grid;gap:4px;margin-top:7px;font-size:9px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:12px;height:2px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:8px;}
+.mc{border:1px solid var(--brd);padding:8px;}
+.mc .v{font-size:25px;font-weight:bold;margin-top:4px;}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:6px;padding:8px 8px 24px;}
+.mil{border:1px solid var(--brd);padding:7px 9px;}
+.mil .v{font-size:17px;font-weight:bold;margin-top:3px;}
+.codes{flex:0 0 98px;border:1px dashed var(--brd);display:grid;
+       place-items:center;align-content:center;gap:6px;}
+.codes .ic{width:34px;height:34px;border:1px solid var(--amb-d);color:var(--amb);
+           display:grid;place-items:center;font-size:20px;font-weight:bold;}
+.codes strong{font-size:11px;letter-spacing:.06em;}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;}
+.st{border:1px solid var(--brd);padding:7px 9px;}
+.st .v{font-size:27px;font-weight:bold;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">// DRIVE</button>
+  <button data-p="dpf">// DPF</button>
+  <button data-p="diag">// DIAG</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off">MIL</span>
+    <span class="sys" data-s="ok">CLT</span>
+    <span class="sys" data-s="ok">OIL</span>
+    <span class="sys" data-s="ok">ATF</span>
+    <span class="sys" data-s="ok">EGT</span>
+    <span class="sys" data-s="ok">DPF</span>
+    <span class="sys" data-s="ok">BAT</span>
+    <span class="sys" data-s="off">DTC</span>
+    <span class="sys" data-s="ok">CAN</span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500k</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="cell gear">
+        <span class="k">GEAR</span>
+        <span class="gearn">D<b>6</b></span>
+      </div>
+      <div class="cell spd">
+        <span class="spdn">95</span>
+        <span class="k">KM/H</span>
+      </div>
+      <div class="cell work">
+        <div class="row"><span class="k">BOOST</span><span class="v" style="color:var(--amb)">1.4<small>bar</small></span></div>
+        <div class="row"><span class="k">RPM</span><span class="v" style="color:#fff">2150</span></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="m">
+        <div class="mtop"><span class="k">COOLANT</span><span style="font-size:9px;color:var(--amb)">▲OK</span></div>
+        <div class="val" style="color:var(--amb)">89<small>°C</small></div>
+        <div class="g"><span style="width:61%;background:var(--amb)"></span><i style="left:66%;background:var(--warn)"></i><i style="left:71%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>120</span></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="k">OIL</span><span style="font-size:9px;color:var(--amb)">▲OK</span></div>
+        <div class="val" style="color:var(--amb)">98<small>°C</small></div>
+        <div class="g"><span style="width:58%;background:var(--amb)"></span><i style="left:80%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>140</span></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="k">ATF</span><span style="font-size:9px;color:var(--amb)">▲OK</span></div>
+        <div class="val" style="color:var(--amb)">82<small>°C</small></div>
+        <div class="g"><span style="width:38%;background:var(--amb)"></span></div>
+        <div class="tk"><span>40</span><span>150</span></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="k">EGT</span><span style="font-size:9px;color:var(--amb)">▲OK</span></div>
+        <div class="val" style="color:var(--amb)">421<small>°C</small></div>
+        <div class="g"><span style="width:53%;background:var(--amb)"></span><i style="left:81%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>0</span><span>800</span></div>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-wrap">
+      <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span class="k" style="font-size:9px;display:block;margin-top:2px">SOOT</span></div></div>
+      <div class="reg">
+        <span class="k">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% threshold</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="k">EGT</span><div class="v" style="color:var(--amb)">421<small>°C</small></div></div>
+      <div class="mc"><span class="k">ΔP DPF</span><div class="v" style="color:var(--data)">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="k">SINCE REGEN</span><div class="v" style="color:var(--data)">180<small>km</small></div></div>
+      <div class="mc"><span class="k">EGR T°</span><div class="v" style="color:var(--amb)">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="k">MIL / CHECK ENGINE</span><div class="v" style="color:var(--amb)">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="k">BATT</span><div class="v" style="color:var(--amb)">14.1<small>V</small></div></div>
+        <div class="st"><span class="k">IAT</span><div class="v" style="color:var(--data)">45<small>°C</small></div></div>
+        <div class="st"><span class="k">LOAD</span><div class="v" style="color:var(--data)">67<small>%</small></div></div>
+        <div class="st"><span class="k">RAIL</span><div class="v" style="color:var(--data)">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>

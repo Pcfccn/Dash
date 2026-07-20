@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept 07 — Neon Synthwave</title>
+<style>
+:root {
+  --bg:#07030f;--sur:#0e0820;--sur2:#120c28;--brd:#1e1040;
+  --prp:#a855f7;--prp-glow:rgba(168,85,247,.4);--prp-d:#5b21b6;
+  --cyn:#22d3ee;--cyn-glow:rgba(34,211,238,.3);
+  --warn:#f97316;--crit:#ef4444;
+  --txt:#e9d5ff;--dim:#4c2a7a;--trk:#160d30;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#050210;color:var(--txt);font-family:system-ui,sans-serif;
+     font-variant-numeric:tabular-nums;display:grid;place-items:start center;padding:24px 12px 40px;}
+.tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tabs button{font:600 10px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--dim);background:#080415;border:1px solid var(--brd);border-radius:6px;padding:7px 14px;cursor:pointer;}
+.tabs button.on{color:var(--prp);border-color:var(--prp-d);background:#0f0823;
+     box-shadow:0 0 16px var(--prp-glow);}
+.bezel{padding:8px;border-radius:24px;
+       background:linear-gradient(145deg,#130a28,#060212);
+       box-shadow:0 0 0 1px var(--brd),0 0 40px rgba(168,85,247,.12),0 30px 60px rgba(0,0,0,.7);}
+.dev{width:320px;height:480px;position:relative;overflow:hidden;border-radius:16px;background:var(--bg);}
+
+/* GLOW RAIL */
+.rail{position:absolute;inset:0 0 auto;height:34px;display:flex;align-items:center;
+      gap:5px;padding:0 10px;border-bottom:1px solid var(--brd);background:var(--bg);z-index:5;}
+.sys{font:600 9px/1 system-ui;letter-spacing:.07em;color:var(--dim);padding-bottom:3px;position:relative;}
+.sys::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--brd);}
+.sys[data-s="ok"]{color:var(--prp)}.sys[data-s="ok"]::after{background:var(--prp);box-shadow:0 0 6px var(--prp);}
+.sys[data-s="warn"]{color:var(--warn)}.sys[data-s="warn"]::after{background:var(--warn);}
+.sys[data-s="crit"]{color:var(--crit)}.sys[data-s="crit"]::after{background:var(--crit);}
+.rail .state{margin-left:auto;font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--prp);
+     text-shadow:0 0 10px var(--prp);}
+
+.brow{margin-top:34px;height:20px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 10px;border-bottom:1px solid var(--brd);}
+.brow .id{font:500 9px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+.brow .pg{font:700 9px/1 system-ui;letter-spacing:.18em;color:var(--cyn);
+     text-shadow:0 0 10px var(--cyn);}
+
+.page{position:absolute;inset:54px 0 22px;display:none;flex-direction:column;gap:6px;padding:6px;}
+.page.on{display:flex;}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:74px 1fr 88px;gap:6px;height:110px;}
+.card{background:var(--sur);border-radius:14px;border:1px solid var(--brd);
+      padding:9px;display:flex;flex-direction:column;justify-content:center;}
+.glow-card{box-shadow:0 0 20px var(--prp-glow),inset 0 0 20px rgba(168,85,247,.04);}
+.gear-card{align-items:center;gap:4px;}
+.gear-label{font:600 9px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
+.gear-num{font:800 40px/1 system-ui;color:var(--txt);}
+.gear-num b{color:var(--prp);text-shadow:0 0 12px var(--prp);}
+.spd-card{background:linear-gradient(145deg,var(--sur2),var(--sur));
+          border:1px solid var(--prp-d);box-shadow:0 0 30px var(--prp-glow),inset 0 0 30px rgba(168,85,247,.06);
+          border-radius:16px;align-items:center;justify-content:center;gap:2px;}
+.spd-num{font:900 70px/.85 system-ui;color:#fff;text-shadow:0 0 20px rgba(255,255,255,.4);}
+.spd-unit{font:600 9px/1 system-ui;letter-spacing:.16em;color:var(--dim);}
+.work-card{gap:10px;}
+.wrow{display:flex;flex-direction:column;gap:2px;}
+.wlabel{font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
+.wval{font:700 20px/1 system-ui;}
+.wval small{font:500 9px/1 system-ui;color:var(--dim);}
+
+/* GLOW GAUGE GRID */
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}
+.m{background:var(--sur);border-radius:14px;border:1px solid var(--brd);
+   padding:9px 11px;display:flex;flex-direction:column;justify-content:space-between;
+   position:relative;overflow:hidden;}
+.m::before{content:'';position:absolute;inset:0;border-radius:14px;
+           background:linear-gradient(135deg,rgba(168,85,247,.03) 0%,transparent 100%);pointer-events:none;}
+.mtop{display:flex;align-items:center;justify-content:space-between;}
+.mlabel{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mdot{width:6px;height:6px;border-radius:50%;}
+.mval{font:800 38px/1 system-ui;text-align:center;margin:2px 0;}
+.mval small{font:500 11px/1 system-ui;color:var(--dim);}
+.bar-g{height:4px;background:var(--trk);border-radius:2px;position:relative;}
+.bar-g span{display:block;height:100%;border-radius:2px;}
+.bar-g i{position:absolute;top:-4px;width:1px;height:12px;border-radius:1px;}
+.tk{display:flex;justify-content:space-between;font:500 9px/1 system-ui;color:var(--dim);margin-top:3px;}
+
+.pager{position:absolute;bottom:0;left:0;right:0;height:22px;
+       display:flex;align-items:center;justify-content:center;gap:8px;
+       border-top:1px solid var(--brd);}
+.pager b{width:6px;height:6px;border-radius:50%;background:var(--trk);}
+.pager b.on{background:var(--prp);box-shadow:0 0 8px var(--prp);}
+
+/* DPF */
+.dpf-card{display:grid;grid-template-columns:132px 1fr;gap:0;height:168px;
+          background:var(--sur);border-radius:14px;border:1px solid var(--prp-d);
+          box-shadow:0 0 20px var(--prp-glow);overflow:hidden;}
+.dpf-left{padding:12px;display:flex;align-items:center;justify-content:center;
+          border-right:1px solid var(--brd);}
+.ring{position:relative;width:116px;height:116px;border-radius:50%;
+      background:conic-gradient(from -90deg,var(--prp) 42%,var(--trk) 0);
+      display:grid;place-items:center;
+      box-shadow:0 0 20px var(--prp-glow);}
+.ring::before{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--bg);}
+.ring .c{position:relative;text-align:center;}
+.ring .rn{font:900 40px/1 system-ui;color:var(--prp);text-shadow:0 0 12px var(--prp);}
+.ring .rn small{font-size:12px;color:var(--dim);}
+.reg{padding:14px 10px;display:flex;flex-direction:column;justify-content:center;}
+.reg-label{font:600 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.reg h3{margin:5px 0 6px;font:700 18px/1 system-ui;}
+.reg p{font:400 11px/1.4 system-ui;color:var(--dim);}
+.th{display:grid;gap:5px;margin-top:8px;font-size:10px;color:var(--dim);}
+.th span{display:flex;align-items:center;gap:6px;}
+.th i{width:14px;height:3px;border-radius:2px;}
+.mini{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}
+.mc{background:var(--sur);border-radius:12px;border:1px solid var(--brd);padding:9px;}
+.mc .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mc .mv{font:700 24px/1 system-ui;margin-top:5px;}
+.mc .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+
+/* DIAG */
+.diag{flex:1;display:flex;flex-direction:column;gap:6px;}
+.mil{background:var(--sur);border-radius:12px;border:1px solid var(--brd);padding:9px 11px;}
+.mil .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.mil .mv{font:700 17px/1 system-ui;margin-top:4px;}
+.codes{flex:0 0 100px;background:var(--sur);border-radius:12px;
+       border:1px solid var(--prp-d);box-shadow:0 0 16px var(--prp-glow);
+       display:grid;place-items:center;align-content:center;gap:7px;}
+.codes .ic{width:38px;height:38px;border-radius:50%;border:2px solid var(--prp);color:var(--prp);
+           display:grid;place-items:center;font-size:22px;font-weight:700;
+           box-shadow:0 0 12px var(--prp-glow);}
+.codes strong{font:700 13px/1 system-ui;letter-spacing:.04em;}
+.stats{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px;}
+.st{background:var(--sur);border-radius:12px;border:1px solid var(--brd);padding:8px 10px;}
+.st .ml{font:600 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+.st .mv{font:700 27px/1 system-ui;margin-top:3px;}
+.st .mv small{font:500 10px/1 system-ui;color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-p="drive">Drive</button>
+  <button data-p="dpf">DPF</button>
+  <button data-p="diag">Diag</button>
+</div>
+<div class="bezel"><div class="dev">
+  <div class="rail">
+    <span class="sys" data-s="off">MIL</span>
+    <span class="sys" data-s="ok">CLT</span>
+    <span class="sys" data-s="ok">OIL</span>
+    <span class="sys" data-s="ok">ATF</span>
+    <span class="sys" data-s="ok">EGT</span>
+    <span class="sys" data-s="ok">DPF</span>
+    <span class="sys" data-s="ok">BAT</span>
+    <span class="sys" data-s="off">DTC</span>
+    <span class="sys" data-s="ok">CAN</span>
+    <span class="state">NOMINAL</span>
+  </div>
+  <div class="brow">
+    <span class="id">COLORADO 2.8 · E98 · 500 kbit/s</span>
+    <span class="pg" id="pg">DRIVE</span>
+  </div>
+
+  <section class="page on" data-p="drive">
+    <div class="hero">
+      <div class="card gear-card glow-card">
+        <span class="gear-label">GEAR</span>
+        <span class="gear-num">D<b>6</b></span>
+      </div>
+      <div class="spd-card">
+        <span class="spd-num">95</span>
+        <span class="spd-unit">KM / H</span>
+      </div>
+      <div class="card work-card">
+        <div class="wrow"><span class="wlabel">BOOST</span><span class="wval" style="color:var(--cyn);text-shadow:0 0 10px var(--cyn)">1.4<small>bar</small></span></div>
+        <div class="wrow"><span class="wlabel">RPM</span><span class="wval" style="color:#fff">2150</span></div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="m">
+        <div class="mtop"><span class="mlabel">COOLANT</span><span class="mdot" style="background:var(--prp);box-shadow:0 0 6px var(--prp)"></span></div>
+        <div class="mval" style="color:var(--prp)">89<small>°C</small></div>
+        <div><div class="bar-g"><span style="width:61%;background:var(--prp);box-shadow:0 0 6px var(--prp)"></span><i style="left:66%;background:var(--warn)"></i><i style="left:71%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>120</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">OIL</span><span class="mdot" style="background:var(--prp);box-shadow:0 0 6px var(--prp)"></span></div>
+        <div class="mval" style="color:var(--prp)">98<small>°C</small></div>
+        <div><div class="bar-g"><span style="width:58%;background:var(--prp);box-shadow:0 0 6px var(--prp)"></span><i style="left:80%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>40</span><span>140</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">ATF</span><span class="mdot" style="background:var(--prp);box-shadow:0 0 6px var(--prp)"></span></div>
+        <div class="mval" style="color:var(--prp)">82<small>°C</small></div>
+        <div><div class="bar-g"><span style="width:38%;background:var(--prp);box-shadow:0 0 6px var(--prp)"></span></div>
+        <div class="tk"><span>40</span><span>150</span></div></div>
+      </div>
+      <div class="m">
+        <div class="mtop"><span class="mlabel">EGT</span><span class="mdot" style="background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span></div>
+        <div class="mval" style="color:var(--cyn)">421<small>°C</small></div>
+        <div><div class="bar-g"><span style="width:53%;background:var(--cyn);box-shadow:0 0 6px var(--cyn)"></span><i style="left:81%;background:var(--warn)"></i><i style="left:90%;background:var(--crit)"></i></div>
+        <div class="tk"><span>0</span><span>800</span></div></div>
+      </div>
+    </div>
+    <div class="pager"><b class="on"></b><b></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="dpf">
+    <div class="dpf-card">
+      <div class="dpf-left">
+        <div class="ring"><div class="c"><div class="rn">42<small>%</small></div><span style="font:600 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);display:block;margin-top:3px">SOOT</span></div></div>
+      </div>
+      <div class="reg">
+        <span class="reg-label">REGENERATION</span>
+        <h3>Inactive</h3>
+        <p>No regen request from ECM.</p>
+        <div class="th">
+          <span><i style="background:var(--warn)"></i>70% warning</span>
+          <span><i style="background:var(--crit)"></i>85% threshold</span>
+        </div>
+      </div>
+    </div>
+    <div class="mini">
+      <div class="mc"><span class="ml">EGT</span><div class="mv" style="color:var(--prp)">421<small>°C</small></div></div>
+      <div class="mc"><span class="ml">ΔP DPF</span><div class="mv" style="color:var(--cyn)">3.1<small>kPa</small></div></div>
+      <div class="mc"><span class="ml">SINCE REGEN</span><div class="mv" style="color:var(--cyn)">180<small>km</small></div></div>
+      <div class="mc"><span class="ml">EGR T°</span><div class="mv" style="color:var(--prp)">96<small>°C</small></div></div>
+    </div>
+    <div class="pager"><b></b><b class="on"></b><b></b></div>
+  </section>
+
+  <section class="page" data-p="diag">
+    <div class="diag">
+      <div class="mil"><span class="ml">MIL / CHECK ENGINE</span><div class="mv" style="color:var(--prp)">OFF</div></div>
+      <div class="codes"><div class="ic">✓</div><strong>NO STORED CODES</strong></div>
+      <div class="stats">
+        <div class="st"><span class="ml">BATT</span><div class="mv" style="color:var(--prp)">14.1<small>V</small></div></div>
+        <div class="st"><span class="ml">IAT</span><div class="mv" style="color:var(--cyn)">45<small>°C</small></div></div>
+        <div class="st"><span class="ml">LOAD</span><div class="mv" style="color:var(--cyn)">67<small>%</small></div></div>
+        <div class="st"><span class="ml">RAIL</span><div class="mv" style="color:var(--cyn)">58<small>MPa</small></div></div>
+      </div>
+    </div>
+    <div class="pager"><b></b><b></b><b class="on"></b></div>
+  </section>
+</div></div>
+<script>
+const pgName={drive:'DRIVE',dpf:'DPF',diag:'DIAG'};
+const btns=[...document.querySelectorAll('.tabs button')];
+btns.forEach(b=>b.onclick=()=>{
+  btns.forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.dataset.p===b.dataset.p));
+  document.getElementById('pg').textContent=pgName[b.dataset.p];
+});
+</script>
+</body>
+</html>
