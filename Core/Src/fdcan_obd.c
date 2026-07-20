@@ -46,18 +46,25 @@ static bool     itp_active;
  * slot is enough. Single-frame replies are still decoded unconditionally —
  * they need no FC, cost nothing, and decode_mode01 keys off the echoed PID,
  * so the other tester's polling transparently feeds our gauges too. */
-#define OBD_AWAIT_MS 50u             /* replies land in a few ms; poll is 25 ms */
+/* The slot expires in POLL TICKS, not milliseconds. A wall-clock deadline is
+ * unusable here: lv_port_disp's flush is a blocking row-by-row HAL_SPI_Transmit
+ * of the whole 320x480 panel, so one superloop iteration can take a few hundred
+ * ms. A 50 ms deadline had always expired by the time obd_rx_poll() next ran,
+ * which silently killed EVERY multi-frame reply (fast/misc/EGT groups) while
+ * single-frame ones kept working -- exactly the "0 everywhere" symptom.
+ * obd_rx_poll and obd_poll_tick share that same stalled loop, so counting ticks
+ * tracks the real request/response cadence no matter how slow a frame is. */
+#define OBD_AWAIT_TICKS 2u
 static uint32_t await_resp_id;       /* 0 = nothing outstanding                 */
-static uint32_t await_until_ms;
+static uint8_t  await_ttl;
 
 static void expect_reply(uint32_t req_id) {
-    await_resp_id  = req_id + 8u;    /* 0x7E0->0x7E8, 0x7E1->0x7E9, 0x7E2->0x7EA */
-    await_until_ms = HAL_GetTick() + OBD_AWAIT_MS;
+    await_resp_id = req_id + 8u;     /* 0x7E0->0x7E8, 0x7E1->0x7E9, 0x7E2->0x7EA */
+    await_ttl     = OBD_AWAIT_TICKS;
 }
 
 static bool reply_is_ours(uint32_t resp_id) {
-    return await_resp_id == resp_id &&
-           (int32_t)(HAL_GetTick() - await_until_ms) < 0;   /* tick-wrap safe */
+    return await_resp_id != 0u && await_resp_id == resp_id;
 }
 
 /* =============================== TX ====================================== */
@@ -280,6 +287,11 @@ void obd_poll_tick(void) {
     static const uint8_t egr[]   = { 0x6B };  /* EGR temperature                  */
     static const uint8_t egt[]   = { 0x78 };  /* exhaust gas temperature          */
     static bool wide_alt = false;
+
+    /* Age the outstanding-request slot before issuing a new one, so a request
+     * that never gets answered cannot leave us answering a stranger's First
+     * Frame with our Flow Control forever. */
+    if (await_ttl && --await_ttl == 0u) await_resp_id = 0u;
 
     /* fast group is hit twice per cycle; enhanced (mode 22, GM-specific) and the
      * DTC scan are interleaved. ATF temp + gear go to the trans controller on

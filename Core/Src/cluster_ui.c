@@ -679,16 +679,17 @@ void cluster_ui_refresh(void)
 
     /* ----- DRIVE ----- */
     /* GEAR: design shows the drive gear as "D6" (range letter + number, the
-     * number in nominal green). The DID is still unverified — but the one hard
-     * data point we have (ignition on, selector in P, raw byte = 1) fits the
-     * common GM range encoding 1=P 2=R 3=N 4=D1. The raw byte is printed on the
-     * DIAG page so this table can be corrected against the selector in one
-     * sitting instead of being guessed at again. */
-    if (!live || d.gear <= 0)  lv_snprintf(b, sizeof b, "--");
-    else if (d.gear == 1)      lv_snprintf(b, sizeof b, "P");
-    else if (d.gear == 2)      lv_snprintf(b, sizeof b, "R");
-    else if (d.gear == 3)      lv_snprintf(b, sizeof b, "N");
-    else                       lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear - 3);
+     * number in nominal green).
+     *
+     * DID 0x199A is the ENGAGED GEAR RATIO, not the selector range: the road
+     * test walked D1/D2/D3 and the raw byte followed 1/2/3, while P also reads
+     * 1. So it cannot express P/R/N at all -- an earlier reading of "raw 1 in
+     * park" as "1 = P" was one data point fitting a wrong theory. Showing P/R/N
+     * from this byte actively lies (it labelled D2 as "R"). Until a real PRNDL
+     * identifier is found the honest display is the gear number alone; the DIAG
+     * probe line still exposes the raw byte. */
+    if (live && d.gear >= 1) lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
+    else                     lv_snprintf(b, sizeof b, "--");
     lv_label_set_text(ui.gear_val, b);
 
     if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
