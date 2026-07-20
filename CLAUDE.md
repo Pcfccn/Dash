@@ -46,11 +46,30 @@ No test framework is present — this is bare-metal firmware with no host-side u
 
 **`cluster_app.c`** is the glue layer between the OBD data source and the UI — it owns no display/panel init itself (that's `lv_port_disp.c`'s job) and just wires `cluster_ui_build()` + `obd_init()` together, then on each `cluster_app_run()` tick: drains CAN RX, runs the OBD-II poll scheduler (~40Hz) and a 1Hz bus watchdog, and refreshes the UI (~25Hz). Set `OBD_DEMO` in `cluster_config.h` to 1 to substitute synthetic values for real CAN traffic (bench testing without a car) — **must be 0 before use in the vehicle**.
 
-**`cluster_config.h`** is the single source of truth for the vehicle-specific domain model: metric keys (`M_SPEED`, `M_RPM`, `M_COOL`, ...), their gauge thresholds/colors (mirrors the `METRICS` table in `design/Diesel_Cluster_v2_3.html`, the HTML mockup this UI was ported from), and the OBD-II PID/DID map (`pid_map[]`) describing how each metric is polled from the ECM (0x7E0) or TCM (0x7E1). Several enhanced-mode (UDS 0x22) DIDs are placeholder `0x0000` entries marked "TBD" — they need real DIDs from an E98/TCM calibration definition (EFILive/HP Tuners) before those metrics (ATF, soot, DPF ∆P, since-regen, EGR temp, gear) will read correctly.
+**`cluster_config.h`** is the single source of truth for the vehicle-specific domain model: metric keys (`M_SPEED`, `M_RPM`, `M_COOL`, ...), their gauge thresholds/colors (mirrors the `METRICS` table in `design/Diesel_Cluster_v2_3.html`, the HTML mockup this UI was ported from), and the OBD-II PID/DID map (`pid_map[]`) describing how each metric is polled from the ECM (0x7E0) or TCM (0x7E1). Several enhanced-mode (UDS 0x22) DIDs are placeholder `0x0000` entries marked "TBD" — they need real DIDs from an E98/TCM calibration definition (EFILive/HP Tuners) before those metrics will read correctly.
+
+What this truck actually answers, verified in-vehicle (don't re-derive it by guessing):
+
+| Signal | Source | Status |
+|---|---|---|
+| coolant `0x05`, IAT `0x0F`, speed `0x0D`, RPM `0x0C`, load `0x04`, MAP `0x0B`, baro `0x33`, rail `0x23`, batt `0x42` | mode 01 | works |
+| ATF temp | DID `0x1940` on 0x7E2 | works, `A - 40` |
+| gear | DID `0x199A` on 0x7E2 | works, but it is the **engaged gear ratio, not the selector range** — D1/D2/D3 give 1/2/3 and P also gives 1, so it cannot express P/R/N |
+| oil temp `0x5C`, EGR temp `0x6B` | mode 01 | **not supported** — silently omitted from grouped replies rather than refused |
+| selector range (PRNDL), soot, DPF ∆P, since-regen | — | **no known identifier**; use the SNIFF page (below) |
+
+Note a grouped mode-01 request drops unsupported PIDs from the reply instead of returning a negative response, so a missing value there is not an error and produces no NRC.
 
 **`fdcan_obd.c`/`.h`** implements the actual OBD-II protocol over FDCAN1 (H743 uses FDCAN, not bxCAN, but this project speaks classic CAN 2.0 frames at 500kbps, not CAN-FD). RX is **polled** from `obd_rx_poll()` in the main loop rather than interrupt-driven — there's no FDCAN NVIC handler wired. Live decoded values land in the global `g_obd` (`obd_data_t`), which both displays read from.
 
-**`cluster_ui.c`/`.h`** builds and refreshes the 3-page LVGL UI (`cluster_ui_build()` once, `cluster_ui_refresh()` at ~25Hz) plus an alert strip; pages are DRIVE(0)/DPF(1)/DIAG(2), selected via `cluster_ui_set_page()`/`cluster_ui_next_page()`.
+Two conventions in `g_obd` matter and are easy to break:
+
+- **Every float starts as `NaN`, meaning "the bus has never sent this."** The UI renders NaN as `--`. Do not "fix" a metric by defaulting it to 0 — an unsupported PID would then paint a believable lie (0 V battery, 0 °C oil), which is exactly the bug that once made an entirely dead poller look like a working one.
+- **Any timeout reached from the superloop must be counted in poll ticks, not `HAL_GetTick()` milliseconds.** `lv_port_disp`'s flush is a blocking row-by-row `HAL_SPI_Transmit` of the whole panel, so one loop iteration can take hundreds of ms. A wall-clock deadline expires before `obd_rx_poll()` next runs; that silently killed every multi-frame ISO-TP reply while single-frame ones kept working.
+
+**`cluster_ui.c`/`.h`** builds and refreshes the 4-page LVGL UI (`cluster_ui_build()` once, `cluster_ui_refresh()` at ~25Hz) plus an alert strip; pages are DRIVE(0)/DPF(1)/DIAG(2)/SNIFF(3), selected via `cluster_ui_set_page()`/`cluster_ui_next_page()`.
+
+**`can_sniff.c`/`.h`** is a workbench-only passive CAN change detector behind the SNIFF page: it widens the FDCAN acceptance filter to all standard IDs and lists the bytes that changed most recently, so operating one control identifies the frame carrying it. It exists because the signals still missing an identifier (selector range/PRNDL, soot, DPF ∆P, since-regen) are broadcast as ordinary frames — the OEM cluster displayed them. Listening is deliberately tied to the page being visible: the wide filter competes with OBD replies for the same RX FIFO, and `obd_poll_tick()` is suspended while it runs.
 
 **Dead code:** `can_gauges.c`/`.h` and `ui_dashboard.c`/`.h` are retired stubs (empty translation units), kept only so the CubeIDE build file list stays valid after the functionality was replaced by `fdcan_obd.c` + `cluster_ui.c`. They're safe to delete along with removing them from the CubeIDE project.
 
