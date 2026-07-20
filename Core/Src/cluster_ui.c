@@ -18,6 +18,7 @@
 #include "cluster_ui.h"
 #include "cluster_config.h"
 #include "fdcan_obd.h"
+#include "can_sniff.h"
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -66,7 +67,7 @@ LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero 
 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
-    lv_obj_t *page[3];
+    lv_obj_t *page[4];
 
     /* alert strip */
     lv_obj_t *strip;
@@ -89,7 +90,16 @@ static struct {
     lv_obj_t *mil_text, *dtc_msg, *dtc_ring, *dtc_ic;
     lv_obj_t *st_val[4];            /* batt iat load rail */
     lv_obj_t *did_dbg;              /* raw gear byte + last NRC (DID probing) */
+
+    /* SNIFF */
+    lv_obj_t *sn_stat, *sn_rows;
 } ui;
+
+/* SNIFF is a workbench page, not part of the design: it only exists while the
+ * remaining signals (selector range, soot, DPF dP, since-regen) have no known
+ * identifier. It sits last so the three real pages keep their order. */
+#define PAGE_SNIFF  3
+#define PAGE_COUNT  4
 
 static uint8_t s_page = 0;
 static volatile bool s_dirty = true;
@@ -263,14 +273,18 @@ static lv_obj_t *mk_dot(lv_obj_t *p, int x, int y)
     return d;
 }
 
-/* three pager dots at the bottom of a page; active one is wider/brighter */
+/* pager dots at the bottom of a page; active one is wider/brighter.
+ * Kept centred on the same point the three-page layout used, so adding the
+ * SNIFF page does not shift the row the eye is used to. */
 static void mk_pager(lv_obj_t *page, int active)
 {
-    for (int i = 0; i < 3; i++) {
+    const int span = (PAGE_COUNT - 1) * 16 + 7;
+    const int x0   = 144 - span / 2;
+    for (int i = 0; i < PAGE_COUNT; i++) {
         lv_obj_t *d = lv_obj_create(page);
         int wide = (i == active);
         lv_obj_set_size(d, wide ? 18 : 7, 7);
-        lv_obj_set_pos(d, 140 - 16 + i * 16, 448 - 16);
+        lv_obj_set_pos(d, x0 + i * 16, 448 - 16);
         lv_obj_set_style_radius(d, 4, 0);
         lv_obj_set_style_bg_color(d, wide ? C_TEXT2 : lv_color_hex(0x344051), 0);
         lv_obj_set_style_bg_opa(d, LV_OPA_COVER, 0);
@@ -548,6 +562,37 @@ static void build_diag(void)
     mk_pager(pg, 2);
 }
 
+/* ---------------------------------------------------------------- SNIFF page */
+/* Workbench page: lists the bus bytes that changed most recently, so operating
+ * one control identifies the frame that carries it. Entering the page starts
+ * listening and clears the history; leaving it stops. */
+static void build_sniff(void)
+{
+    lv_obj_t *pg = ui.page[PAGE_SNIFF];
+
+    mk_eyebrow(pg, "SNIFF");
+
+    ui.sn_stat = mk_label(pg, "LISTENING...", F12, C_MUTED);
+    lv_obj_set_pos(ui.sn_stat, 10, 40);
+
+    lv_obj_t *hdr = mk_label(pg, "ID   B  WAS>NOW   N   AGE", F12, C_FAINT);
+    lv_obj_set_pos(hdr, 10, 60);
+
+    ui.sn_rows = mk_label(pg, "", F14, C_TEXT2);
+    lv_obj_set_pos(ui.sn_rows, 10, 80);
+    lv_obj_set_style_text_line_space(ui.sn_rows, 6, 0);
+
+    lv_obj_t *hint = mk_label(pg,
+        "Park, ignition on. Move ONE control,\n"
+        "then read the top row. Leaving and\n"
+        "re-entering this page clears history.\n"
+        "OBD polling is paused while here.", F12, C_MUTED);
+    lv_obj_set_pos(hint, 10, 352);
+    lv_obj_set_style_text_line_space(hint, 4, 0);
+
+    mk_pager(pg, PAGE_SNIFF);
+}
+
 /* --------------------------------------------------------------- alert strip */
 static void build_strip(lv_obj_t *scr)
 {
@@ -585,7 +630,7 @@ void cluster_ui_build(void)
     lv_obj_set_style_pad_all(scr, 0, 0);
     lv_obj_clear_flag(scr, LV_OBJ_FLAG_SCROLLABLE);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < PAGE_COUNT; i++) {
         ui.page[i] = lv_obj_create(scr);
         lv_obj_set_pos(ui.page[i], 0, 32);
         lv_obj_set_size(ui.page[i], 320, 448);
@@ -599,6 +644,7 @@ void cluster_ui_build(void)
     build_drive();
     build_dpf();
     build_diag();
+    build_sniff();
     build_strip(scr);
 
     cluster_ui_set_page(0);
@@ -606,9 +652,12 @@ void cluster_ui_build(void)
 
 void cluster_ui_set_page(uint8_t p)
 {
-    if (p > 2) p = 0;
+    if (p >= PAGE_COUNT) p = 0;
     s_page = p;
-    for (int i = 0; i < 3; i++) {
+    /* Sniffing costs the OBD poller its bus access, so it is tied to the page
+     * being visible: you cannot leave it running by accident. */
+    can_sniff_set_active(p == PAGE_SNIFF);
+    for (int i = 0; i < PAGE_COUNT; i++) {
         if (i == p) lv_obj_clear_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
         else        lv_obj_add_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
     }
@@ -617,7 +666,7 @@ void cluster_ui_set_page(uint8_t p)
 
 void cluster_ui_next_page(void)
 {
-    cluster_ui_set_page((s_page + 1) % 3);
+    cluster_ui_set_page((s_page + 1) % PAGE_COUNT);
 }
 
 uint8_t cluster_ui_get_page(void)
@@ -755,6 +804,34 @@ void cluster_ui_refresh(void)
             lv_snprintf(db, sizeof db, "GEAR RAW %02X   NRC --",
                         (unsigned)d.gear_raw);
         lv_label_set_text(ui.did_dbg, db);
+    }
+
+    /* ----- SNIFF -----
+     * Only while visible: can_sniff_top() is a scan over the whole table and
+     * the page is hidden the rest of the time. */
+    if (s_page == PAGE_SNIFF) {
+        char sb[40];
+        lv_snprintf(sb, sizeof sb, "IDS %u   FRAMES %lu",
+                    (unsigned)can_sniff_id_count(),
+                    (unsigned long)can_sniff_frame_count());
+        lv_label_set_text(ui.sn_stat, sb);
+
+        sniff_hit_t hits[SNIFF_TOP_N];
+        uint8_t nh = can_sniff_top(hits, SNIFF_TOP_N);
+        char rows[SNIFF_TOP_N * 34 + 2];
+        int  off = 0;
+        for (uint8_t i = 0; i < nh; i++) {
+            unsigned age_ds = (unsigned)(hits[i].age_ms / 100u);   /* 0.1 s */
+            off += lv_snprintf(rows + off, sizeof rows - off,
+                               "%03X  %u  %02X>%02X  %3u  %u.%us\n",
+                               (unsigned)hits[i].id, (unsigned)hits[i].byte_idx,
+                               (unsigned)hits[i].prev, (unsigned)hits[i].cur,
+                               (unsigned)hits[i].changes,
+                               age_ds / 10u, age_ds % 10u);
+            if (off >= (int)sizeof rows - 1) break;
+        }
+        if (nh == 0) lv_snprintf(rows, sizeof rows, "no changes yet");
+        lv_label_set_text(ui.sn_rows, rows);
     }
 
     /* ----- alert strip -----

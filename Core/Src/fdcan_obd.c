@@ -12,6 +12,7 @@
  * ========================================================================== */
 #include "fdcan_obd.h"
 #include "cluster_config.h"
+#include "can_sniff.h"
 #include <string.h>
 #include <math.h>
 
@@ -221,7 +222,13 @@ void obd_rx_poll(void) {
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
         /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */
-        if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) continue;
+        if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) {
+            /* Everything else only reaches here with the sniffer's wide filter
+             * installed; normally the hardware rejects it. */
+            can_sniff_feed((uint16_t)rh.Identifier, d,
+                           (uint8_t)(rh.DataLength > 8u ? 8u : rh.DataLength));
+            continue;
+        }
         last_rx_ms = HAL_GetTick();
         g_obd.can_ok = true;
 
@@ -287,6 +294,11 @@ void obd_poll_tick(void) {
     static const uint8_t egr[]   = { 0x6B };  /* EGR temperature                  */
     static const uint8_t egt[]   = { 0x78 };  /* exhaust gas temperature          */
     static bool wide_alt = false;
+
+    /* While sniffing, stay off the bus entirely: our own request/response pairs
+     * would otherwise show up as "changing bytes" and compete for the RX FIFO
+     * with the broadcast traffic we are trying to catch. */
+    if (can_sniff_is_active()) return;
 
     /* Age the outstanding-request slot before issuing a new one, so a request
      * that never gets answered cannot leave us answering a stranger's First
