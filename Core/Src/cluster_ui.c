@@ -44,6 +44,7 @@
 #define C_INFO       lv_color_hex(0x45d0ff)
 #define C_WARN       lv_color_hex(0xffc73f)
 #define C_CRIT       lv_color_hex(0xff4350)
+#define C_ORANGE     lv_color_hex(0xff7a1a)   /* reverse gear: bright orange */
 #define C_TRACK      lv_color_hex(0x2b3d54)
 #define C_ALERTBG    lv_color_hex(0x000000)
 #define C_TOPBAR     lv_color_hex(0x000000)
@@ -68,6 +69,9 @@ LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
     lv_obj_t *page[4];
+
+    /* full-screen alert border overlay (red = critical, orange = reverse) */
+    lv_obj_t *border;
 
     /* alert strip */
     lv_obj_t *strip;
@@ -660,6 +664,23 @@ void cluster_ui_build(void)
     build_sniff();
     build_strip(scr);
 
+    /* Full-screen alert border: a transparent-centre ring on top of every page,
+     * so a critical value or reverse gear is unmissable regardless of the page
+     * shown. Hidden until refresh() decides a colour. Non-interactive: input is
+     * the physical KEY button, so the overlay never needs to catch touches. */
+    ui.border = lv_obj_create(scr);
+    lv_obj_set_pos(ui.border, 0, 0);
+    lv_obj_set_size(ui.border, 320, 480);
+    lv_obj_set_style_bg_opa(ui.border, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_radius(ui.border, 0, 0);
+    lv_obj_set_style_pad_all(ui.border, 0, 0);
+    lv_obj_set_style_border_width(ui.border, 5, 0);
+    lv_obj_set_style_border_color(ui.border, C_ORANGE, 0);
+    lv_obj_set_style_border_opa(ui.border, LV_OPA_COVER, 0);
+    lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
+
     cluster_ui_set_page(0);
 }
 
@@ -760,6 +781,10 @@ void cluster_ui_refresh(void)
         default: lv_snprintf(b, sizeof b, "--"); break;
     }
     lv_label_set_text(ui.gear_val, b);
+    /* Reverse: the whole "R" glows bright orange (a reversing cue). Other ranges
+     * keep the white base; the D case still recolors its gear number green. */
+    lv_obj_set_style_text_color(ui.gear_val,
+                                (live && d.sel_range == 2) ? C_ORANGE : C_TEXT2, 0);
 
     if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
     else        lv_label_set_text(ui.speed_val, "--");
@@ -963,6 +988,19 @@ void cluster_ui_refresh(void)
     else if (worst == ST_WARN)     { sbg = lv_color_hex(0x1a1408); sbd = C_WARN; }
     lv_obj_set_style_bg_color(ui.strip, sbg, 0);
     lv_obj_set_style_border_color(ui.strip, sbd, 0);
+
+    /* full-screen alert border: red on any critical parameter (high coolant,
+     * MIL, CAN lost, ...), orange when reverse is engaged, off otherwise. Red
+     * outranks reverse. */
+    if (worst == ST_CRIT || !live) {
+        lv_obj_set_style_border_color(ui.border, C_CRIT, 0);
+        lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
+    } else if (live && d.sel_range == 2) {          /* R */
+        lv_obj_set_style_border_color(ui.border, C_ORANGE, 0);
+        lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
+    }
 
     s_dirty = false;
 }

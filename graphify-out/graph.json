@@ -41,8 +41,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_inc_cluster_config",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
+      "community": 27,
+      "community_name": "set_metric",
       "norm_label": "cluster_config.h"
     },
     {
@@ -52,8 +52,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "core_inc_cluster_config_metric_state",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
+      "community": 27,
+      "community_name": "set_metric",
       "norm_label": "metric_state()"
     },
     {
@@ -63,8 +63,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_inc_cluster_config_h_metric_state_t",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
+      "community": 27,
+      "community_name": "set_metric",
       "norm_label": "metric_state_t"
     },
     {
@@ -74,8 +74,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "core_inc_cluster_config_h_metric_key_t",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
+      "community": 27,
+      "community_name": "set_metric",
       "norm_label": "metric_key_t"
     },
     {
@@ -346,7 +346,7 @@
       "label": "build_dpf()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L435",
+      "source_location": "L438",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_dpf",
       "community": 3,
@@ -357,7 +357,7 @@
       "label": "build_diag()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L501",
+      "source_location": "L504",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_diag",
       "community": 3,
@@ -368,7 +368,7 @@
       "label": "build_sniff()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L572",
+      "source_location": "L575",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_sniff",
       "community": 3,
@@ -379,7 +379,7 @@
       "label": "build_strip()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L607",
+      "source_location": "L610",
       "_origin": "ast",
       "id": "core_src_cluster_ui_build_strip",
       "community": 3,
@@ -390,7 +390,7 @@
       "label": "cluster_ui_build()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L635",
+      "source_location": "L638",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_build",
       "community": 3,
@@ -401,7 +401,7 @@
       "label": "cluster_ui_set_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L663",
+      "source_location": "L666",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_set_page",
       "community": 3,
@@ -412,7 +412,7 @@
       "label": "cluster_ui_next_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L677",
+      "source_location": "L680",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_next_page",
       "community": 3,
@@ -423,7 +423,7 @@
       "label": "cluster_ui_get_page()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L682",
+      "source_location": "L685",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_get_page",
       "community": 2,
@@ -434,7 +434,7 @@
       "label": "set_metric()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
+      "source_location": "L691",
       "_origin": "ast",
       "id": "core_src_cluster_ui_set_metric",
       "community": 3,
@@ -445,7 +445,7 @@
       "label": "cluster_ui_refresh()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L722",
+      "source_location": "L725",
       "_origin": "ast",
       "id": "core_src_cluster_ui_cluster_ui_refresh",
       "community": 3,
@@ -456,11 +456,11 @@
       "label": "obd_on_update()",
       "file_type": "code",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L966",
+      "source_location": "L971",
       "_origin": "ast",
       "id": "core_src_cluster_ui_obd_on_update",
-      "community": 3,
-      "community_name": "UI Page Builders",
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
       "norm_label": "obd_on_update()"
     },
     {
@@ -469,10 +469,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "fdcan_obd.c",
-      "id": "core_src_fdcan_obd"
+      "norm_label": "fdcan_obd.c"
     },
     {
       "label": "expect_reply()",
@@ -480,10 +480,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L63",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_expect_reply",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "expect_reply()",
-      "id": "core_src_fdcan_obd_expect_reply"
+      "norm_label": "expect_reply()"
     },
     {
       "label": "reply_is_ours()",
@@ -491,10 +491,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L68",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_reply_is_ours",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "reply_is_ours()",
-      "id": "core_src_fdcan_obd_reply_is_ours"
+      "norm_label": "reply_is_ours()"
     },
     {
       "label": "can_send()",
@@ -502,10 +502,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L73",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_can_send",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "can_send()",
-      "id": "core_src_fdcan_obd_can_send"
+      "norm_label": "can_send()"
     },
     {
       "label": "req_mode01()",
@@ -513,10 +513,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L87",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_req_mode01",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode01()",
-      "id": "core_src_fdcan_obd_req_mode01"
+      "norm_label": "req_mode01()"
     },
     {
       "label": "req_mode03()",
@@ -524,10 +524,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L97",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_req_mode03",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode03()",
-      "id": "core_src_fdcan_obd_req_mode03"
+      "norm_label": "req_mode03()"
     },
     {
       "label": "req_mode22()",
@@ -535,10 +535,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L106",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_req_mode22",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode22()",
-      "id": "core_src_fdcan_obd_req_mode22"
+      "norm_label": "req_mode22()"
     },
     {
       "label": "send_flow_control()",
@@ -546,10 +546,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L117",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_send_flow_control",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "send_flow_control()",
-      "id": "core_src_fdcan_obd_send_flow_control"
+      "norm_label": "send_flow_control()"
     },
     {
       "label": "set_f()",
@@ -557,10 +557,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L123",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_set_f",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "set_f()",
-      "id": "core_src_fdcan_obd_set_f"
+      "norm_label": "set_f()"
     },
     {
       "label": "update_boost()",
@@ -568,10 +568,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L135",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_update_boost",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "update_boost()",
-      "id": "core_src_fdcan_obd_update_boost"
+      "norm_label": "update_boost()"
     },
     {
       "label": "decode_mode01()",
@@ -579,10 +579,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L143",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_decode_mode01",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "decode_mode01()",
-      "id": "core_src_fdcan_obd_decode_mode01"
+      "norm_label": "decode_mode01()"
     },
     {
       "label": "decode_mode22()",
@@ -590,65 +590,65 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L195",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_decode_mode22",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "decode_mode22()",
-      "id": "core_src_fdcan_obd_decode_mode22"
+      "norm_label": "decode_mode22()"
     },
     {
       "label": "dispatch()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L251",
+      "source_location": "L262",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_dispatch",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "dispatch()",
-      "id": "core_src_fdcan_obd_dispatch"
+      "norm_label": "dispatch()"
     },
     {
       "label": "obd_check_health()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L281",
+      "source_location": "L292",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_check_health",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_check_health()",
-      "id": "core_src_fdcan_obd_obd_check_health"
+      "norm_label": "obd_check_health()"
     },
     {
       "label": "obd_can_health()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L306",
+      "source_location": "L317",
       "_origin": "ast",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_can_health()",
-      "id": "core_src_fdcan_obd_obd_can_health"
+      "id": "core_src_fdcan_obd_obd_can_health",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "obd_can_health()"
     },
     {
       "label": "obd_rx_poll()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L315",
+      "source_location": "L326",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_rx_poll",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_rx_poll()",
-      "id": "core_src_fdcan_obd_obd_rx_poll"
+      "norm_label": "obd_rx_poll()"
     },
     {
       "label": "obd_init()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L373",
+      "source_location": "L384",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_init",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_init()",
-      "id": "core_src_fdcan_obd_obd_init"
+      "norm_label": "obd_init()"
     },
     {
       "label": "FDCAN_HandleTypeDef",
@@ -656,43 +656,43 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
+      "id": "fdcan_handletypedef",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "fdcan_handletypedef",
-      "id": "fdcan_handletypedef"
+      "norm_label": "fdcan_handletypedef"
     },
     {
       "label": "obd_poll_tick()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L410",
+      "source_location": "L421",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_poll_tick",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_poll_tick()",
-      "id": "core_src_fdcan_obd_obd_poll_tick"
+      "norm_label": "obd_poll_tick()"
     },
     {
       "label": "obd_watchdog_tick_1hz()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L489",
+      "source_location": "L500",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_watchdog_tick_1hz()",
-      "id": "core_src_fdcan_obd_obd_watchdog_tick_1hz"
+      "norm_label": "obd_watchdog_tick_1hz()"
     },
     {
       "label": "obd_demo_tick()",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L498",
+      "source_location": "L509",
       "_origin": "ast",
+      "id": "core_src_fdcan_obd_obd_demo_tick",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_demo_tick()",
-      "id": "core_src_fdcan_obd_obd_demo_tick"
+      "norm_label": "obd_demo_tick()"
     },
     {
       "label": "enhanced-dids.md",
@@ -700,10 +700,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "docs_enhanced_dids",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "enhanced-dids.md",
-      "id": "docs_enhanced_dids"
+      "norm_label": "enhanced-dids.md"
     },
     {
       "label": "GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98",
@@ -711,10 +711,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L1",
       "_origin": "ast",
+      "id": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "gm-enhanced dids (mode 22) for the colorado 2.8 / e98",
-      "id": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98"
+      "norm_label": "gm-enhanced dids (mode 22) for the colorado 2.8 / e98"
     },
     {
       "label": "Confirmed on this vehicle",
@@ -722,10 +722,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L14",
       "_origin": "ast",
+      "id": "docs_enhanced_dids_confirmed_on_this_vehicle",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "confirmed on this vehicle",
-      "id": "docs_enhanced_dids_confirmed_on_this_vehicle"
+      "norm_label": "confirmed on this vehicle"
     },
     {
       "label": "Added, awaiting on-car confirmation",
@@ -733,32 +733,32 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L24",
       "_origin": "ast",
+      "id": "docs_enhanced_dids_added_awaiting_on_car_confirmation",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "added, awaiting on-car confirmation",
-      "id": "docs_enhanced_dids_added_awaiting_on_car_confirmation"
+      "norm_label": "added, awaiting on-car confirmation"
     },
     {
       "label": "Being probed on the car (standard diesel PIDs)",
       "file_type": "document",
       "source_file": "docs/enhanced-dids.md",
-      "source_location": "L45",
+      "source_location": "L46",
       "_origin": "ast",
+      "id": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "being probed on the car (standard diesel pids)",
-      "id": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids"
+      "norm_label": "being probed on the car (standard diesel pids)"
     },
     {
       "label": "Sources",
       "file_type": "document",
       "source_file": "docs/enhanced-dids.md",
-      "source_location": "L74",
+      "source_location": "L75",
       "_origin": "ast",
+      "id": "docs_enhanced_dids_sources",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "sources",
-      "id": "docs_enhanced_dids_sources"
+      "norm_label": "sources"
     },
     {
       "label": "run-2026-07-21.md",
@@ -2935,9 +2935,9 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_inc_cluster_config"
+      "target": "core_inc_cluster_config",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -2969,7 +2969,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L766",
+      "source_location": "L769",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -2981,7 +2981,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L707",
+      "source_location": "L710",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -2991,7 +2991,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L501",
+      "source_location": "L504",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3002,7 +3002,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L435",
+      "source_location": "L438",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3024,7 +3024,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L572",
+      "source_location": "L575",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3035,7 +3035,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L607",
+      "source_location": "L610",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3046,7 +3046,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L635",
+      "source_location": "L638",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3057,7 +3057,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L682",
+      "source_location": "L685",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3068,7 +3068,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L677",
+      "source_location": "L680",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3079,7 +3079,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L722",
+      "source_location": "L725",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3090,7 +3090,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L663",
+      "source_location": "L666",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3244,7 +3244,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L966",
+      "source_location": "L971",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3277,7 +3277,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
+      "source_location": "L691",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui",
@@ -3324,7 +3324,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L423",
+      "source_location": "L426",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3336,7 +3336,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L761",
+      "source_location": "L764",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -3348,7 +3348,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L704",
+      "source_location": "L707",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3360,7 +3360,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L767",
+      "source_location": "L770",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -3372,7 +3372,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L708",
+      "source_location": "L711",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3444,7 +3444,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L761",
+      "source_location": "L764",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -3456,7 +3456,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L692",
+      "source_location": "L695",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3480,7 +3480,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L710",
+      "source_location": "L713",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3515,7 +3515,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
+      "source_location": "L691",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3540,7 +3540,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L691",
+      "source_location": "L694",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3551,7 +3551,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
+      "source_location": "L691",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3564,7 +3564,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L778",
+      "source_location": "L781",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -3576,7 +3576,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L717",
+      "source_location": "L720",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_set_metric",
@@ -3588,7 +3588,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L445",
+      "source_location": "L448",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3600,7 +3600,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L334",
+      "source_location": "L336",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3635,7 +3635,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L607",
+      "source_location": "L610",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3743,7 +3743,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
+      "source_location": "L691",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -3756,7 +3756,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L510",
+      "source_location": "L513",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -3768,7 +3768,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L467",
+      "source_location": "L470",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3780,7 +3780,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L342",
+      "source_location": "L344",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3792,7 +3792,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L578",
+      "source_location": "L581",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_sniff",
@@ -3804,7 +3804,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L623",
+      "source_location": "L626",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_strip",
@@ -3864,7 +3864,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L553",
+      "source_location": "L556",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -3876,59 +3876,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L465",
+      "source_location": "L468",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
       "target": "core_src_cluster_ui_mk_value",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L406",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_value",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L508",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_card",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L490",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_card",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L340",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_card",
       "confidence_score": 1.0
     },
     {
@@ -3940,6 +3892,54 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L511",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L493",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L342",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L412",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
       "target": "core_src_cluster_ui_mk_bar",
       "confidence_score": 1.0
     },
@@ -3948,7 +3948,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L476",
+      "source_location": "L479",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -3960,7 +3960,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L418",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3972,7 +3972,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L626",
+      "source_location": "L629",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_strip",
@@ -3984,7 +3984,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L404",
+      "source_location": "L407",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -3996,7 +3996,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L565",
+      "source_location": "L568",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -4008,7 +4008,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L497",
+      "source_location": "L500",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -4020,7 +4020,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L431",
+      "source_location": "L434",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_drive",
@@ -4032,7 +4032,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L603",
+      "source_location": "L606",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_sniff",
@@ -4044,7 +4044,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L505",
+      "source_location": "L508",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_diag",
@@ -4056,7 +4056,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L439",
+      "source_location": "L442",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_dpf",
@@ -4068,59 +4068,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L326",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_eyebrow",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L576",
+      "source_location": "L579",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_build_sniff",
       "target": "core_src_cluster_ui_mk_eyebrow",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L654",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_drive",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L655",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_dpf",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L656",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_diag",
       "confidence_score": 1.0
     },
     {
@@ -4132,7 +4084,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_sniff",
+      "target": "core_src_cluster_ui_build_drive",
       "confidence_score": 1.0
     },
     {
@@ -4141,6 +4093,42 @@
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
       "source_location": "L658",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_dpf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L659",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_diag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L660",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_sniff",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L661",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -4164,7 +4152,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L660",
+      "source_location": "L663",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_build",
@@ -4176,7 +4164,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L679",
+      "source_location": "L682",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_next_page",
@@ -4212,7 +4200,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L770",
+      "source_location": "L773",
       "weight": 1.0,
       "_origin": "ast",
       "source": "core_src_cluster_ui_cluster_ui_refresh",
@@ -4232,15 +4220,111 @@
       "target": "core_src_cluster_ui_cluster_ui_refresh"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L867",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_fdcan_obd_obd_can_health"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_decode_mode01",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L246",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_decode_mode22",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L273",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_dispatch",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L523",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_obd_demo_tick",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L340",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_obd_rx_poll",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L502",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/fdcan_obd.c",
+      "source_location": "L124",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_fdcan_obd_set_f",
+      "target": "core_src_cluster_ui_obd_on_update"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_can_send"
+      "target": "core_src_fdcan_obd_can_send",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4249,9 +4333,9 @@
       "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_decode_mode01"
+      "target": "core_src_fdcan_obd_decode_mode01",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4260,20 +4344,20 @@
       "source_location": "L195",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_decode_mode22"
+      "target": "core_src_fdcan_obd_decode_mode22",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L251",
+      "source_location": "L262",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_dispatch"
+      "target": "core_src_fdcan_obd_dispatch",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4282,86 +4366,86 @@
       "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_expect_reply"
+      "target": "core_src_fdcan_obd_expect_reply",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L306",
+      "source_location": "L317",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_can_health"
+      "target": "core_src_fdcan_obd_obd_can_health",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L281",
+      "source_location": "L292",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_check_health"
+      "target": "core_src_fdcan_obd_obd_check_health",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L498",
+      "source_location": "L509",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_demo_tick"
+      "target": "core_src_fdcan_obd_obd_demo_tick",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L373",
+      "source_location": "L384",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_init"
+      "target": "core_src_fdcan_obd_obd_init",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L410",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_poll_tick"
+      "target": "core_src_fdcan_obd_obd_poll_tick",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L315",
+      "source_location": "L326",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_rx_poll"
+      "target": "core_src_fdcan_obd_obd_rx_poll",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L489",
+      "source_location": "L500",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_watchdog_tick_1hz"
+      "target": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4370,9 +4454,9 @@
       "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_reply_is_ours"
+      "target": "core_src_fdcan_obd_reply_is_ours",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4381,9 +4465,9 @@
       "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode01"
+      "target": "core_src_fdcan_obd_req_mode01",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4392,9 +4476,9 @@
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode03"
+      "target": "core_src_fdcan_obd_req_mode03",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4403,9 +4487,9 @@
       "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode22"
+      "target": "core_src_fdcan_obd_req_mode22",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4414,9 +4498,9 @@
       "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_send_flow_control"
+      "target": "core_src_fdcan_obd_send_flow_control",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4425,9 +4509,9 @@
       "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_set_f"
+      "target": "core_src_fdcan_obd_set_f",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4436,9 +4520,9 @@
       "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_update_boost"
+      "target": "core_src_fdcan_obd_update_boost",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4448,9 +4532,9 @@
       "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode01",
-      "target": "core_src_fdcan_obd_expect_reply"
+      "target": "core_src_fdcan_obd_expect_reply",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4460,9 +4544,9 @@
       "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode03",
-      "target": "core_src_fdcan_obd_expect_reply"
+      "target": "core_src_fdcan_obd_expect_reply",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4472,21 +4556,21 @@
       "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode22",
-      "target": "core_src_fdcan_obd_expect_reply"
+      "target": "core_src_fdcan_obd_expect_reply",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L347",
+      "source_location": "L358",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_reply_is_ours"
+      "target": "core_src_fdcan_obd_reply_is_ours",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4496,9 +4580,9 @@
       "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode01",
-      "target": "core_src_fdcan_obd_can_send"
+      "target": "core_src_fdcan_obd_can_send",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4508,9 +4592,9 @@
       "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode03",
-      "target": "core_src_fdcan_obd_can_send"
+      "target": "core_src_fdcan_obd_can_send",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4520,9 +4604,9 @@
       "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode22",
-      "target": "core_src_fdcan_obd_can_send"
+      "target": "core_src_fdcan_obd_can_send",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4532,57 +4616,57 @@
       "source_location": "L119",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_send_flow_control",
-      "target": "core_src_fdcan_obd_can_send"
+      "target": "core_src_fdcan_obd_can_send",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L469",
+      "source_location": "L480",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode01"
+      "target": "core_src_fdcan_obd_req_mode01",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L484",
+      "source_location": "L495",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode03"
+      "target": "core_src_fdcan_obd_req_mode03",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L470",
+      "source_location": "L481",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode22"
+      "target": "core_src_fdcan_obd_req_mode22",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L357",
+      "source_location": "L368",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_send_flow_control"
+      "target": "core_src_fdcan_obd_send_flow_control",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4592,9 +4676,9 @@
       "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode01",
-      "target": "core_src_fdcan_obd_set_f"
+      "target": "core_src_fdcan_obd_set_f",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4604,9 +4688,9 @@
       "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode22",
-      "target": "core_src_fdcan_obd_set_f"
+      "target": "core_src_fdcan_obd_set_f",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4616,9 +4700,9 @@
       "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_update_boost",
-      "target": "core_src_fdcan_obd_set_f"
+      "target": "core_src_fdcan_obd_set_f",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4628,57 +4712,57 @@
       "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode01",
-      "target": "core_src_fdcan_obd_update_boost"
+      "target": "core_src_fdcan_obd_update_boost",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L253",
+      "source_location": "L264",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_dispatch",
-      "target": "core_src_fdcan_obd_decode_mode01"
+      "target": "core_src_fdcan_obd_decode_mode01",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L254",
+      "source_location": "L265",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_dispatch",
-      "target": "core_src_fdcan_obd_decode_mode22"
+      "target": "core_src_fdcan_obd_decode_mode22",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L348",
+      "source_location": "L359",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_dispatch"
+      "target": "core_src_fdcan_obd_dispatch",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L318",
+      "source_location": "L329",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_obd_check_health"
+      "target": "core_src_fdcan_obd_obd_check_health",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4708,13 +4792,13 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Core/Src/fdcan_obd.c",
-      "source_location": "L373",
+      "source_location": "L384",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_init",
-      "target": "fdcan_handletypedef"
+      "target": "fdcan_handletypedef",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -4759,9 +4843,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "docs_enhanced_dids",
-      "target": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98"
+      "target": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4770,20 +4854,20 @@
       "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_added_awaiting_on_car_confirmation"
+      "target": "docs_enhanced_dids_added_awaiting_on_car_confirmation",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/enhanced-dids.md",
-      "source_location": "L45",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids"
+      "target": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4792,20 +4876,20 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_confirmed_on_this_vehicle"
+      "target": "docs_enhanced_dids_confirmed_on_this_vehicle",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/enhanced-dids.md",
-      "source_location": "L74",
+      "source_location": "L75",
       "weight": 1.0,
       "_origin": "ast",
-      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_sources"
+      "target": "docs_enhanced_dids_sources",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -7299,5 +7383,5 @@
       "source_file": "design/Diesel_Cluster_v2_3.html"
     }
   ],
-  "built_at_commit": "5b26c4256175669639bdadd3d3d070ebf1a01f29"
+  "built_at_commit": "af55d52a9999c6dca982d2f34f4822b78e522d54"
 }
