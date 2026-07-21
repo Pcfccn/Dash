@@ -23,7 +23,7 @@
  * the bus actually produced. */
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
-    float   atf, soot, dpf_dp, egr_t, since_regen;
+    float   atf, soot, dpf_dp, egr_t, since_regen, oil_press;
     int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     int8_t  sel_range;       /* selector 0x1F5.b3: -1 unknown, 1 P 2 R 3 N 4 D  */
     bool    mil;
@@ -36,6 +36,7 @@ typedef struct {
      * silently dropped: a stuck raw byte means "wrong DID", while an NRC means
      * "right module, wrong/unsupported identifier". */
     uint8_t gear_raw;        /* last raw byte from the gear DID                */
+    uint8_t oil_press_raw;   /* last raw byte from the oil-pressure DID        */
     uint8_t last_nrc_sid;    /* service that was rejected (0 = none seen)      */
     uint8_t last_nrc;        /* its negative-response code                     */
 } obd_data_t;

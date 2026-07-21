@@ -24,6 +24,7 @@ volatile obd_data_t g_obd = {
     .speed = NAN, .rpm   = NAN, .cool   = NAN, .oil = NAN, .iat     = NAN,
     .load  = NAN, .boost = NAN, .rail   = NAN, .egt = NAN, .battery = NAN,
     .atf   = NAN, .soot  = NAN, .dpf_dp = NAN, .egr_t = NAN, .since_regen = NAN,
+    .oil_press = NAN,
     .gear  = -1,  .sel_range = -1, .can_ok = false,
 };
 
@@ -184,6 +185,17 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
     switch (did) {
         case 0x1940:                            /* trans fluid (ATF) temp        */
             set_f(&g_obd.atf, (float)A - 40.0f);
+            break;
+        case 0x1154:                            /* engine oil temp (GM enhanced) */
+            set_f(&g_obd.oil, (float)A - 40.0f);
+            break;
+        case 0x1470:                            /* engine oil pressure           */
+            /* Community scaling A*(116/256) psi; shown in bar. GM DID/scaling
+             * varies by ECM, so the raw byte is surfaced on DIAG to calibrate
+             * against a known idle pressure before trusting the number. */
+            g_obd.oil_press_raw = A;
+            set_f(&g_obd.oil_press,
+                  (float)A * (116.0f / 256.0f) / 14.5038f);   /* psi -> bar      */
             break;
         case 0x199A: {                          /* current gear (raw index in A) */
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
@@ -367,7 +379,14 @@ void obd_poll_tick(void) {
      * cannot desynchronise the parse of the ones that do work. */
     static const uint8_t egr[]   = { 0x6B };  /* EGR temperature                  */
     static const uint8_t egt[]   = { 0x78 };  /* exhaust gas temperature          */
-    static bool wide_alt = false;
+    static uint8_t probe = 0;
+
+    /* GM-enhanced ENGINE DIDs (mode 22 to the ECM 0x7E0), researched from the
+     * Colorado/Duramax scan-tool community. Standard oil temp (0x5C) and the
+     * wide EGR/EGT PIDs are not answered by this E98, so these are the real
+     * source. Scaling can vary by ECM; each raw byte is checked on the car via
+     * the DIAG probe line before its card is trusted. See docs/enhanced-dids.md. */
+    static const uint16_t eng_did[] = { 0x1154, 0x1470 }; /* oil temp, oil press  */
 
     /* While sniffing, stay off the bus entirely: our own request/response pairs
      * would otherwise show up as "changing bytes" and compete for the RX FIFO
@@ -389,9 +408,15 @@ void obd_poll_tick(void) {
         case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
         case 4: req_mode01(fast,  sizeof fast);   break;
         case 5: req_mode01(misc,  sizeof misc);   break;
-        case 6: wide_alt = !wide_alt;
-                if (wide_alt) req_mode01(egr, sizeof egr);
-                else          req_mode01(egt, sizeof egt);
+        case 6: /* rotate the enhanced-engine probes: oil temp, oil pressure,
+                 * then the two standard wide PIDs that may or may not answer */
+                switch (probe & 3u) {
+                    case 0: req_mode22(OBD_REQ_ECM, eng_did[0]); break; /* oil temp  */
+                    case 1: req_mode22(OBD_REQ_ECM, eng_did[1]); break; /* oil press */
+                    case 2: req_mode01(egr, sizeof egr);         break; /* EGR temp  */
+                    case 3: req_mode01(egt, sizeof egt);         break; /* EGT       */
+                }
+                probe++;
                 break;
         case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */
     }

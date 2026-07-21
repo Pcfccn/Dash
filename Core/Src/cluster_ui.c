@@ -727,7 +727,8 @@ void cluster_ui_refresh(void)
     d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
     d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
-    d.gear_raw = g_obd.gear_raw;
+    d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
+    d.oil_press_raw = g_obd.oil_press_raw;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
     bool live = d.can_ok;
 
@@ -804,15 +805,24 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
-    {   /* DID probe line — raw gear byte and last negative response */
-        char db[48];
+    {   /* DID probe line — enhanced-DID calibration aids. OILP shows the raw
+         * 0x1470 byte and the bar value it decodes to, so the scaling can be
+         * checked against a known idle pressure; NRC is the last rejection. */
+        char db[64];
+        char nrc[16];
         if (d.last_nrc_sid)
-            lv_snprintf(db, sizeof db, "GEAR RAW %02X   NRC %02X/%02X",
-                        (unsigned)d.gear_raw,
+            lv_snprintf(nrc, sizeof nrc, "%02X/%02X",
                         (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
         else
-            lv_snprintf(db, sizeof db, "GEAR RAW %02X   NRC --",
-                        (unsigned)d.gear_raw);
+            lv_snprintf(nrc, sizeof nrc, "--");
+        if (has_value(d.oil_press))
+            lv_snprintf(db, sizeof db, "GR %02X  OILP %02X=%d.%02u  NRC %s",
+                        (unsigned)d.gear_raw, (unsigned)d.oil_press_raw,
+                        (int)d.oil_press,
+                        (unsigned)((d.oil_press - (int)d.oil_press) * 100), nrc);
+        else
+            lv_snprintf(db, sizeof db, "GR %02X  OILP --  NRC %s",
+                        (unsigned)d.gear_raw, nrc);
         lv_label_set_text(ui.did_dbg, db);
     }
 
