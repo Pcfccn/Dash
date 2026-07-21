@@ -31,5 +31,7 @@
   "29": "metric_key_t",
   "30": "metric_state_t",
   "31": "SNIFF capture — selector / PRNDL search",
-  "32": "FDCAN_HandleTypeDef"
+  "32": "FDCAN_HandleTypeDef",
+  "33": "metric_state_t",
+  "34": "FDCAN_HandleTypeDef"
 }

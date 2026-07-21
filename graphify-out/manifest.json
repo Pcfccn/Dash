@@ -35,8 +35,8 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1784608197.3329597,
-    "ast_hash": "eda99a57f2e961b60f9f983b5951194a",
+    "mtime": 1784611874.0524623,
+    "ast_hash": "b108143d0945fb415d411d5faafccc06",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1784608327.4333892,
-    "ast_hash": "3df72acb17dfdc89f0dd0dc5b0b17101",
+    "mtime": 1784612244.027026,
+    "ast_hash": "3bcc4387b6b88a271aea6f03986ba7ba",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1784608245.4037983,
-    "ast_hash": "1da32b7522c8b2d3e68d7edcd2d5b40a",
+    "mtime": 1784612105.020453,
+    "ast_hash": "2543341cda029824193b22a618fd6243",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -397,6 +397,11 @@
   "docs/sniff-selector.md": {
     "mtime": 1784607281.057464,
     "ast_hash": "ba93dacdf7a9fe88d6809fdde5de2725",
+    "semantic_hash": ""
+  },
+  "docs/enhanced-dids.md": {
+    "mtime": 1784612344.4571426,
+    "ast_hash": "4c8814a6862ce768c5367153d6e69d08",
     "semantic_hash": ""
   }
 }
