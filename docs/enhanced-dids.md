@@ -15,19 +15,19 @@ Header: engine parameters are requested from the **ECM at 0x7E0** (response
 
 | Parameter | DID | request | formula | notes |
 |---|---|---|---|---|
-| Trans fluid (ATF) temp | `0x1940` | `22 19 40` → 7E2 | A − 40 °C | reads plausibly |
+| Trans fluid (ATF) temp | `0x1940` | `22 19 40` → 7E2 | A − 40 °C | reads plausibly (19 °C cold, KOEO 2026-07-21) |
+| Engine oil temp | `0x1154` | `22 11 54` → 7E0 | A − 40 °C | ✅ confirmed — DRIVE OIL 17 °C cold (KOEO 2026-07-21) |
+| DPF soot accumulation | `0x336A` | `22 33 6A` → 7E0 | A × 100/255 % | ✅ confirmed — SOOT 8 % (KOEO 2026-07-21) |
+| DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | ✅ answers — 0.0 kPa engine-off (correct); scaling under load TBD |
 | Selector / PRNDL | (broadcast `0x1F5`, not a DID) | — | b3: 1 P / 2 R / 3 N / 4 D | see [sniff-selector.md](sniff-selector.md) |
 
 ## Added, awaiting on-car confirmation
 
-| Parameter | DID | request | formula | source |
+| Parameter | DID | request | formula | source / status |
 |---|---|---|---|---|
-| Engine oil temp | `0x1154` | `22 11 54` → 7E0 | A − 40 °C | GM Colorado community |
-| Engine oil pressure | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | GM Colorado community |
-| DPF soot accumulation | `0x336A` | `22 33 6A` → 7E0 | A × 100/255 % | Opel/Vauxhall Astra-K |
-| Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | Opel/Vauxhall Astra-K |
-| DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | Opel/Vauxhall Astra-K |
-| DPF regen status | `0x20F6` | `22 20 F6` → 7E0 | A & 1 → active | Opel/Vauxhall Astra-K |
+| Engine oil pressure | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | ❌ likely source of `NRC 22/31` (requestOutOfRange) — not supported by this E98; needs alt DID or engine-running probe |
+| Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | ⚠️ answers **0xFFFF** = no-data (now guarded → `--`); confirm real value after a recorded regen |
+| DPF regen status | `0x20F6` | `22 20 F6` → 7E0 | A & 1 → active | reads Inactive KOEO — can't distinguish answer from default; verify during active regen |
 
 The DPF set comes from the **Opel/Vauxhall Astra-K** extended-PID lists — the
 same GM Global-B diesel family as this E98, so the `22 30xx / 33xx / 20xx` DID

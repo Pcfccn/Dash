@@ -218,9 +218,15 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
         case 0x336A:                            /* DPF soot accumulation, %      */
             set_f(&g_obd.soot, (float)A * 100.0f / 255.0f);
             break;
-        case 0x3039:                            /* distance since last regen, km */
-            set_f(&g_obd.since_regen, (float)(((uint16_t)A << 8) | p[4]));
+        case 0x3039: {                          /* distance since last regen, km */
+            /* The E98 answers this DID but reports 0xFFFF when it has no value
+             * to give (KOEO / no regen recorded). Treat that sentinel as "no
+             * data" rather than painting a literal 65535 km. */
+            uint16_t km = ((uint16_t)A << 8) | p[4];
+            if (km != 0xFFFF)
+                set_f(&g_obd.since_regen, (float)km);
             break;
+        }
         case 0x20F4:                            /* DPF differential pressure, kPa */
             set_f(&g_obd.dpf_dp, (float)(int8_t)A);   /* signed byte             */
             break;
@@ -403,9 +409,20 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
 /* Round-robin request scheduler. Call from a 20-50 Hz timer/task. */
 void obd_poll_tick(void) {
     static uint8_t step = 0;
-    static const uint8_t fast[]  = { 0x0C, 0x0D, 0x04, 0x0B };     /* rpm,speed,load,MAP */
-    static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };           /* cool,oil,iat       */
-    static const uint8_t misc[]  = { 0x23, 0x42, 0x33, 0x01 };     /* rail,batt,baro,mil */
+    /* IMPORTANT: keep every grouped mode-01 request small enough that its reply
+     * fits a SINGLE ISO-TP frame (<=7 payload bytes: the 0x41 echo + PID/data).
+     * This E98 answers single-frame grouped requests reliably but its multi-frame
+     * responses do not survive the polled RX across the blocking display flush
+     * (rpm/speed/load/MAP/rail/batt all read "--" when packed into one 4-PID
+     * request whose 10-14 byte reply needs a First Frame + Flow Control + CF).
+     * So the old {0C,0D,04,0B} and {23,42,33,01} groups are split into halves,
+     * each of which is a single frame. A 1-byte PID costs 2 bytes, a 2-byte PID
+     * costs 3; budget is 6 after the 0x41. */
+    static const uint8_t fastA[] = { 0x0C, 0x0D };        /* rpm(3)+speed(2) = 6      */
+    static const uint8_t fastB[] = { 0x04, 0x0B, 0x33 };  /* load+MAP+baro   = 6      */
+    static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };  /* cool+oil+iat   <= 7      */
+    static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3) = 6      */
+    static const uint8_t mil1[]  = { 0x01 };              /* MIL/monitor    = 5       */
     static uint8_t probe = 0;
     /* Enhanced ENGINE DIDs (mode 22 → ECM 0x7E0). Oil temp/pressure from the GM
      * Colorado community; the DPF set from the Opel/Vauxhall Astra-K (same GM
@@ -443,26 +460,30 @@ void obd_poll_tick(void) {
      * Frame with our Flow Control forever. */
     if (await_ttl && --await_ttl == 0u) await_resp_id = 0u;
 
-    /* fast group is hit twice per cycle; enhanced (mode 22, GM-specific) and the
-     * DTC scan are interleaved. ATF temp + gear go to the trans controller on
-     * 0x7E2; if they never populate, that module/DID is wrong for this truck. */
+    /* fastA (rpm/speed) is hit twice per cycle for a livelier tach/speedo;
+     * enhanced (mode 22, GM-specific) and the DTC scan are interleaved. ATF temp
+     * + gear go to the trans controller on 0x7E2; if they never populate, that
+     * module/DID is wrong for this truck. Every mode-01 group here is a single
+     * frame (see the note above the arrays). */
     switch (step) {
-        case 0: req_mode01(fast,  sizeof fast);   break;
+        case 0: req_mode01(fastA, sizeof fastA);  break; /* rpm, speed             */
         case 1: req_mode22(OBD_REQ_TCM2, 0x1940); break; /* ATF / trans fluid temp */
-        case 2: req_mode01(temps, sizeof temps);  break;
+        case 2: req_mode01(fastB, sizeof fastB);  break; /* load, MAP, baro        */
         case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
-        case 4: req_mode01(fast,  sizeof fast);   break;
-        case 5: req_mode01(misc,  sizeof misc);   break;
-        case 6: /* rotate one enhanced/diesel probe per cycle: first the mode-22
+        case 4: req_mode01(temps, sizeof temps);  break; /* cool, oil, iat         */
+        case 5: req_mode01(fastA, sizeof fastA);  break; /* rpm, speed (2nd hit)   */
+        case 6: req_mode01(misc,  sizeof misc);   break; /* rail, batt             */
+        case 7: /* rotate one enhanced/diesel probe per cycle: first the mode-22
                  * engine DIDs, then the standard mode-01 diesel PIDs. Which ones
                  * actually answer is read off the DPF tiles and the DIAG line. */
                 if (probe < N_DID) req_mode22(OBD_REQ_ECM, probe_did[probe]);
                 else               req_mode01(&probe_pid[probe - N_DID], 1);
                 probe = (uint8_t)((probe + 1) % N_PROBE);
                 break;
-        case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */
+        case 8: req_mode01(mil1,  sizeof mil1);   break; /* MIL / monitor status   */
+        case 9: req_mode03();                     break; /* DTC list ~ once/cycle  */
     }
-    step = (step + 1) % 8;
+    step = (step + 1) % 10;
 }
 
 void obd_watchdog_tick_1hz(void) {
