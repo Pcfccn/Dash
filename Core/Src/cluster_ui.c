@@ -742,7 +742,11 @@ void cluster_ui_refresh(void)
         case 1:  lv_snprintf(b, sizeof b, "P"); break;
         case 2:  lv_snprintf(b, sizeof b, "R"); break;
         case 3:  lv_snprintf(b, sizeof b, "N"); break;
-        case 4:  lv_snprintf(b, sizeof b, "#37d67a D#"); break;   /* D in green */
+        case 4:  /* D + engaged gear (0x199A) as the design's white letter +
+                  * green number; bare "D" until the gear number arrives */
+                 if (d.gear >= 1) lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
+                 else             lv_snprintf(b, sizeof b, "D");
+                 break;
         default: lv_snprintf(b, sizeof b, "--"); break;
     }
     lv_label_set_text(ui.gear_val, b);
