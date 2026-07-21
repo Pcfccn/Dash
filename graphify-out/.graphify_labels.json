@@ -29,5 +29,7 @@
   "27": "set_metric",
   "28": "can_sniff.h",
   "29": "metric_key_t",
-  "30": "metric_state_t"
+  "30": "metric_state_t",
+  "31": "cluster_config.h",
+  "32": "FDCAN_HandleTypeDef"
 }
