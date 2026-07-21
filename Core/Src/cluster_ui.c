@@ -727,6 +727,7 @@ void cluster_ui_refresh(void)
     d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
     d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
+    d.regen_active = g_obd.regen_active;
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.oil_press_raw = g_obd.oil_press_raw;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
@@ -778,6 +779,13 @@ void cluster_ui_refresh(void)
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.mc_val[i], NULL, NULL, MINI_M[i], &d, live);
+    {   /* regeneration status from DID 0x20F6 */
+        bool rg = live && d.regen_active;
+        lv_label_set_text(ui.regen_title, rg ? "Active" : "Inactive");
+        lv_obj_set_style_text_color(ui.regen_title, rg ? C_WARN : C_TEXT, 0);
+        lv_label_set_text(ui.regen_hint, rg ? "Regenerating —\ndo not switch off."
+                                            : "No regeneration\nrequest from ECM.");
+    }
 
     /* ----- DIAG ----- */
     lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");

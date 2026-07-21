@@ -211,6 +211,24 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
             set_f(&g_obd.oil_press,
                   (float)A * (116.0f / 256.0f) / 14.5038f);   /* psi -> bar      */
             break;
+        /* GM diesel DPF DIDs, from the Opel/Vauxhall Astra-K set (same GM
+         * Global-B diesel family as this E98). Verified on the car by whether
+         * they answer; scaling from that community and checked against known
+         * conditions (dP ~0 at idle, soot a low %). See docs/enhanced-dids.md. */
+        case 0x336A:                            /* DPF soot accumulation, %      */
+            set_f(&g_obd.soot, (float)A * 100.0f / 255.0f);
+            break;
+        case 0x3039:                            /* distance since last regen, km */
+            set_f(&g_obd.since_regen, (float)(((uint16_t)A << 8) | p[4]));
+            break;
+        case 0x20F4:                            /* DPF differential pressure, kPa */
+            set_f(&g_obd.dpf_dp, (float)(int8_t)A);   /* signed byte             */
+            break;
+        case 0x20F6: {                          /* DPF regeneration status       */
+            bool r = (A & 0x01u) != 0u;
+            if (g_obd.regen_active != r) { g_obd.regen_active = r; obd_on_update(); }
+            break;
+        }
         case 0x199A: {                          /* current gear (raw index in A) */
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
              * never moves while the selector does) can be told apart from a
@@ -389,12 +407,22 @@ void obd_poll_tick(void) {
     static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };           /* cool,oil,iat       */
     static const uint8_t misc[]  = { 0x23, 0x42, 0x33, 0x01 };     /* rail,batt,baro,mil */
     static uint8_t probe = 0;
-    /* One PID per probe request (never grouped): a wide/unsupported PID then
-     * cannot desynchronise the parse of another. 0 selects a mode-22 DID
-     * instead (handled in the switch). */
+    /* Enhanced ENGINE DIDs (mode 22 → ECM 0x7E0). Oil temp/pressure from the GM
+     * Colorado community; the DPF set from the Opel/Vauxhall Astra-K (same GM
+     * Global-B diesel family). These are decoded in decode_mode22; which ones
+     * this E98 actually supports is confirmed on the car. */
+    static const uint16_t probe_did[] = {
+        0x1154,  /* oil temperature         */
+        0x1470,  /* oil pressure            */
+        0x336A,  /* DPF soot %              */
+        0x3039,  /* distance since regen    */
+        0x20F4,  /* DPF differential press  */
+        0x20F6,  /* DPF regen status        */
+    };
+    #define N_DID (sizeof probe_did / sizeof probe_did[0])
+    /* Standard diesel PIDs (mode 01), one per request so an unsupported wide PID
+     * cannot desync another's parse. Unknown ones are captured raw for DIAG. */
     static const uint8_t probe_pid[] = {
-        0x00,  /* -> DID 0x1154 oil temp  */
-        0x00,  /* -> DID 0x1470 oil press */
         0x78,  /* EGT bank 1              */
         0x6B,  /* EGR temperature         */
         0x7A,  /* DPF differential press  */
@@ -402,14 +430,8 @@ void obd_poll_tick(void) {
         0x8B,  /* diesel aftertreatment   */
         0x86,  /* particulate matter      */
     };
-    #define N_PROBE (sizeof probe_pid)
-
-    /* GM-enhanced ENGINE DIDs (mode 22 to the ECM 0x7E0), researched from the
-     * Colorado/Duramax scan-tool community. Standard oil temp (0x5C) and the
-     * wide EGR/EGT PIDs are not answered by this E98, so these are the real
-     * source. Scaling can vary by ECM; each raw byte is checked on the car via
-     * the DIAG probe line before its card is trusted. See docs/enhanced-dids.md. */
-    static const uint16_t eng_did[] = { 0x1154, 0x1470 }; /* oil temp, oil press  */
+    #define N_PID (sizeof probe_pid)
+    #define N_PROBE (N_DID + N_PID)
 
     /* While sniffing, stay off the bus entirely: our own request/response pairs
      * would otherwise show up as "changing bytes" and compete for the RX FIFO
@@ -431,12 +453,11 @@ void obd_poll_tick(void) {
         case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
         case 4: req_mode01(fast,  sizeof fast);   break;
         case 5: req_mode01(misc,  sizeof misc);   break;
-        case 6: /* rotate one enhanced/diesel probe per cycle. 0 = a mode-22
-                 * engine DID (oil temp / oil pressure), otherwise the mode-01
-                 * PID itself. Which ones actually answer is read off DIAG. */
-                if (probe == 0)      req_mode22(OBD_REQ_ECM, eng_did[0]); /* oil temp  */
-                else if (probe == 1) req_mode22(OBD_REQ_ECM, eng_did[1]); /* oil press */
-                else                 req_mode01(&probe_pid[probe], 1);
+        case 6: /* rotate one enhanced/diesel probe per cycle: first the mode-22
+                 * engine DIDs, then the standard mode-01 diesel PIDs. Which ones
+                 * actually answer is read off the DPF tiles and the DIAG line. */
+                if (probe < N_DID) req_mode22(OBD_REQ_ECM, probe_did[probe]);
+                else               req_mode01(&probe_pid[probe - N_DID], 1);
                 probe = (uint8_t)((probe + 1) % N_PROBE);
                 break;
         case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */

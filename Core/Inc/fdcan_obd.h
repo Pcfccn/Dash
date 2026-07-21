@@ -29,6 +29,7 @@ typedef struct {
     bool    mil;
     uint8_t dtc_count;
     bool    can_ok;          /* set false if no valid frame within timeout     */
+    bool    regen_active;    /* DPF regeneration requested/active (DID 0x20F6)  */
 
     /* ---- DID discovery aids (DIAG page) --------------------------------
      * The GM-enhanced DIDs are still being identified for this truck, so the

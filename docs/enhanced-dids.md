@@ -22,8 +22,20 @@ Header: engine parameters are requested from the **ECM at 0x7E0** (response
 
 | Parameter | DID | request | formula | source |
 |---|---|---|---|---|
-| Engine oil temp | `0x1154` | `22 11 54` → 7E0 | A − 40 °C | community GM PID list |
-| Engine oil pressure | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | community GM PID list |
+| Engine oil temp | `0x1154` | `22 11 54` → 7E0 | A − 40 °C | GM Colorado community |
+| Engine oil pressure | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | GM Colorado community |
+| DPF soot accumulation | `0x336A` | `22 33 6A` → 7E0 | A × 100/255 % | Opel/Vauxhall Astra-K |
+| Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | Opel/Vauxhall Astra-K |
+| DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | Opel/Vauxhall Astra-K |
+| DPF regen status | `0x20F6` | `22 20 F6` → 7E0 | A & 1 → active | Opel/Vauxhall Astra-K |
+
+The DPF set comes from the **Opel/Vauxhall Astra-K** extended-PID lists — the
+same GM Global-B diesel family as this E98, so the `22 30xx / 33xx / 20xx` DID
+block is expected to carry over. The soot `A×100/255 %` scaling also matches the
+independent Colorado hint that soot there is reported in percent, not grams.
+Other Astra-K DIDs seen and worth trying if these miss: `0x2320/0x2321` (O2
+sensors, A×0.01 V), `0x3035` (DPF Δp sensor raw, A×5.5/255 V), `0x20F5`
+(calculated DPF flow).
 
 The standard oil-temp PID `0x5C` and the wide diesel PIDs `0x6B` (EGR temp) and
 `0x78` (EGT) are **not answered** by this E98, so the enhanced DIDs above are the
