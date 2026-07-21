@@ -203,10 +203,21 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
         case 0x1154:                            /* engine oil temp (GM enhanced) */
             set_f(&g_obd.oil, (float)A - 40.0f);
             break;
-        case 0x1470:                            /* engine oil pressure           */
-            /* Community scaling A*(116/256) psi; shown in bar. GM DID/scaling
-             * varies by ECM, so the raw byte is surfaced on DIAG to calibrate
-             * against a known idle pressure before trusting the number. */
+        case 0x115C:                            /* engine oil pressure (Colorado) */
+            /* DID 0x1470 is rejected by this E98 (NRC 22/31). The Colorado
+             * community uses 0x115C (right next to oil-temp 0x1154, which works
+             * here) with (A*0.65 - 17.5) psi. Provisional: capture the raw byte
+             * on DIAG and calibrate the scaling against a known warm-idle
+             * pressure before trusting the number. */
+            g_obd.oil_press_raw = A;
+            {
+                float psi = (float)A * 0.65f - 17.5f;
+                if (psi < 0.0f) psi = 0.0f;
+                set_f(&g_obd.oil_press, psi / 14.5038f);       /* psi -> bar      */
+            }
+            break;
+        case 0x1470:                            /* engine oil pressure (alt DID) */
+            /* Not supported on this E98 (NRC 22/31); kept for other GM years.  */
             g_obd.oil_press_raw = A;
             set_f(&g_obd.oil_press,
                   (float)A * (116.0f / 256.0f) / 14.5038f);   /* psi -> bar      */
@@ -430,7 +441,7 @@ void obd_poll_tick(void) {
      * this E98 actually supports is confirmed on the car. */
     static const uint16_t probe_did[] = {
         0x1154,  /* oil temperature         */
-        0x1470,  /* oil pressure            */
+        0x115C,  /* oil pressure (Colorado) */
         0x336A,  /* DPF soot %              */
         0x3039,  /* distance since regen    */
         0x20F4,  /* DPF differential press  */

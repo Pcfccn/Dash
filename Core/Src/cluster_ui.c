@@ -323,21 +323,23 @@ static void build_drive(void)
 {
     lv_obj_t *pg = ui.page[0];
 
-    mk_eyebrow(pg, "DRIVE");
+    /* No eyebrow on DRIVE: the gear+speed hero already identifies the page and
+     * the pager dots show position, so the 28px bar was dead space. The hero and
+     * the metric grid start at the very top and use the reclaimed height. */
 
     /* hero: gear | speed | (boost / rpm stacked) — matches the design's
      * "working state next to speed" layout. No IAT here (it lives on DIAG),
      * no separate boost strip, no rpm bar. */
     lv_obj_t *hero = lv_obj_create(pg);
-    lv_obj_set_pos(hero, 0, 28);
-    lv_obj_set_size(hero, 320, 120);
+    lv_obj_set_pos(hero, 0, 0);
+    lv_obj_set_size(hero, 320, 128);
     plain(hero);
     lv_obj_set_style_border_color(hero, C_LINE, 0);
     lv_obj_set_style_border_width(hero, 1, 0);
     lv_obj_set_style_border_side(hero, LV_BORDER_SIDE_BOTTOM, 0);
 
     /* GEAR card (left column) — big "D6" like the 44px design gear */
-    lv_obj_t *gear = mk_card(hero, 8, 8, 78, 104);
+    lv_obj_t *gear = mk_card(hero, 8, 12, 78, 104);
     lv_obj_set_style_pad_hor(gear, 4, 0);      /* tighter sides so 48px D6 fits 78px */
     lv_obj_t *gl = mk_label(gear, "GEAR", F12, C_MUTED);
     lv_obj_align(gl, LV_ALIGN_TOP_MID, 0, -2);
@@ -351,14 +353,14 @@ static void build_drive(void)
     ui.speed_val = mk_label(hero, "--", F72, C_TEXT);
     lv_obj_set_width(ui.speed_val, 134);
     lv_obj_set_style_text_align(ui.speed_val, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(ui.speed_val, 86, 22);
+    lv_obj_set_pos(ui.speed_val, 86, 26);
     lv_obj_t *su = mk_label(hero, "KM / H", F12, C_LABEL);
     lv_obj_set_width(su, 134);
     lv_obj_set_style_text_align(su, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_pos(su, 86, 82);
+    lv_obj_set_pos(su, 86, 86);
 
     /* work column: BOOST (data-cyan) over RPM */
-    lv_obj_t *work = mk_card(hero, 220, 8, 92, 104);
+    lv_obj_t *work = mk_card(hero, 220, 12, 92, 104);
     lv_obj_set_style_pad_all(work, 9, 0);
     lv_obj_t *bl = mk_label(work, "BOOST", F12, C_LABEL);
     lv_obj_set_pos(bl, 0, 0);
@@ -371,10 +373,11 @@ static void build_drive(void)
     ui.rpm_val = mk_label(work, "--", F24, C_TEXT2);
     lv_obj_set_pos(ui.rpm_val, 0, 60);
 
-    /* 2x2 metric grid on a 1px line background (fills the reclaimed height) */
+    /* 2x2 metric grid on a 1px line background (fills the reclaimed height:
+     * starts right under the hero and runs down to just above the pager) */
     lv_obj_t *grid = lv_obj_create(pg);
-    lv_obj_set_pos(grid, 0, 148);
-    lv_obj_set_size(grid, 320, 276);
+    lv_obj_set_pos(grid, 0, 128);
+    lv_obj_set_size(grid, 320, 300);
     lv_obj_set_style_bg_color(grid, C_LINE, 0);
     lv_obj_set_style_bg_opa(grid, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(grid, 0, 0);
@@ -384,7 +387,7 @@ static void build_drive(void)
 
     static const char *NAMES[4] = { "COOLANT", "OIL", "ATF", "OIL P" };
     static const char *UNITS[4] = { DEG "C",   DEG "C", DEG "C", "bar" };
-    const int ch = 137;                                 /* cell height */
+    const int ch = 149;                                 /* cell height */
     const int cx[4] = { 0, 160, 0, 160 };
     const int cy[4] = { 0, 0, ch + 1, ch + 1 };
     const int cw[4] = { 159, 160, 159, 160 };
@@ -819,8 +822,10 @@ void cluster_ui_refresh(void)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
     {   /* DID probe line — enhanced-DID calibration aids. OILP shows the raw
-         * 0x1470 byte and the bar value it decodes to, so the scaling can be
-         * checked against a known idle pressure; NRC is the last rejection. */
+         * oil-pressure DID byte (now 0x115C; 0x1470 gave NRC 22/31) and the bar
+         * value it decodes to, so the scaling can be checked against a known
+         * idle pressure; NRC is the last rejection (should clear if 0x115C is
+         * supported). */
         char db[96];
         char nrc[16];
         if (d.last_nrc_sid)

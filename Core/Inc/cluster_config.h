@@ -168,6 +168,7 @@ static const pid_map_t pid_map[] = {
    * and are not requested until a real DID is known. */
   { M_ATF,          SRC_TCM, OBD_MODE_ENHANCED, 0x1940, "[H] TCM@7E2 A-40 degC — trans fluid temp (Torque 221940) — POLLED" },
   { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x199A, "[M] TCM@7E2 current gear = A — verify scaling on car — POLLED" },
+  { M_OILP,         SRC_ECM, OBD_MODE_ENHANCED, 0x115C, "[M] oil pressure (Colorado) A*0.65-17.5 psi->bar; 0x1470 gave NRC 22/31 — POLLED, confirm on car" },
   { M_EGR_T,        SRC_ECM, OBD_MODE_CURRENT,  0x006B, "[M] std J1979 PID 6B EGR temp, sensor1 = B-40 degC — POLLED" },
   { M_SOOT,         SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF soot %% — DID varies by year; discover on car — NOT polled" },
   { M_DPF_DP,       SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF delta-p — GM enhanced DID guarded; discover on car — NOT polled" },

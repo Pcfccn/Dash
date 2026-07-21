@@ -35,15 +35,444 @@
   },
   "nodes": [
     {
+      "label": "cluster_config.h",
+      "file_type": "code",
+      "source_file": "Core/Inc/cluster_config.h",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "core_inc_cluster_config",
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
+      "norm_label": "cluster_config.h"
+    },
+    {
+      "label": "metric_state()",
+      "file_type": "code",
+      "source_file": "Core/Inc/cluster_config.h",
+      "source_location": "L117",
+      "_origin": "ast",
+      "id": "core_inc_cluster_config_metric_state",
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
+      "norm_label": "metric_state()"
+    },
+    {
+      "label": "metric_state_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "core_inc_cluster_config_h_metric_state_t",
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
+      "norm_label": "metric_state_t"
+    },
+    {
+      "label": "metric_key_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "core_inc_cluster_config_h_metric_key_t",
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
+      "norm_label": "metric_key_t"
+    },
+    {
+      "label": "cluster_ui.c",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "cluster_ui.c"
+    },
+    {
+      "label": "iround()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L115",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_iround",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "iround()"
+    },
+    {
+      "label": "fmt()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L118",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_fmt",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "fmt()"
+    },
+    {
+      "label": "state_color()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L129",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_state_color",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "state_color()"
+    },
+    {
+      "label": "lv_color_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "lv_color_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "lv_color_t"
+    },
+    {
+      "label": "metric_state_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_c_metric_state_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "metric_state_t"
+    },
+    {
+      "label": "has_value()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L144",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_has_value",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "has_value()"
+    },
+    {
+      "label": "is_temp()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L147",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_is_temp",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "is_temp()"
+    },
+    {
+      "label": "metric_key_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_c_metric_key_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "metric_key_t"
+    },
+    {
+      "label": "mval()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L152",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mval",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mval()"
+    },
+    {
+      "label": "obd_data_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "obd_data_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "obd_data_t"
+    },
+    {
+      "label": "pct_of()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L168",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_pct_of",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "pct_of()"
+    },
+    {
+      "label": "plain()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L178",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_plain",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "plain()"
+    },
+    {
+      "label": "lv_obj_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "lv_obj_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "lv_obj_t"
+    },
+    {
+      "label": "mk_label()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L187",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_label",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_label()"
+    },
+    {
+      "label": "lv_font_t",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "lv_font_t",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "lv_font_t"
+    },
+    {
+      "label": "mk_value()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L202",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_value",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_value()"
+    },
+    {
+      "label": "mk_card()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L222",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_card",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_card()"
+    },
+    {
+      "label": "mk_bar()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L238",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_bar",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_bar()"
+    },
+    {
+      "label": "mk_tick()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L254",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_tick",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_tick()"
+    },
+    {
+      "label": "mk_dot()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L267",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_dot",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_dot()"
+    },
+    {
+      "label": "mk_pager()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L283",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_pager",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_pager()"
+    },
+    {
+      "label": "mk_eyebrow()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L303",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_mk_eyebrow",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "mk_eyebrow()"
+    },
+    {
+      "label": "build_drive()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L322",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_build_drive",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "build_drive()"
+    },
+    {
+      "label": "build_dpf()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L435",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_build_dpf",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "build_dpf()"
+    },
+    {
+      "label": "build_diag()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L501",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_build_diag",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "build_diag()"
+    },
+    {
+      "label": "build_sniff()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L572",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_build_sniff",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "build_sniff()"
+    },
+    {
+      "label": "build_strip()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L607",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_build_strip",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "build_strip()"
+    },
+    {
+      "label": "cluster_ui_build()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L635",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_cluster_ui_build",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "cluster_ui_build()"
+    },
+    {
+      "label": "cluster_ui_set_page()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L663",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_cluster_ui_set_page",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "cluster_ui_set_page()"
+    },
+    {
+      "label": "cluster_ui_next_page()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L677",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_cluster_ui_next_page",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "cluster_ui_next_page()"
+    },
+    {
+      "label": "cluster_ui_get_page()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L682",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_cluster_ui_get_page",
+      "community": 2,
+      "community_name": "App Main & Superloop",
+      "norm_label": "cluster_ui_get_page()"
+    },
+    {
+      "label": "set_metric()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L688",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_set_metric",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "set_metric()"
+    },
+    {
+      "label": "cluster_ui_refresh()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L722",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_cluster_ui_refresh",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "cluster_ui_refresh()"
+    },
+    {
+      "label": "obd_on_update()",
+      "file_type": "code",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L966",
+      "_origin": "ast",
+      "id": "core_src_cluster_ui_obd_on_update",
+      "community": 3,
+      "community_name": "UI Page Builders",
+      "norm_label": "obd_on_update()"
+    },
+    {
       "label": "fdcan_obd.c",
       "file_type": "code",
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "fdcan_obd.c"
+      "norm_label": "fdcan_obd.c",
+      "id": "core_src_fdcan_obd"
     },
     {
       "label": "expect_reply()",
@@ -51,10 +480,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L63",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_expect_reply",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "expect_reply()"
+      "norm_label": "expect_reply()",
+      "id": "core_src_fdcan_obd_expect_reply"
     },
     {
       "label": "reply_is_ours()",
@@ -62,10 +491,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_reply_is_ours",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "reply_is_ours()"
+      "norm_label": "reply_is_ours()",
+      "id": "core_src_fdcan_obd_reply_is_ours"
     },
     {
       "label": "can_send()",
@@ -73,10 +502,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L73",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_can_send",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "can_send()"
+      "norm_label": "can_send()",
+      "id": "core_src_fdcan_obd_can_send"
     },
     {
       "label": "req_mode01()",
@@ -84,10 +513,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L87",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_req_mode01",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode01()"
+      "norm_label": "req_mode01()",
+      "id": "core_src_fdcan_obd_req_mode01"
     },
     {
       "label": "req_mode03()",
@@ -95,10 +524,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L97",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_req_mode03",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode03()"
+      "norm_label": "req_mode03()",
+      "id": "core_src_fdcan_obd_req_mode03"
     },
     {
       "label": "req_mode22()",
@@ -106,10 +535,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L106",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_req_mode22",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "req_mode22()"
+      "norm_label": "req_mode22()",
+      "id": "core_src_fdcan_obd_req_mode22"
     },
     {
       "label": "send_flow_control()",
@@ -117,10 +546,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L117",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_send_flow_control",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "send_flow_control()"
+      "norm_label": "send_flow_control()",
+      "id": "core_src_fdcan_obd_send_flow_control"
     },
     {
       "label": "set_f()",
@@ -128,10 +557,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L123",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_set_f",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "set_f()"
+      "norm_label": "set_f()",
+      "id": "core_src_fdcan_obd_set_f"
     },
     {
       "label": "update_boost()",
@@ -139,10 +568,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L135",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_update_boost",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "update_boost()"
+      "norm_label": "update_boost()",
+      "id": "core_src_fdcan_obd_update_boost"
     },
     {
       "label": "decode_mode01()",
@@ -150,10 +579,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L143",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_decode_mode01",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "decode_mode01()"
+      "norm_label": "decode_mode01()",
+      "id": "core_src_fdcan_obd_decode_mode01"
     },
     {
       "label": "decode_mode22()",
@@ -161,10 +590,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L195",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_decode_mode22",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "decode_mode22()"
+      "norm_label": "decode_mode22()",
+      "id": "core_src_fdcan_obd_decode_mode22"
     },
     {
       "label": "dispatch()",
@@ -172,10 +601,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L251",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_dispatch",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "dispatch()"
+      "norm_label": "dispatch()",
+      "id": "core_src_fdcan_obd_dispatch"
     },
     {
       "label": "obd_check_health()",
@@ -183,10 +612,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L281",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_check_health",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_check_health()"
+      "norm_label": "obd_check_health()",
+      "id": "core_src_fdcan_obd_obd_check_health"
     },
     {
       "label": "obd_can_health()",
@@ -194,10 +623,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L306",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_can_health",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "obd_can_health()"
+      "community": 1,
+      "community_name": "Metric Model & App Glue",
+      "norm_label": "obd_can_health()",
+      "id": "core_src_fdcan_obd_obd_can_health"
     },
     {
       "label": "obd_rx_poll()",
@@ -205,10 +634,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L315",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_rx_poll",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_rx_poll()"
+      "norm_label": "obd_rx_poll()",
+      "id": "core_src_fdcan_obd_obd_rx_poll"
     },
     {
       "label": "obd_init()",
@@ -216,10 +645,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L373",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_init",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_init()"
+      "norm_label": "obd_init()",
+      "id": "core_src_fdcan_obd_obd_init"
     },
     {
       "label": "FDCAN_HandleTypeDef",
@@ -227,10 +656,10 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "fdcan_handletypedef",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "fdcan_handletypedef"
+      "norm_label": "fdcan_handletypedef",
+      "id": "fdcan_handletypedef"
     },
     {
       "label": "obd_poll_tick()",
@@ -238,10 +667,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L410",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_poll_tick",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_poll_tick()"
+      "norm_label": "obd_poll_tick()",
+      "id": "core_src_fdcan_obd_obd_poll_tick"
     },
     {
       "label": "obd_watchdog_tick_1hz()",
@@ -249,10 +678,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L489",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_watchdog_tick_1hz()"
+      "norm_label": "obd_watchdog_tick_1hz()",
+      "id": "core_src_fdcan_obd_obd_watchdog_tick_1hz"
     },
     {
       "label": "obd_demo_tick()",
@@ -260,10 +689,10 @@
       "source_file": "Core/Src/fdcan_obd.c",
       "source_location": "L498",
       "_origin": "ast",
-      "id": "core_src_fdcan_obd_obd_demo_tick",
       "community": 1,
       "community_name": "Metric Model & App Glue",
-      "norm_label": "obd_demo_tick()"
+      "norm_label": "obd_demo_tick()",
+      "id": "core_src_fdcan_obd_obd_demo_tick"
     },
     {
       "label": "enhanced-dids.md",
@@ -271,10 +700,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "docs_enhanced_dids",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "enhanced-dids.md"
+      "norm_label": "enhanced-dids.md",
+      "id": "docs_enhanced_dids"
     },
     {
       "label": "GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98",
@@ -282,10 +711,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "gm-enhanced dids (mode 22) for the colorado 2.8 / e98"
+      "norm_label": "gm-enhanced dids (mode 22) for the colorado 2.8 / e98",
+      "id": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98"
     },
     {
       "label": "Confirmed on this vehicle",
@@ -293,10 +722,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "docs_enhanced_dids_confirmed_on_this_vehicle",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "confirmed on this vehicle"
+      "norm_label": "confirmed on this vehicle",
+      "id": "docs_enhanced_dids_confirmed_on_this_vehicle"
     },
     {
       "label": "Added, awaiting on-car confirmation",
@@ -304,10 +733,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "docs_enhanced_dids_added_awaiting_on_car_confirmation",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "added, awaiting on-car confirmation"
+      "norm_label": "added, awaiting on-car confirmation",
+      "id": "docs_enhanced_dids_added_awaiting_on_car_confirmation"
     },
     {
       "label": "Being probed on the car (standard diesel PIDs)",
@@ -315,10 +744,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L45",
       "_origin": "ast",
-      "id": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "being probed on the car (standard diesel pids)"
+      "norm_label": "being probed on the car (standard diesel pids)",
+      "id": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids"
     },
     {
       "label": "Sources",
@@ -326,10 +755,10 @@
       "source_file": "docs/enhanced-dids.md",
       "source_location": "L74",
       "_origin": "ast",
-      "id": "docs_enhanced_dids_sources",
       "community": 29,
       "community_name": "metric_key_t",
-      "norm_label": "sources"
+      "norm_label": "sources",
+      "id": "docs_enhanced_dids_sources"
     },
     {
       "label": "run-2026-07-21.md",
@@ -337,10 +766,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "run-2026-07-21.md"
+      "norm_label": "run-2026-07-21.md",
+      "id": "docs_run_2026_07_21"
     },
     {
       "label": "\u041f\u0440\u043e\u0433\u043e\u043d 2026-07-21 (\u043f\u043e\u0441\u043b\u0435 ~5 \u043c\u0438\u043d \u043f\u043e\u0435\u0437\u0434\u043a\u0438, \u0441\u043d\u0438\u043c\u043e\u043a \u043d\u0430 \u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435)",
@@ -348,10 +777,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u043f\u0440\u043e\u0433\u043e\u043d 2026-07-21 (\u043f\u043e\u0441\u043b\u0435 ~5 \u043c\u0438\u043d \u043f\u043e\u0435\u0437\u0434\u043a\u0438, \u0441\u043d\u0438\u043c\u043e\u043a \u043d\u0430 \u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435)"
+      "norm_label": "\u043f\u0440\u043e\u0433\u043e\u043d 2026-07-21 (\u043f\u043e\u0441\u043b\u0435 ~5 \u043c\u0438\u043d \u043f\u043e\u0435\u0437\u0434\u043a\u0438, \u0441\u043d\u0438\u043c\u043e\u043a \u043d\u0430 \u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435)",
+      "id": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435"
     },
     {
       "label": "\u0420\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
@@ -359,10 +788,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430"
+      "norm_label": "\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
+      "id": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430"
     },
     {
       "label": "\u0424\u043e\u0442\u043e 7 \u2014 DRIVE",
@@ -370,10 +799,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_7_drive",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0444\u043e\u0442\u043e 7 \u2014 drive"
+      "norm_label": "\u0444\u043e\u0442\u043e 7 \u2014 drive",
+      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_7_drive"
     },
     {
       "label": "\u0424\u043e\u0442\u043e 5 \u2014 DIAG",
@@ -381,10 +810,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L25",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_5_diag",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0444\u043e\u0442\u043e 5 \u2014 diag"
+      "norm_label": "\u0444\u043e\u0442\u043e 5 \u2014 diag",
+      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_5_diag"
     },
     {
       "label": "\u0424\u043e\u0442\u043e 6 \u2014 DPF",
@@ -392,10 +821,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L31",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_6_dpf",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0444\u043e\u0442\u043e 6 \u2014 dpf"
+      "norm_label": "\u0444\u043e\u0442\u043e 6 \u2014 dpf",
+      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_6_dpf"
     },
     {
       "label": "\u0424\u043e\u0442\u043e 1\u20134 \u2014 SNIFF (\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043a\u0430\u0434\u0440\u044b, \u043c\u043e\u0442\u043e\u0440 \u0437\u0430\u0433\u043b\u0443\u0448\u0451\u043d)",
@@ -403,10 +832,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L41",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_1_4_sniff_\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435_\u043a\u0430\u0434\u0440\u044b_\u043c\u043e\u0442\u043e\u0440_\u0437\u0430\u0433\u043b\u0443\u0448\u0451\u043d",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0444\u043e\u0442\u043e 1\u20134 \u2014 sniff (\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043a\u0430\u0434\u0440\u044b, \u043c\u043e\u0442\u043e\u0440 \u0437\u0430\u0433\u043b\u0443\u0448\u0435\u043d)"
+      "norm_label": "\u0444\u043e\u0442\u043e 1\u20134 \u2014 sniff (\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043a\u0430\u0434\u0440\u044b, \u043c\u043e\u0442\u043e\u0440 \u0437\u0430\u0433\u043b\u0443\u0448\u0435\u043d)",
+      "id": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_1_4_sniff_\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435_\u043a\u0430\u0434\u0440\u044b_\u043c\u043e\u0442\u043e\u0440_\u0437\u0430\u0433\u043b\u0443\u0448\u0451\u043d"
     },
     {
       "label": "\u0410\u043d\u0430\u043b\u0438\u0437: \u0447\u0442\u043e \u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438 \u043d\u043e\u0432\u044b\u0435 enhanced-DID",
@@ -414,10 +843,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L50",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0430\u043d\u0430\u043b\u0438\u0437_\u0447\u0442\u043e_\u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438_\u043d\u043e\u0432\u044b\u0435_enhanced_did",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0430\u043d\u0430\u043b\u0438\u0437: \u0447\u0442\u043e \u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438 \u043d\u043e\u0432\u044b\u0435 enhanced-did"
+      "norm_label": "\u0430\u043d\u0430\u043b\u0438\u0437: \u0447\u0442\u043e \u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438 \u043d\u043e\u0432\u044b\u0435 enhanced-did",
+      "id": "docs_run_2026_07_21_\u0430\u043d\u0430\u043b\u0438\u0437_\u0447\u0442\u043e_\u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438_\u043d\u043e\u0432\u044b\u0435_enhanced_did"
     },
     {
       "label": "\u041a\u0420\u0418\u0422\u0418\u0427\u041d\u041e: \u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c/\u043e\u0431\u043e\u0440\u043e\u0442\u044b/rail/batt/load \u043d\u0435 \u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c",
@@ -425,10 +854,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e_\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c_\u043e\u0431\u043e\u0440\u043e\u0442\u044b_rail_batt_load_\u043d\u0435_\u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e: \u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c/\u043e\u0431\u043e\u0440\u043e\u0442\u044b/rail/batt/load \u043d\u0435 \u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c"
+      "norm_label": "\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e: \u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c/\u043e\u0431\u043e\u0440\u043e\u0442\u044b/rail/batt/load \u043d\u0435 \u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c",
+      "id": "docs_run_2026_07_21_\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e_\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c_\u043e\u0431\u043e\u0440\u043e\u0442\u044b_rail_batt_load_\u043d\u0435_\u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c"
     },
     {
       "label": "\u0412\u044b\u0432\u043e\u0434\u044b / \u0447\u0442\u043e \u0434\u0430\u043b\u044c\u0448\u0435",
@@ -436,10 +865,10 @@
       "source_file": "docs/run-2026-07-21.md",
       "source_location": "L83",
       "_origin": "ast",
-      "id": "docs_run_2026_07_21_\u0432\u044b\u0432\u043e\u0434\u044b_\u0447\u0442\u043e_\u0434\u0430\u043b\u044c\u0448\u0435",
       "community": 30,
       "community_name": "metric_state_t",
-      "norm_label": "\u0432\u044b\u0432\u043e\u0434\u044b / \u0447\u0442\u043e \u0434\u0430\u043b\u044c\u0448\u0435"
+      "norm_label": "\u0432\u044b\u0432\u043e\u0434\u044b / \u0447\u0442\u043e \u0434\u0430\u043b\u044c\u0448\u0435",
+      "id": "docs_run_2026_07_21_\u0432\u044b\u0432\u043e\u0434\u044b_\u0447\u0442\u043e_\u0434\u0430\u043b\u044c\u0448\u0435"
     },
     {
       "label": "fdcan_obd.h",
@@ -453,92 +882,15 @@
       "id": "core_inc_fdcan_obd"
     },
     {
-      "label": "cluster_ui.c",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "cluster_ui.c",
-      "id": "core_src_cluster_ui"
-    },
-    {
-      "label": "iround()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L112",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "iround()",
-      "id": "core_src_cluster_ui_iround"
-    },
-    {
-      "label": "fmt()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L115",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "fmt()",
-      "id": "core_src_cluster_ui_fmt"
-    },
-    {
-      "label": "state_color()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L126",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "state_color()",
-      "id": "core_src_cluster_ui_state_color"
-    },
-    {
-      "label": "lv_color_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "lv_color_t",
-      "id": "lv_color_t"
-    },
-    {
       "label": "metric_state_t",
       "file_type": "code",
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
+      "community": 33,
+      "community_name": "metric_state_t",
       "norm_label": "metric_state_t",
       "id": "metric_state_t"
-    },
-    {
-      "label": "has_value()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L141",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "has_value()",
-      "id": "core_src_cluster_ui_has_value"
-    },
-    {
-      "label": "is_temp()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L144",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "is_temp()",
-      "id": "core_src_cluster_ui_is_temp"
     },
     {
       "label": "metric_key_t",
@@ -546,296 +898,10 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
+      "community": 32,
+      "community_name": "FDCAN_HandleTypeDef",
       "norm_label": "metric_key_t",
       "id": "metric_key_t"
-    },
-    {
-      "label": "mval()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L149",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mval()",
-      "id": "core_src_cluster_ui_mval"
-    },
-    {
-      "label": "obd_data_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "obd_data_t",
-      "id": "obd_data_t"
-    },
-    {
-      "label": "pct_of()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L164",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "pct_of()",
-      "id": "core_src_cluster_ui_pct_of"
-    },
-    {
-      "label": "plain()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L174",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "plain()",
-      "id": "core_src_cluster_ui_plain"
-    },
-    {
-      "label": "lv_obj_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "lv_obj_t",
-      "id": "lv_obj_t"
-    },
-    {
-      "label": "mk_label()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L183",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_label()",
-      "id": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "label": "lv_font_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "lv_font_t",
-      "id": "lv_font_t"
-    },
-    {
-      "label": "mk_value()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L198",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_value()",
-      "id": "core_src_cluster_ui_mk_value"
-    },
-    {
-      "label": "mk_card()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L218",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_card()",
-      "id": "core_src_cluster_ui_mk_card"
-    },
-    {
-      "label": "mk_bar()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L234",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_bar()",
-      "id": "core_src_cluster_ui_mk_bar"
-    },
-    {
-      "label": "mk_tick()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L250",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_tick()",
-      "id": "core_src_cluster_ui_mk_tick"
-    },
-    {
-      "label": "mk_dot()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L263",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_dot()",
-      "id": "core_src_cluster_ui_mk_dot"
-    },
-    {
-      "label": "mk_pager()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L279",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_pager()",
-      "id": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "label": "mk_eyebrow()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L299",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "mk_eyebrow()",
-      "id": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "label": "build_drive()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L320",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "build_drive()",
-      "id": "core_src_cluster_ui_build_drive"
-    },
-    {
-      "label": "build_dpf()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L432",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "build_dpf()",
-      "id": "core_src_cluster_ui_build_dpf"
-    },
-    {
-      "label": "build_diag()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L498",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "build_diag()",
-      "id": "core_src_cluster_ui_build_diag"
-    },
-    {
-      "label": "build_sniff()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L569",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "build_sniff()",
-      "id": "core_src_cluster_ui_build_sniff"
-    },
-    {
-      "label": "build_strip()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L604",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "build_strip()",
-      "id": "core_src_cluster_ui_build_strip"
-    },
-    {
-      "label": "cluster_ui_build()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L632",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "cluster_ui_build()",
-      "id": "core_src_cluster_ui_cluster_ui_build"
-    },
-    {
-      "label": "cluster_ui_set_page()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L660",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "cluster_ui_set_page()",
-      "id": "core_src_cluster_ui_cluster_ui_set_page"
-    },
-    {
-      "label": "cluster_ui_next_page()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L674",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "cluster_ui_next_page()",
-      "id": "core_src_cluster_ui_cluster_ui_next_page"
-    },
-    {
-      "label": "cluster_ui_get_page()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L679",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "App Main & Superloop",
-      "norm_label": "cluster_ui_get_page()",
-      "id": "core_src_cluster_ui_cluster_ui_get_page"
-    },
-    {
-      "label": "set_metric()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L685",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "set_metric()",
-      "id": "core_src_cluster_ui_set_metric"
-    },
-    {
-      "label": "cluster_ui_refresh()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L719",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "cluster_ui_refresh()",
-      "id": "core_src_cluster_ui_cluster_ui_refresh"
-    },
-    {
-      "label": "obd_on_update()",
-      "file_type": "code",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L963",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "UI Page Builders",
-      "norm_label": "obd_on_update()",
-      "id": "core_src_cluster_ui_obd_on_update"
     },
     {
       "label": "can_sniff.h",
@@ -847,50 +913,6 @@
       "community_name": "can_sniff.h",
       "norm_label": "can_sniff.h",
       "id": "core_inc_can_sniff"
-    },
-    {
-      "label": "cluster_config.h",
-      "file_type": "code",
-      "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
-      "norm_label": "cluster_config.h",
-      "id": "core_inc_cluster_config"
-    },
-    {
-      "label": "metric_state()",
-      "file_type": "code",
-      "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L115",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
-      "norm_label": "metric_state()",
-      "id": "core_inc_cluster_config_metric_state"
-    },
-    {
-      "label": "metric_state_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
-      "norm_label": "metric_state_t",
-      "id": "core_inc_cluster_config_h_metric_state_t"
-    },
-    {
-      "label": "metric_key_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "Metric Model & App Glue",
-      "norm_label": "metric_key_t",
-      "id": "core_inc_cluster_config_h_metric_key_t"
     },
     {
       "label": "can_sniff.c",
@@ -1078,28 +1100,6 @@
       "community_name": "set_metric",
       "norm_label": "can_sniff_top_ids()",
       "id": "core_src_can_sniff_can_sniff_top_ids"
-    },
-    {
-      "label": "metric_state_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 33,
-      "community_name": "metric_state_t",
-      "norm_label": "metric_state_t",
-      "id": "core_src_cluster_ui_c_metric_state_t"
-    },
-    {
-      "label": "metric_key_t",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "community": 32,
-      "community_name": "FDCAN_HandleTypeDef",
-      "norm_label": "metric_key_t",
-      "id": "core_src_cluster_ui_c_metric_key_t"
     },
     {
       "label": "fdcan.c",
@@ -2881,6 +2881,53 @@
   ],
   "links": [
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Inc/cluster_config.h",
+      "source_location": "L117",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_inc_cluster_config",
+      "target": "core_inc_cluster_config_metric_state",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/can_sniff.c",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "core_src_can_sniff",
+      "target": "core_inc_cluster_config"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_app.c",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "core_src_cluster_app",
+      "target": "core_inc_cluster_config"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_inc_cluster_config",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -2888,9 +2935,1301 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_inc_cluster_config",
+      "target": "core_inc_cluster_config"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Inc/cluster_config.h",
+      "source_location": "L117",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_inc_cluster_config_metric_state",
+      "target": "core_inc_cluster_config_h_metric_key_t",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Inc/cluster_config.h",
+      "source_location": "L117",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast",
+      "source": "core_inc_cluster_config_metric_state",
+      "target": "core_inc_cluster_config_h_metric_state_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L766",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_inc_cluster_config_metric_state"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L707",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_inc_cluster_config_metric_state"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L501",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_build_diag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L435",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_build_dpf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L322",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_build_drive",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L572",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_build_sniff",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L607",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_build_strip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L635",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_cluster_ui_build",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L682",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_cluster_ui_get_page",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L677",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_cluster_ui_next_page",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L722",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_cluster_ui_refresh",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L663",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_cluster_ui_set_page",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L118",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_fmt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_has_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_iround",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_is_temp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L238",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_bar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L222",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L267",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_dot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L303",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L283",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_pager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L254",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L202",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mk_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_mval",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L966",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_obd_on_update",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L168",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_pct_of",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L178",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_plain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L688",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_set_metric",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L129",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui",
+      "target": "core_src_cluster_ui_state_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L121",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_fmt",
+      "target": "core_src_cluster_ui_iround",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L173",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_pct_of",
+      "target": "core_src_cluster_ui_iround",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L423",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_fmt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L761",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_cluster_ui_fmt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L704",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_fmt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L767",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_cluster_ui_state_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L708",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_state_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L129",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_state_color",
+      "target": "core_src_cluster_ui_c_metric_state_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L129",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_state_color",
+      "target": "lv_color_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L187",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_label",
+      "target": "lv_color_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L254",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_tick",
+      "target": "lv_color_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L202",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_value",
+      "target": "lv_color_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L761",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_cluster_ui_has_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L692",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_has_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L147",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_is_temp",
+      "target": "core_src_cluster_ui_c_metric_key_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L710",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_is_temp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L152",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mval",
+      "target": "core_src_cluster_ui_c_metric_key_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_pct_of",
+      "target": "core_src_cluster_ui_c_metric_key_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L688",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_c_metric_key_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L152",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mval",
+      "target": "obd_data_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L691",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_mval",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L688",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "obd_data_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L778",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_cluster_ui_pct_of",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L717",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "core_src_cluster_ui_pct_of",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L445",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_plain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L334",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_plain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_value",
+      "target": "core_src_cluster_ui_plain",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L178",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_plain",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L607",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_strip",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L238",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_bar",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L222",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_card",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L267",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_dot",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L303",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_eyebrow",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L187",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_label",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L283",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_pager",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L254",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_tick",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L202",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_value",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L688",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_set_metric",
+      "target": "lv_obj_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L510",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L467",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L342",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L578",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_sniff",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L623",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_strip",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L316",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_eyebrow",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L187",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_label",
+      "target": "lv_font_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L213",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_value",
+      "target": "core_src_cluster_ui_mk_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L202",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_mk_value",
+      "target": "lv_font_t",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L553",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L465",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L406",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_value",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L508",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L490",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L340",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L409",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_bar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L476",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L418",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L626",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_strip",
+      "target": "core_src_cluster_ui_mk_tick",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L404",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_dot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L565",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_pager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L497",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_pager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L431",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_pager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L603",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_sniff",
+      "target": "core_src_cluster_ui_mk_pager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L505",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_diag",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L439",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_dpf",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L326",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_drive",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L576",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_build_sniff",
+      "target": "core_src_cluster_ui_mk_eyebrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L654",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_drive",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L655",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_dpf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L656",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_diag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L657",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_sniff",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L658",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_build_strip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/cluster_app.c",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_app_cluster_app_init",
+      "target": "core_src_cluster_ui_cluster_ui_build"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L660",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_build",
+      "target": "core_src_cluster_ui_cluster_ui_set_page",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L679",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_next_page",
+      "target": "core_src_cluster_ui_cluster_ui_set_page",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_run",
+      "target": "core_src_cluster_ui_cluster_ui_next_page"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/app_main.c",
+      "source_location": "L167",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_app_main_appmain_run",
+      "target": "core_src_cluster_ui_cluster_ui_get_page"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Core/Src/cluster_ui.c",
+      "source_location": "L770",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_ui_cluster_ui_refresh",
+      "target": "core_src_cluster_ui_set_metric",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Core/Src/cluster_app.c",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "core_src_cluster_app_cluster_app_run",
+      "target": "core_src_cluster_ui_cluster_ui_refresh"
     },
     {
       "relation": "contains",
@@ -2899,9 +4238,9 @@
       "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_can_send",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_can_send"
     },
     {
       "relation": "contains",
@@ -2910,9 +4249,9 @@
       "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_decode_mode01",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_decode_mode01"
     },
     {
       "relation": "contains",
@@ -2921,9 +4260,9 @@
       "source_location": "L195",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_decode_mode22",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_decode_mode22"
     },
     {
       "relation": "contains",
@@ -2932,9 +4271,9 @@
       "source_location": "L251",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_dispatch",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_dispatch"
     },
     {
       "relation": "contains",
@@ -2943,9 +4282,9 @@
       "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_expect_reply",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_expect_reply"
     },
     {
       "relation": "contains",
@@ -2954,9 +4293,9 @@
       "source_location": "L306",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_can_health",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_can_health"
     },
     {
       "relation": "contains",
@@ -2965,9 +4304,9 @@
       "source_location": "L281",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_check_health",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_check_health"
     },
     {
       "relation": "contains",
@@ -2976,9 +4315,9 @@
       "source_location": "L498",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_demo_tick",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_demo_tick"
     },
     {
       "relation": "contains",
@@ -2987,9 +4326,9 @@
       "source_location": "L373",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_init",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_init"
     },
     {
       "relation": "contains",
@@ -2998,9 +4337,9 @@
       "source_location": "L410",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_poll_tick",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_poll_tick"
     },
     {
       "relation": "contains",
@@ -3009,9 +4348,9 @@
       "source_location": "L315",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_rx_poll",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_rx_poll"
     },
     {
       "relation": "contains",
@@ -3020,9 +4359,9 @@
       "source_location": "L489",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_obd_watchdog_tick_1hz",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_obd_watchdog_tick_1hz"
     },
     {
       "relation": "contains",
@@ -3031,9 +4370,9 @@
       "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_reply_is_ours",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_reply_is_ours"
     },
     {
       "relation": "contains",
@@ -3042,9 +4381,9 @@
       "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode01",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode01"
     },
     {
       "relation": "contains",
@@ -3053,9 +4392,9 @@
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode03",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode03"
     },
     {
       "relation": "contains",
@@ -3064,9 +4403,9 @@
       "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_req_mode22",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode22"
     },
     {
       "relation": "contains",
@@ -3075,9 +4414,9 @@
       "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_send_flow_control",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_send_flow_control"
     },
     {
       "relation": "contains",
@@ -3086,9 +4425,9 @@
       "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_set_f",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_set_f"
     },
     {
       "relation": "contains",
@@ -3097,9 +4436,9 @@
       "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd",
-      "target": "core_src_fdcan_obd_update_boost",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_update_boost"
     },
     {
       "relation": "calls",
@@ -3109,9 +4448,9 @@
       "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode01",
-      "target": "core_src_fdcan_obd_expect_reply",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_expect_reply"
     },
     {
       "relation": "calls",
@@ -3121,9 +4460,9 @@
       "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode03",
-      "target": "core_src_fdcan_obd_expect_reply",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_expect_reply"
     },
     {
       "relation": "calls",
@@ -3133,9 +4472,9 @@
       "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode22",
-      "target": "core_src_fdcan_obd_expect_reply",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_expect_reply"
     },
     {
       "relation": "calls",
@@ -3145,9 +4484,9 @@
       "source_location": "L347",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_reply_is_ours",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_reply_is_ours"
     },
     {
       "relation": "calls",
@@ -3157,9 +4496,9 @@
       "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode01",
-      "target": "core_src_fdcan_obd_can_send",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_can_send"
     },
     {
       "relation": "calls",
@@ -3169,9 +4508,9 @@
       "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode03",
-      "target": "core_src_fdcan_obd_can_send",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_can_send"
     },
     {
       "relation": "calls",
@@ -3181,9 +4520,9 @@
       "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_req_mode22",
-      "target": "core_src_fdcan_obd_can_send",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_can_send"
     },
     {
       "relation": "calls",
@@ -3193,9 +4532,9 @@
       "source_location": "L119",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_send_flow_control",
-      "target": "core_src_fdcan_obd_can_send",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_can_send"
     },
     {
       "relation": "calls",
@@ -3205,9 +4544,9 @@
       "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode01",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode01"
     },
     {
       "relation": "calls",
@@ -3217,9 +4556,9 @@
       "source_location": "L484",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode03",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode03"
     },
     {
       "relation": "calls",
@@ -3229,9 +4568,9 @@
       "source_location": "L470",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_poll_tick",
-      "target": "core_src_fdcan_obd_req_mode22",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_req_mode22"
     },
     {
       "relation": "calls",
@@ -3241,9 +4580,9 @@
       "source_location": "L357",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_send_flow_control",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_send_flow_control"
     },
     {
       "relation": "calls",
@@ -3253,9 +4592,9 @@
       "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode01",
-      "target": "core_src_fdcan_obd_set_f",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_set_f"
     },
     {
       "relation": "calls",
@@ -3265,9 +4604,9 @@
       "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode22",
-      "target": "core_src_fdcan_obd_set_f",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_set_f"
     },
     {
       "relation": "calls",
@@ -3277,9 +4616,9 @@
       "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_update_boost",
-      "target": "core_src_fdcan_obd_set_f",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_set_f"
     },
     {
       "relation": "calls",
@@ -3289,9 +4628,9 @@
       "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_decode_mode01",
-      "target": "core_src_fdcan_obd_update_boost",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_update_boost"
     },
     {
       "relation": "calls",
@@ -3301,9 +4640,9 @@
       "source_location": "L253",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_dispatch",
-      "target": "core_src_fdcan_obd_decode_mode01",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_decode_mode01"
     },
     {
       "relation": "calls",
@@ -3313,9 +4652,9 @@
       "source_location": "L254",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_dispatch",
-      "target": "core_src_fdcan_obd_decode_mode22",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_decode_mode22"
     },
     {
       "relation": "calls",
@@ -3325,9 +4664,9 @@
       "source_location": "L348",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_dispatch",
-      "confidence_score": 1.0
+      "target": "core_src_fdcan_obd_dispatch"
     },
     {
       "relation": "calls",
@@ -3337,21 +4676,9 @@
       "source_location": "L318",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_rx_poll",
-      "target": "core_src_fdcan_obd_obd_check_health",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L859",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_fdcan_obd_obd_can_health"
+      "target": "core_src_fdcan_obd_obd_check_health"
     },
     {
       "relation": "calls",
@@ -3385,9 +4712,9 @@
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "core_src_fdcan_obd_obd_init",
-      "target": "fdcan_handletypedef",
-      "confidence_score": 1.0
+      "target": "fdcan_handletypedef"
     },
     {
       "relation": "calls",
@@ -3432,9 +4759,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_enhanced_dids",
-      "target": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "confidence_score": 1.0
+      "target": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98"
     },
     {
       "relation": "contains",
@@ -3443,9 +4770,9 @@
       "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_added_awaiting_on_car_confirmation",
-      "confidence_score": 1.0
+      "target": "docs_enhanced_dids_added_awaiting_on_car_confirmation"
     },
     {
       "relation": "contains",
@@ -3454,9 +4781,9 @@
       "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids",
-      "confidence_score": 1.0
+      "target": "docs_enhanced_dids_being_probed_on_the_car_standard_diesel_pids"
     },
     {
       "relation": "contains",
@@ -3465,9 +4792,9 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_confirmed_on_this_vehicle",
-      "confidence_score": 1.0
+      "target": "docs_enhanced_dids_confirmed_on_this_vehicle"
     },
     {
       "relation": "contains",
@@ -3476,9 +4803,9 @@
       "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_enhanced_dids_gm_enhanced_dids_mode_22_for_the_colorado_2_8_e98",
-      "target": "docs_enhanced_dids_sources",
-      "confidence_score": 1.0
+      "target": "docs_enhanced_dids_sources"
     },
     {
       "relation": "contains",
@@ -3487,9 +4814,9 @@
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21",
-      "target": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435"
     },
     {
       "relation": "contains",
@@ -3498,9 +4825,9 @@
       "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
-      "target": "docs_run_2026_07_21_\u0430\u043d\u0430\u043b\u0438\u0437_\u0447\u0442\u043e_\u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438_\u043d\u043e\u0432\u044b\u0435_enhanced_did",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0430\u043d\u0430\u043b\u0438\u0437_\u0447\u0442\u043e_\u043e\u0442\u0432\u0435\u0442\u0438\u043b\u0438_\u043d\u043e\u0432\u044b\u0435_enhanced_did"
     },
     {
       "relation": "contains",
@@ -3509,9 +4836,9 @@
       "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
-      "target": "docs_run_2026_07_21_\u0432\u044b\u0432\u043e\u0434\u044b_\u0447\u0442\u043e_\u0434\u0430\u043b\u044c\u0448\u0435",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0432\u044b\u0432\u043e\u0434\u044b_\u0447\u0442\u043e_\u0434\u0430\u043b\u044c\u0448\u0435"
     },
     {
       "relation": "contains",
@@ -3520,9 +4847,9 @@
       "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
-      "target": "docs_run_2026_07_21_\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e_\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c_\u043e\u0431\u043e\u0440\u043e\u0442\u044b_rail_batt_load_\u043d\u0435_\u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u043a\u0440\u0438\u0442\u0438\u0447\u043d\u043e_\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c_\u043e\u0431\u043e\u0440\u043e\u0442\u044b_rail_batt_load_\u043d\u0435_\u0447\u0438\u0442\u0430\u043b\u0438\u0441\u044c"
     },
     {
       "relation": "contains",
@@ -3531,9 +4858,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u043f\u0440\u043e\u0433\u043e\u043d_2026_07_21_\u043f\u043e\u0441\u043b\u0435_5_\u043c\u0438\u043d_\u043f\u043e\u0435\u0437\u0434\u043a\u0438_\u0441\u043d\u0438\u043c\u043e\u043a_\u043d\u0430_\u043f\u0430\u0440\u043a\u043e\u0432\u043a\u0435",
-      "target": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430"
     },
     {
       "relation": "contains",
@@ -3542,9 +4869,9 @@
       "source_location": "L41",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
-      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_1_4_sniff_\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435_\u043a\u0430\u0434\u0440\u044b_\u043c\u043e\u0442\u043e\u0440_\u0437\u0430\u0433\u043b\u0443\u0448\u0451\u043d",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_1_4_sniff_\u0448\u0438\u0440\u043e\u043a\u043e\u0432\u0435\u0449\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435_\u043a\u0430\u0434\u0440\u044b_\u043c\u043e\u0442\u043e\u0440_\u0437\u0430\u0433\u043b\u0443\u0448\u0451\u043d"
     },
     {
       "relation": "contains",
@@ -3553,9 +4880,9 @@
       "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
-      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_5_diag",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_5_diag"
     },
     {
       "relation": "contains",
@@ -3564,9 +4891,9 @@
       "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
-      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_6_dpf",
-      "confidence_score": 1.0
+      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_6_dpf"
     },
     {
       "relation": "contains",
@@ -3575,1324 +4902,9 @@
       "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "docs_run_2026_07_21_\u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430",
-      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_7_drive",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_inc_cluster_config"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L498",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_build_diag"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L432",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_build_dpf"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L320",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_build_drive"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L569",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_build_sniff"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L604",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_build_strip"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L632",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_cluster_ui_build"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L679",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_cluster_ui_get_page"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L674",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_cluster_ui_next_page"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L719",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_cluster_ui_refresh"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L660",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_cluster_ui_set_page"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L115",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_fmt"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L141",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_has_value"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L112",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_iround"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L144",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_is_temp"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L234",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_bar"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L218",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_card"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L263",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_dot"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L299",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L183",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L279",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L250",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_tick"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L198",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mk_value"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L149",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_mval"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L963",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_obd_on_update"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L164",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_pct_of"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L174",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_plain"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L685",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_set_metric"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L126",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui",
-      "target": "core_src_cluster_ui_state_color"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L118",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_fmt",
-      "target": "core_src_cluster_ui_iround"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L169",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_pct_of",
-      "target": "core_src_cluster_ui_iround"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L420",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_fmt"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L758",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_fmt"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L701",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_fmt"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L764",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_state_color"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L705",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_state_color"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L126",
-      "weight": 1.0,
-      "context": "return_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_state_color",
-      "target": "lv_color_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L126",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_state_color",
-      "target": "metric_state_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L183",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_label",
-      "target": "lv_color_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L250",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_tick",
-      "target": "lv_color_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L198",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_value",
-      "target": "lv_color_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L758",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_has_value"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L689",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_has_value"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L144",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_is_temp",
-      "target": "metric_key_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L707",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_is_temp"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L149",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mval",
-      "target": "metric_key_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L164",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_pct_of",
-      "target": "metric_key_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L685",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "metric_key_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L149",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mval",
-      "target": "obd_data_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L688",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_mval"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L685",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "obd_data_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L775",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_pct_of"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L714",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "core_src_cluster_ui_pct_of"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L442",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_plain"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L332",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_plain"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L202",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_value",
-      "target": "core_src_cluster_ui_plain"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L174",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_plain",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L604",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_strip",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L234",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_bar",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L218",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_card",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L263",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_dot",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L299",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_eyebrow",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L183",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_label",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L279",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_pager",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L250",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_tick",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L198",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_value",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L685",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_set_metric",
-      "target": "lv_obj_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L507",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L464",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L340",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L575",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_sniff",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L620",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_strip",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L312",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_eyebrow",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L183",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_label",
-      "target": "lv_font_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L209",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_value",
-      "target": "core_src_cluster_ui_mk_label"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L198",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_mk_value",
-      "target": "lv_font_t"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L550",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_value"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L462",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_value"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L403",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_value"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L505",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_card"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L487",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_card"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L338",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_card"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L406",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_bar"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L473",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_tick"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L415",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_tick"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L623",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_strip",
-      "target": "core_src_cluster_ui_mk_tick"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L401",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_dot"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L562",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L494",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L428",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L600",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_sniff",
-      "target": "core_src_cluster_ui_mk_pager"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L502",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_diag",
-      "target": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L436",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_dpf",
-      "target": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L324",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_drive",
-      "target": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L573",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_build_sniff",
-      "target": "core_src_cluster_ui_mk_eyebrow"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L651",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_drive"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L652",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_dpf"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L653",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_diag"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L654",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_sniff"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L655",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_build_strip"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Core/Src/cluster_app.c",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_app_cluster_app_init",
-      "target": "core_src_cluster_ui_cluster_ui_build"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L657",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_build",
-      "target": "core_src_cluster_ui_cluster_ui_set_page"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L676",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_next_page",
-      "target": "core_src_cluster_ui_cluster_ui_set_page"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Core/Src/app_main.c",
-      "source_location": "L144",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_app_main_appmain_run",
-      "target": "core_src_cluster_ui_cluster_ui_next_page"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Core/Src/app_main.c",
-      "source_location": "L167",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_app_main_appmain_run",
-      "target": "core_src_cluster_ui_cluster_ui_get_page"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_ui.c",
-      "source_location": "L767",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_ui_cluster_ui_refresh",
-      "target": "core_src_cluster_ui_set_metric"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Core/Src/cluster_app.c",
-      "source_location": "L28",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "core_src_cluster_app_cluster_app_run",
-      "target": "core_src_cluster_ui_cluster_ui_refresh"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L115",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_inc_cluster_config",
-      "target": "core_inc_cluster_config_metric_state"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/can_sniff.c",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_can_sniff",
-      "target": "core_inc_cluster_config"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Src/cluster_app.c",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_src_cluster_app",
-      "target": "core_inc_cluster_config"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L115",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_inc_cluster_config_metric_state",
-      "target": "core_inc_cluster_config_h_metric_key_t"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Core/Inc/cluster_config.h",
-      "source_location": "L115",
-      "weight": 1.0,
-      "context": "return_type",
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "core_inc_cluster_config_metric_state",
-      "target": "core_inc_cluster_config_h_metric_state_t"
+      "target": "docs_run_2026_07_21_\u0444\u043e\u0442\u043e_7_drive"
     },
     {
       "relation": "contains",
@@ -7287,5 +7299,5 @@
       "source_file": "design/Diesel_Cluster_v2_3.html"
     }
   ],
-  "built_at_commit": "b81a97b4fbebc3a875f5df7cbcff0055402b0015"
+  "built_at_commit": "5b26c4256175669639bdadd3d3d070ebf1a01f29"
 }
