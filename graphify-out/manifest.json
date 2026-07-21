@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1784626616.6541393,
-    "ast_hash": "c1ba99872f8a80d93e6a11e15894bf80",
+    "mtime": 1784669576.5417535,
+    "ast_hash": "a3360eb7d77522d32f4c711dc69270b7",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -249,159 +249,54 @@
     "ast_hash": "ead0575a3056cf22f1a7aac28571ea7b",
     "semantic_hash": ""
   },
-  "design/Photos/1/5402172748261431023.jpg": {
-    "mtime": 1784601523.7245636,
-    "ast_hash": "9687324096f0bed1bda58d1a48ae4215",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431024.jpg": {
-    "mtime": 1784601529.5914683,
-    "ast_hash": "f221236a955835419e041ef182b001f5",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431025.jpg": {
-    "mtime": 1784601531.4696488,
-    "ast_hash": "6f37e77e43186fa467655c8228f35faa",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431026.jpg": {
-    "mtime": 1784601533.3390868,
-    "ast_hash": "b276e26a00559698ca3acd914c106434",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431027.jpg": {
-    "mtime": 1784601535.2866025,
-    "ast_hash": "ddd9d05bfe1fa525d0204f53edbfe7ee",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431028.jpg": {
-    "mtime": 1784601537.2193034,
-    "ast_hash": "f7b67bbe1af0ec898e24d4e0858cb77e",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431029.jpg": {
-    "mtime": 1784601539.0555205,
-    "ast_hash": "2542c0c92e7ec8a9d8cd644d18ba8597",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431030.jpg": {
-    "mtime": 1784601542.0676327,
-    "ast_hash": "75783d2446988614dfa94266214cc65f",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431031.jpg": {
-    "mtime": 1784601544.1674652,
-    "ast_hash": "db8d48a1b489447a620d6970c060ad78",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431032.jpg": {
-    "mtime": 1784601546.2149336,
-    "ast_hash": "a05348273bb3d1a9fdcf8764c4179466",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431033.jpg": {
-    "mtime": 1784601548.520356,
-    "ast_hash": "afe0dd5903e094b5bd15975b50e1a410",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431034.jpg": {
-    "mtime": 1784601551.130788,
-    "ast_hash": "7cf8e3bc23bf6f6c375d0acae519a298",
-    "semantic_hash": ""
-  },
-  "design/Photos/1/5402172748261431035.jpg": {
-    "mtime": 1784601553.4155767,
-    "ast_hash": "96279eb22da8d27817fc6654090ea22e",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431036.jpg": {
-    "mtime": 1784601628.496,
-    "ast_hash": "b3d43d6e8d39330fe7683cc6a72671a6",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431037.jpg": {
-    "mtime": 1784601630.7780607,
-    "ast_hash": "518759b2b739b9ce0a6e64d35e43ac55",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431038.jpg": {
-    "mtime": 1784601632.9640057,
-    "ast_hash": "e63120fea979e0c568ad9c78c10df192",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431039.jpg": {
-    "mtime": 1784601635.2941515,
-    "ast_hash": "4993011ed702c77af3af5feac592c4e2",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431040.jpg": {
-    "mtime": 1784601637.4597926,
-    "ast_hash": "ad2cb49c0e441b7151958946e8d8f82c",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431041.jpg": {
-    "mtime": 1784601639.4592898,
-    "ast_hash": "9a2958c1171a91553afb8bd4ca2192a4",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431043.jpg": {
-    "mtime": 1784601641.6106768,
-    "ast_hash": "9fca0800bc73575fbf6795e396736f9e",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431044.jpg": {
-    "mtime": 1784601643.9281278,
-    "ast_hash": "232d1f2997208df54e9ada0ccb115dc2",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431045.jpg": {
-    "mtime": 1784601646.2926197,
-    "ast_hash": "9cdb503462bd7928226dc9a798f37ddb",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431046.jpg": {
-    "mtime": 1784601648.349485,
-    "ast_hash": "24ae8f251391904e62b057e5d326c5cf",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431048.jpg": {
-    "mtime": 1784601650.2449286,
-    "ast_hash": "577e50635f59e9764f41849e974ae078",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431049.jpg": {
-    "mtime": 1784601652.076658,
-    "ast_hash": "1c59ad9e9d31549601abffa4a165623f",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431050.jpg": {
-    "mtime": 1784601654.1243312,
-    "ast_hash": "f671bdff730828490e3e82f2c05ee4f0",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431051.jpg": {
-    "mtime": 1784601655.9898708,
-    "ast_hash": "a5c0de8b7d7fea452d61594fd0b40f11",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431052.jpg": {
-    "mtime": 1784601658.1209755,
-    "ast_hash": "8f8e8e798dd9104ac502451f1bec367c",
-    "semantic_hash": ""
-  },
-  "design/Photos/2/5402172748261431053.jpg": {
-    "mtime": 1784601659.9877727,
-    "ast_hash": "69798c1f73743829cffa31c9f3d7d6e5",
-    "semantic_hash": ""
-  },
   "docs/sniff-selector.md": {
     "mtime": 1784607281.057464,
     "ast_hash": "ba93dacdf7a9fe88d6809fdde5de2725",
     "semantic_hash": ""
   },
   "docs/enhanced-dids.md": {
-    "mtime": 1784627179.4944975,
-    "ast_hash": "d32bb62244efbc802e7db6ac1aa6c710",
+    "mtime": 1784669100.084102,
+    "ast_hash": "dbcfa3a4b7de588d11b607d901cfafb0",
+    "semantic_hash": ""
+  },
+  "docs/run-2026-07-21.md": {
+    "mtime": 1784669697.320448,
+    "ast_hash": "0b8c2fde6fb730d8e61007dd63e9aae3",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_1_2026-07-21_22-55-05.jpg": {
+    "mtime": 1784636565.0,
+    "ast_hash": "b589b2acc4efd2e5860e71fa92d2db11",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_2_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636566.0,
+    "ast_hash": "ddb52512f3efa76bc4b60b6dfdfbc867",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_3_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636567.0,
+    "ast_hash": "5cad51a4f6f1e19ed361c6c0874958bd",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_4_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636569.0,
+    "ast_hash": "9e725221b5147123a1875911e38e60cb",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_5_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636571.0,
+    "ast_hash": "f5a4bae27dd9ba6a0116ba8852731002",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_6_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636573.0,
+    "ast_hash": "ed83c52be1b0467b5400f94f2669d6f5",
+    "semantic_hash": ""
+  },
+  "design/Photos/photo_7_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784636574.0,
+    "ast_hash": "5e83ab77daa1243b9911dd9e96ae7580",
     "semantic_hash": ""
   }
 }

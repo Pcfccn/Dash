@@ -1,16 +1,16 @@
-# Graph Report - Dash  (2026-07-21)
+# Graph Report - Dash  (2026-07-22)
 
 ## Corpus Check
-- 43 files · ~286,784 words
+- 44 files · ~73,446 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 245 nodes · 380 edges · 35 communities (31 shown, 4 thin omitted)
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.8)
+- 255 nodes · 382 edges · 35 communities (31 shown, 4 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c00e6aa9`
+- Built from commit: `b81a97b4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -42,20 +42,20 @@
 6. `build_dpf()` - 9 edges
 7. `cluster_ui_build()` - 8 edges
 8. `cluster_ui_refresh()` - 8 edges
-9. `obd_on_update()` - 8 edges
-10. `AppMain_Init()` - 8 edges
+9. `AppMain_Init()` - 8 edges
+10. `main()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `main()` --calls--> `MX_FREERTOS_Init()`  [INFERRED]
-  Core/Src/main.c → Core/Src/freertos.c
+- `cluster_ui_refresh()` --calls--> `obd_can_health()`  [INFERRED]
+  Core/Src/cluster_ui.c → Core/Src/fdcan_obd.c
+- `cluster_app_run()` --calls--> `obd_watchdog_tick_1hz()`  [INFERRED]
+  Core/Src/cluster_app.c → Core/Src/fdcan_obd.c
+- `cluster_app_run()` --calls--> `obd_demo_tick()`  [INFERRED]
+  Core/Src/cluster_app.c → Core/Src/fdcan_obd.c
 - `cluster_app_init()` --calls--> `cluster_ui_build()`  [INFERRED]
   Core/Src/cluster_app.c → Core/Src/cluster_ui.c
 - `AppMain_Run()` --calls--> `cluster_ui_next_page()`  [INFERRED]
   Core/Src/app_main.c → Core/Src/cluster_ui.c
-- `AppMain_Run()` --calls--> `cluster_ui_get_page()`  [INFERRED]
-  Core/Src/app_main.c → Core/Src/cluster_ui.c
-- `cluster_app_run()` --calls--> `cluster_ui_refresh()`  [INFERRED]
-  Core/Src/cluster_app.c → Core/Src/cluster_ui.c
 
 ## Import Cycles
 - None detected.
@@ -67,19 +67,19 @@
 ## Communities (35 total, 4 thin omitted)
 
 ### Community 0 - "FDCAN & OBD Bus Init"
-Cohesion: 0.11
-Nodes (20): FDCAN_HandleTypeDef, HAL_FDCAN_MspDeInit(), HAL_FDCAN_MspInit(), MX_FDCAN1_Init(), MX_GPIO_Init(), TIM_HandleTypeDef, Error_Handler(), HAL_TIM_PeriodElapsedCallback() (+12 more)
+Cohesion: 0.10
+Nodes (22): FDCAN_HandleTypeDef, HAL_FDCAN_MspDeInit(), HAL_FDCAN_MspInit(), MX_FDCAN1_Init(), MX_FREERTOS_Init(), StartDefaultTask(), MX_GPIO_Init(), TIM_HandleTypeDef (+14 more)
 
 ### Community 1 - "Metric Model & App Glue"
-Cohesion: 0.25
-Nodes (19): cluster_app_run(), obd_on_update(), can_send(), decode_mode01(), decode_mode22(), dispatch(), expect_reply(), obd_check_health() (+11 more)
+Cohesion: 0.14
+Nodes (25): metric_key_t, metric_state_t, metric_state(), FDCAN_HandleTypeDef, cluster_app_init(), cluster_app_run(), can_send(), decode_mode01() (+17 more)
 
 ### Community 2 - "App Main & Superloop"
-Cohesion: 0.16
-Nodes (21): AppMain_Init(), AppMain_Run(), backlight_set(), heartbeat_led_init(), heartbeat_led_tick(), key_button_init(), cluster_ui_get_page(), MX_FREERTOS_Init() (+13 more)
+Cohesion: 0.19
+Nodes (19): AppMain_Init(), AppMain_Run(), backlight_set(), heartbeat_led_init(), heartbeat_led_tick(), key_button_init(), cluster_ui_get_page(), lv_display_t (+11 more)
 
 ### Community 3 - "UI Page Builders"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (33): build_diag(), build_dpf(), build_drive(), build_sniff(), build_strip(), cluster_ui_build(), cluster_ui_next_page(), cluster_ui_refresh() (+25 more)
 
 ### Community 4 - "LVGL Display Port"
@@ -111,32 +111,32 @@ Cohesion: 0.33
 Nodes (5): Added, awaiting on-car confirmation, Being probed on the car (standard diesel PIDs), Confirmed on this vehicle, GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98, Sources
 
 ### Community 30 - "metric_state_t"
-Cohesion: 0.22
-Nodes (7): metric_key_t, metric_state_t, metric_state(), FDCAN_HandleTypeDef, cluster_app_init(), obd_init(), FDCAN_HandleTypeDef
+Cohesion: 0.20
+Nodes (9): Анализ: что ответили новые enhanced-DID, Выводы / что дальше, КРИТИЧНО: скорость/обороты/rail/batt/load не читались, Прогон 2026-07-21 (после ~5 мин поездки, снимок на парковке), Расшифровка, Фото 1–4 — SNIFF (широковещательные кадры, мотор заглушён), Фото 5 — DIAG, Фото 6 — DPF (+1 more)
 
 ### Community 31 - "SNIFF capture — selector / PRNDL search"
 Cohesion: 0.29
 Nodes (6): Analysis — distinct value set per interesting byte, Conclusion, Next, Run 1  (design/Photos/1/, frames 023–035), Run 2  (design/Photos/2/, frames 036–052), SNIFF capture — selector / PRNDL search
 
 ## Knowledge Gaps
-- **34 isolated node(s):** `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Being probed on the car (standard diesel PIDs)`, `Sources`, `Run 1  (design/Photos/1/, frames 023–035)` (+29 more)
+- **41 isolated node(s):** `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Being probed on the car (standard diesel PIDs)`, `Sources`, `Фото 7 — DRIVE` (+36 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppMain_Init()` connect `App Main & Superloop` to `LVGL Display Port`, `metric_state_t`?**
-  _High betweenness centrality (0.104) - this node is a cross-community bridge._
-- **Why does `AppMain_Run()` connect `App Main & Superloop` to `Metric Model & App Glue`, `UI Page Builders`?**
-  _High betweenness centrality (0.099) - this node is a cross-community bridge._
-- **Why does `cluster_app_init()` connect `metric_state_t` to `App Main & Superloop`, `UI Page Builders`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `AppMain_Init()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `LVGL Display Port`?**
+  _High betweenness centrality (0.096) - this node is a cross-community bridge._
+- **Why does `AppMain_Run()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `UI Page Builders`?**
+  _High betweenness centrality (0.092) - this node is a cross-community bridge._
+- **Why does `cluster_app_init()` connect `Metric Model & App Glue` to `App Main & Superloop`, `UI Page Builders`?**
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `AppMain_Run()` (e.g. with `cluster_app_run()` and `cluster_ui_get_page()`) actually correct?**
   _`AppMain_Run()` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Being probed on the car (standard diesel PIDs)` to the rest of the system?**
-  _34 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _41 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `FDCAN & OBD Bus Init` be split into smaller, more focused modules?**
-  _Cohesion score 0.11076923076923077 - nodes in this community are weakly interconnected._
-- **Should `UI Refresh & Metric Helpers` be split into smaller, more focused modules?**
-  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10098522167487685 - nodes in this community are weakly interconnected._
+- **Should `Metric Model & App Glue` be split into smaller, more focused modules?**
+  _Cohesion score 0.13756613756613756 - nodes in this community are weakly interconnected._

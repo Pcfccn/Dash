@@ -73,6 +73,7 @@ typedef enum {
     M_SPEED = 0, M_RPM, M_COOL, M_OIL, M_ATF, M_EGT, M_BOOST,
     M_SOOT, M_DPF_DP, M_SINCE_REGEN, M_EGR_T,
     M_BATTERY, M_IAT, M_LOAD, M_RAIL,
+    M_OILP,
     M_GEAR,
     M_COUNT
 } metric_key_t;
@@ -108,6 +109,7 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
   { "RAIL",        THR_INFO,       0,    200,     0,     0,     0,     0,   0 }, /* MPa            */
+  { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,   8.0f,  9.0f,  1 }, /* bar; low = danger, high never trips within 0-7 */
   { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
 

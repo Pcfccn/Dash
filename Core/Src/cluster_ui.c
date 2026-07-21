@@ -104,7 +104,10 @@ static struct {
 static uint8_t s_page = 0;
 static volatile bool s_dirty = true;
 
-static const metric_key_t DRIVE_M[4] = { M_COOL, M_OIL, M_ATF, M_EGT };
+/* DRIVE grid: coolant, oil temp, ATF temp, oil pressure. EGT is not duplicated
+ * here — it lives on the DPF page. Oil pressure is the driver-relevant health
+ * number, so it takes the 4th tile. */
+static const metric_key_t DRIVE_M[4] = { M_COOL, M_OIL, M_ATF, M_OILP };
 static const metric_key_t MINI_M[4]  = { M_EGT, M_DPF_DP, M_SINCE_REGEN, M_EGR_T };
 static const metric_key_t STAT_M[4]  = { M_BATTERY, M_IAT, M_LOAD, M_RAIL };
 
@@ -152,6 +155,7 @@ static float mval(const obd_data_t *d, metric_key_t k)
         case M_SPEED: return d->speed;   case M_RPM:  return d->rpm;
         case M_COOL:  return d->cool;    case M_OIL:  return d->oil;
         case M_ATF:   return d->atf;     case M_EGT:  return d->egt;
+        case M_OILP:  return d->oil_press;
         case M_BOOST: return d->boost;   case M_SOOT: return d->soot;
         case M_DPF_DP:return d->dpf_dp;  case M_SINCE_REGEN: return d->since_regen;
         case M_EGR_T: return d->egr_t;   case M_BATTERY: return d->battery;
@@ -309,8 +313,6 @@ static lv_obj_t *mk_eyebrow(lv_obj_t *page, const char *title)
     lv_obj_set_style_radius(tb, 0, 0);
     lv_obj_set_style_pad_all(tb, 0, 0);
     lv_obj_clear_flag(tb, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t *id = mk_label(tb, "COLORADO 2.8 / E98 / 500 kbit/s", F12, C_MUTED);
-    lv_obj_align(id, LV_ALIGN_LEFT_MID, 8, 0);
     lv_obj_t *pgn = mk_label(tb, title, F12, C_OK);
     lv_obj_align(pgn, LV_ALIGN_RIGHT_MID, -8, 0);
     return tb;
@@ -380,7 +382,8 @@ static void build_drive(void)
     lv_obj_set_style_pad_all(grid, 0, 0);
     lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
 
-    static const char *NAMES[4] = { "COOLANT", "OIL", "ATF", "EGT" };
+    static const char *NAMES[4] = { "COOLANT", "OIL", "ATF", "OIL P" };
+    static const char *UNITS[4] = { DEG "C",   DEG "C", DEG "C", "bar" };
     const int ch = 137;                                 /* cell height */
     const int cx[4] = { 0, 160, 0, 160 };
     const int cy[4] = { 0, 0, ch + 1, ch + 1 };
@@ -400,7 +403,7 @@ static void build_drive(void)
         lv_obj_set_pos(nm, 12, 12);
         ui.dm_dot[i] = mk_dot(cell, cw[i] - 16, 14);
 
-        ui.dm_val[i] = mk_value(cell, F48, C_TEXT, DEG "C", F14);
+        ui.dm_val[i] = mk_value(cell, F48, C_TEXT, UNITS[i], F14);
         lv_obj_align(lv_obj_get_parent(ui.dm_val[i]), LV_ALIGN_TOP_MID, 0, 34);
 
         ui.dm_bar[i] = mk_bar(cell, 12, ch - 40, cw[i] - 24, 6);
