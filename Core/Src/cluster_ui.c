@@ -92,7 +92,7 @@ static struct {
     lv_obj_t *did_dbg;              /* raw gear byte + last NRC (DID probing) */
 
     /* SNIFF */
-    lv_obj_t *sn_stat, *sn_rows;
+    lv_obj_t *sn_stat, *sn_rows, *sn_ana;
 } ui;
 
 /* SNIFF is a workbench page, not part of the design: it only exists while the
@@ -575,20 +575,26 @@ static void build_sniff(void)
     ui.sn_stat = mk_label(pg, "LISTENING...", F12, C_MUTED);
     lv_obj_set_pos(ui.sn_stat, 10, 40);
 
-    lv_obj_t *hdr = mk_label(pg, "ID.B  N  DISTINCT VALUES", F12, C_FAINT);
-    lv_obj_set_pos(hdr, 10, 60);
-
+    /* STATE: low-cardinality bytes (selector / on-off flags), with value sets. */
+    lv_obj_t *h1 = mk_label(pg, "STATE  ID.B N  VALUES", F12, C_FAINT);
+    lv_obj_set_pos(h1, 10, 60);
     ui.sn_rows = mk_label(pg, "", F14, C_TEXT2);
     lv_obj_set_pos(ui.sn_rows, 10, 80);
-    lv_obj_set_style_text_line_space(ui.sn_rows, 8, 0);
+    lv_obj_set_style_text_line_space(ui.sn_rows, 6, 0);
+
+    /* ANALOG: widest-span bytes (temperatures, pressures), with min>max=now. */
+    lv_obj_t *h2 = mk_label(pg, "ANALOG ID.B  MIN>MAX =NOW", F12, C_FAINT);
+    lv_obj_set_pos(h2, 10, 214);
+    ui.sn_ana = mk_label(pg, "", F14, C_TEXT2);
+    lv_obj_set_pos(ui.sn_ana, 10, 234);
+    lv_obj_set_style_text_line_space(ui.sn_ana, 6, 0);
 
     lv_obj_t *hint = mk_label(pg,
-        "Park, ignition on. Sweep the selector\n"
-        "P R N D M 1 2 3 slowly. The gear byte\n"
-        "is the row whose values are the detent\n"
-        "codes, in the order you swept them.\n"
+        "Selector: STATE row whose values are\n"
+        "the detents. Temps/pressures: ANALOG,\n"
+        "found on a warm-up / throttle blip.\n"
         "Re-enter to clear. OBD paused.", F12, C_MUTED);
-    lv_obj_set_pos(hint, 10, 344);
+    lv_obj_set_pos(hint, 10, 380);
     lv_obj_set_style_text_line_space(hint, 4, 0);
 
     mk_pager(pg, PAGE_SNIFF);
@@ -719,7 +725,7 @@ void cluster_ui_refresh(void)
     d.boost = g_obd.boost; d.rail = g_obd.rail; d.egt = g_obd.egt;
     d.battery = g_obd.battery; d.atf = g_obd.atf; d.soot = g_obd.soot;
     d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
-    d.gear = g_obd.gear;
+    d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
     d.gear_raw = g_obd.gear_raw;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
@@ -728,18 +734,17 @@ void cluster_ui_refresh(void)
     char b[16];
 
     /* ----- DRIVE ----- */
-    /* GEAR: design shows the drive gear as "D6" (range letter + number, the
-     * number in nominal green).
-     *
-     * DID 0x199A is the ENGAGED GEAR RATIO, not the selector range: the road
-     * test walked D1/D2/D3 and the raw byte followed 1/2/3, while P also reads
-     * 1. So it cannot express P/R/N at all -- an earlier reading of "raw 1 in
-     * park" as "1 = P" was one data point fitting a wrong theory. Showing P/R/N
-     * from this byte actively lies (it labelled D2 as "R"). Until a real PRNDL
-     * identifier is found the honest display is the gear number alone; the DIAG
-     * probe line still exposes the raw byte. */
-    if (live && d.gear >= 1) lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
-    else                     lv_snprintf(b, sizeof b, "--");
+    /* GEAR: real selector range from the 0x1F5 broadcast (byte 3), found with
+     * the SNIFF page -- 1 P / 2 R / 3 N / 4 D (docs/sniff-selector.md). The
+     * design shows the drive gear in nominal green; P/R/N stay white. The old
+     * 0x199A DID was the engaged gear RATIO and could not express P/R/N. */
+    switch (live ? d.sel_range : -1) {
+        case 1:  lv_snprintf(b, sizeof b, "P"); break;
+        case 2:  lv_snprintf(b, sizeof b, "R"); break;
+        case 3:  lv_snprintf(b, sizeof b, "N"); break;
+        case 4:  lv_snprintf(b, sizeof b, "#37d67a D#"); break;   /* D in green */
+        default: lv_snprintf(b, sizeof b, "--"); break;
+    }
     lv_label_set_text(ui.gear_val, b);
 
     if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
@@ -825,15 +830,14 @@ void cluster_ui_refresh(void)
         lv_obj_set_style_text_color(ui.sn_stat,
                                     boff ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN), 0);
 
-        /* Candidate view: each low-cardinality byte with its distinct value set.
-         * The selector is the row whose values are the detent codes; counters
-         * are excluded by saturating their value set. Values print in the order
-         * first seen, so a clean P->R->N->D->M->1->2->3 sweep reads as the map. */
-        sniff_cand_t cs[SNIFF_TOP_N];
-        uint8_t  nh = can_sniff_candidates(cs, SNIFF_TOP_N);
-        char rows[SNIFF_TOP_N * 40 + 2];
+        /* STATE: low-cardinality bytes with their distinct value set. The
+         * selector is the row whose values are the detent codes, listed in
+         * first-seen (== swept) order; counters are excluded by saturation. */
+        sniff_cand_t cs[6];
+        uint8_t  nc = can_sniff_candidates(cs, 6);
+        char rows[6 * 40 + 2];
         int  off = 0;
-        for (uint8_t i = 0; i < nh; i++) {
+        for (uint8_t i = 0; i < nc; i++) {
             off += lv_snprintf(rows + off, sizeof rows - off,
                                "%03X.%u %u ", (unsigned)cs[i].id,
                                (unsigned)cs[i].byte_idx, (unsigned)cs[i].nvals);
@@ -843,8 +847,26 @@ void cluster_ui_refresh(void)
             off += lv_snprintf(rows + off, sizeof rows - off, "\n");
             if (off >= (int)sizeof rows - 1) break;
         }
-        if (nh == 0) lv_snprintf(rows, sizeof rows, "no candidates yet");
+        if (nc == 0) lv_snprintf(rows, sizeof rows, "no state bytes yet");
         lv_label_set_text(ui.sn_rows, rows);
+
+        /* ANALOG: widest-span bytes. A temperature climbing on warm-up or a
+         * pressure jumping on a throttle blip shows a large min>max here while
+         * being hidden from STATE (too many distinct values). */
+        sniff_mover_t mv[5];
+        uint8_t  nm = can_sniff_movers(mv, 5);
+        char arows[5 * 32 + 2];
+        int  aoff = 0;
+        for (uint8_t i = 0; i < nm; i++) {
+            aoff += lv_snprintf(arows + aoff, sizeof arows - aoff,
+                                "%03X.%u  %02X>%02X =%02X\n",
+                                (unsigned)mv[i].id, (unsigned)mv[i].byte_idx,
+                                (unsigned)mv[i].vmin, (unsigned)mv[i].vmax,
+                                (unsigned)mv[i].cur);
+            if (aoff >= (int)sizeof arows - 1) break;
+        }
+        if (nm == 0) lv_snprintf(arows, sizeof arows, "no analog bytes yet");
+        lv_label_set_text(ui.sn_ana, arows);
     }
 
     /* ----- alert strip -----

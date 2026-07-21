@@ -24,7 +24,7 @@ volatile obd_data_t g_obd = {
     .speed = NAN, .rpm   = NAN, .cool   = NAN, .oil = NAN, .iat     = NAN,
     .load  = NAN, .boost = NAN, .rail   = NAN, .egt = NAN, .battery = NAN,
     .atf   = NAN, .soot  = NAN, .dpf_dp = NAN, .egr_t = NAN, .since_regen = NAN,
-    .gear  = -1,  .can_ok = false,
+    .gear  = -1,  .sel_range = -1, .can_ok = false,
 };
 
 static FDCAN_HandleTypeDef *hfd;
@@ -268,6 +268,18 @@ void obd_rx_poll(void) {
     obd_check_health();
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
+
+        /* Selector/PRNDL broadcast: a plain 8-byte frame, not ISO-TP. byte 3 is
+         * 01 P / 02 R / 03 N / 04 D (see docs/sniff-selector.md). Decoded here,
+         * ahead of the OBD-range gate, and it also keeps can_ok alive. */
+        if (rh.Identifier == CAN_ID_SELECTOR) {
+            last_rx_ms = HAL_GetTick();
+            g_obd.can_ok = true;
+            int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
+            if (g_obd.sel_range != r) { g_obd.sel_range = r; obd_on_update(); }
+            continue;
+        }
+
         /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */
         if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) {
             /* Everything else only reaches here with the sniffer's wide filter
@@ -322,6 +334,21 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     f.FilterID2    = OBD_RESP_TCM2;              /* 0x7EA (range high): ECM,     */
                                                  /* TCM(7E9) and trans(7EA)      */
     HAL_FDCAN_ConfigFilter(hfd, &f);
+
+    /* Filter 1: the selector/PRNDL broadcast (0x1F5). It is not an OBD
+     * request/response, so the narrow OBD filter above would reject it; this
+     * exact-match filter lets it into the same FIFO, where obd_rx_poll decodes
+     * it specially. (The sniffer's promiscuous filter also covers it, but this
+     * is what makes P/R/N/D live during normal operation.) */
+    FDCAN_FilterTypeDef fs = {0};
+    fs.IdType       = FDCAN_STANDARD_ID;
+    fs.FilterIndex  = 1;
+    fs.FilterType   = FDCAN_FILTER_MASK;
+    fs.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    fs.FilterID1    = CAN_ID_SELECTOR;
+    fs.FilterID2    = 0x7FFu;                 /* full mask = exact match         */
+    HAL_FDCAN_ConfigFilter(hfd, &fs);
+
     HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
                                  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
 

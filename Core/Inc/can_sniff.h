@@ -24,6 +24,8 @@
 #define SNIFF_TOP_N         8u   /* rows the UI asks for                      */
 #define SNIFF_DISTINCT_MAX 10u   /* distinct values kept per byte before it   */
                                  /* is written off as a counter/checksum      */
+#define SNIFF_MOVER_MAX_CH 300u  /* above this many changes a wide-span byte  */
+                                 /* is a free-running counter, not a sensor   */
 
 typedef struct {
     uint16_t id;
@@ -43,6 +45,15 @@ typedef struct {
     uint16_t changes;
     uint32_t age_ms;
 } sniff_cand_t;
+
+/* One wide-span byte: an analogue-shaped signal (temperature, pressure). */
+typedef struct {
+    uint16_t id;
+    uint8_t  byte_idx;
+    uint8_t  vmin, vmax, cur;
+    uint16_t changes;
+    uint32_t age_ms;
+} sniff_mover_t;
 
 /* Enable/disable listening. Enabling widens the FDCAN acceptance filter to the
  * whole standard-ID space and clears the table; disabling restores the narrow
@@ -70,6 +81,10 @@ uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max);
  * (counters excluded). Best = most recently changed. This is the primary
  * discovery view: it names the position byte and lists its codes directly. */
 uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max);
+
+/* Bytes with the widest min..max span: analogue signals (temperatures,
+ * pressures) that the candidate view discards. Widest span first. */
+uint8_t can_sniff_movers(sniff_mover_t *out, uint8_t max);
 
 /* Distinct IDs seen and total frames counted, for a "is it even listening?" readout. */
 uint8_t  can_sniff_id_count(void);

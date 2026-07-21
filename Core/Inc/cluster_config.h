@@ -40,6 +40,11 @@
 #define OBD_REQ_TCM2           0x7E2u   /* physical request to trans (ATF/gear)*/
 #define OBD_RESP_TCM2          0x7EAu   /* its response                        */
 
+/* Broadcast (not request/response) frame carrying the selector range/PRNDL,
+ * identified with the SNIFF page: byte 3 = 01 P / 02 R / 03 N / 04 D, and in D
+ * byte 2 carries the manual/commanded gear. See docs/sniff-selector.md. */
+#define CAN_ID_SELECTOR        0x1F5u
+
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
 #define OBD_MODE_FREEZE        0x02u

@@ -27,6 +27,13 @@ typedef struct {
      * lever P->R->N->D->M->1->2->3 makes the value list read out as the map. */
     uint8_t  nvals[8];
     uint8_t  vals[8][SNIFF_DISTINCT_MAX];
+    /* Min/max ever seen per byte. This is the counterpart to the distinct set:
+     * an analogue signal (coolant, oil, EGT ramping on warm-up) saturates the
+     * distinct set and drops out of the candidate view, but its min..max span
+     * grows large -- so ranking by span surfaces exactly the temperatures and
+     * pressures the distinct view hides. */
+    uint8_t  vmin[8];
+    uint8_t  vmax[8];
 } sniff_id_t;
 
 static sniff_id_t tbl[SNIFF_MAX_IDS];
@@ -127,9 +134,13 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
             e->vals[b][e->nvals[b]++] = data[b];
 
         if (!e->primed) {                    /* first sight is the baseline,  */
-            e->cur[b] = data[b];             /* not a change                  */
+            e->cur[b]  = data[b];            /* not a change                  */
+            e->vmin[b] = data[b];
+            e->vmax[b] = data[b];
             continue;
         }
+        if (data[b] < e->vmin[b]) e->vmin[b] = data[b];
+        if (data[b] > e->vmax[b]) e->vmax[b] = data[b];
         if (e->cur[b] != data[b]) {
             e->prev[b]    = e->cur[b];
             e->cur[b]     = data[b];
@@ -179,6 +190,51 @@ uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max)
             out[n].vals[k] = best_e->vals[best_b][k];
         out[n].changes  = best_e->changes[best_b];
         out[n].age_ms   = now - best_ms;
+        n++;
+    }
+    return n;
+}
+
+/* ----------------------------------------------------------------- movers */
+/* Bytes with the widest min..max span: the analogue shape. A coolant or oil
+ * temperature climbing on warm-up, a rail pressure or EGT jumping on a throttle
+ * blip -- these have a large span and are what the candidate view discards.
+ * Fast free-running counters also span widely, so they are excluded by change
+ * count (a real sensor moves far fewer times than a per-frame counter). Ranked
+ * by span, widest first. */
+uint8_t can_sniff_movers(sniff_mover_t *out, uint8_t max)
+{
+    uint32_t now = HAL_GetTick();
+    uint8_t  n   = 0;
+
+    for (uint8_t slot = 0; slot < max; slot++) {
+        const sniff_id_t *best_e = NULL;
+        uint8_t  best_b   = 0;
+        uint16_t best_span = 2;                         /* ignore <=2 (noise)  */
+
+        for (uint8_t i = 0; i < n_ids; i++) {
+            const sniff_id_t *e = &tbl[i];
+            for (uint8_t b = 0; b < e->len; b++) {
+                if (e->changes[b] == 0u) continue;
+                if (e->changes[b] > SNIFF_MOVER_MAX_CH) continue;  /* counter   */
+                uint16_t span = (uint16_t)e->vmax[b] - e->vmin[b];
+                if (span <= best_span) continue;
+                bool taken = false;
+                for (uint8_t k = 0; k < n; k++)
+                    if (out[k].id == e->id && out[k].byte_idx == b) { taken = true; break; }
+                if (taken) continue;
+                best_e = e; best_b = b; best_span = span;
+            }
+        }
+        if (best_e == NULL) break;
+
+        out[n].id       = best_e->id;
+        out[n].byte_idx = best_b;
+        out[n].vmin     = best_e->vmin[best_b];
+        out[n].vmax     = best_e->vmax[best_b];
+        out[n].cur      = best_e->cur[best_b];
+        out[n].changes  = best_e->changes[best_b];
+        out[n].age_ms   = now - best_e->last_ms[best_b];
         n++;
     }
     return n;
