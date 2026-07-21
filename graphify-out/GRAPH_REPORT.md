@@ -1,7 +1,7 @@
 # Graph Report - Dash  (2026-07-21)
 
 ## Corpus Check
-- 43 files · ~285,967 words
+- 43 files · ~286,459 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2d424a5f`
+- Built from commit: `1167d268`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -108,7 +108,7 @@ Nodes (9): apply_filter(), can_sniff_candidates(), can_sniff_movers(), can_sniff
 
 ### Community 29 - "metric_key_t"
 Cohesion: 0.33
-Nodes (5): Added, awaiting on-car confirmation, Confirmed on this vehicle, GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98, Sources, Still unmapped (candidates to try)
+Nodes (5): Added, awaiting on-car confirmation, Being probed on the car (standard diesel PIDs), Confirmed on this vehicle, GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98, Sources
 
 ### Community 30 - "metric_state_t"
 Cohesion: 0.22
@@ -119,7 +119,7 @@ Cohesion: 0.29
 Nodes (6): Analysis — distinct value set per interesting byte, Conclusion, Next, Run 1  (design/Photos/1/, frames 023–035), Run 2  (design/Photos/2/, frames 036–052), SNIFF capture — selector / PRNDL search
 
 ## Knowledge Gaps
-- **34 isolated node(s):** `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Still unmapped (candidates to try)`, `Sources`, `Run 1  (design/Photos/1/, frames 023–035)` (+29 more)
+- **34 isolated node(s):** `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Being probed on the car (standard diesel PIDs)`, `Sources`, `Run 1  (design/Photos/1/, frames 023–035)` (+29 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -134,7 +134,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.078) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `AppMain_Run()` (e.g. with `cluster_app_run()` and `cluster_ui_get_page()`) actually correct?**
   _`AppMain_Run()` has 7 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Still unmapped (candidates to try)` to the rest of the system?**
+- **What connects `Confirmed on this vehicle`, `Added, awaiting on-car confirmation`, `Being probed on the car (standard diesel PIDs)` to the rest of the system?**
   _34 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `FDCAN & OBD Bus Init` be split into smaller, more focused modules?**
   _Cohesion score 0.11076923076923077 - nodes in this community are weakly interconnected._
