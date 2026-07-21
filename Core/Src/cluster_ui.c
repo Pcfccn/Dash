@@ -810,11 +810,19 @@ void cluster_ui_refresh(void)
      * Only while visible: can_sniff_top() is a scan over the whole table and
      * the page is hidden the rest of the time. */
     if (s_page == PAGE_SNIFF) {
-        char sb[40];
-        lv_snprintf(sb, sizeof sb, "IDS %u   FRAMES %lu",
-                    (unsigned)can_sniff_id_count(),
-                    (unsigned long)can_sniff_frame_count());
+        /* Lead with the frame rate and bus health: a frozen row table means
+         * nothing if you cannot see whether frames are still arriving. fps 0 =
+         * bus asleep (procedural, not a bug); BOFF/EP/LOST = a real fault. */
+        bool boff = false, ep = false; uint16_t lost = 0, rec = 0;
+        obd_can_health(&boff, &ep, &lost, &rec);
+        char sb[64];
+        lv_snprintf(sb, sizeof sb, "%u fps  IDS %u  %s%s L%u",
+                    (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
+                    boff ? "BUSOFF " : (ep ? "ERRPASS " : "ok "),
+                    "", (unsigned)lost);
         lv_label_set_text(ui.sn_stat, sb);
+        lv_obj_set_style_text_color(ui.sn_stat,
+                                    boff ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN), 0);
 
         /* One row per recently-changed frame, full 8-byte payload. Reading the
          * whole frame is what lets a value->position table be built by stepping

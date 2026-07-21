@@ -215,10 +215,57 @@ static void dispatch(const uint8_t *p, uint16_t n) {
     /* 0x43 (DTC list) intentionally ignored */
 }
 
+/* ---- bus health (surfaced on the SNIFF page) -----------------------------
+ * The sniffer's promiscuous filter puts the full 500 kbps bus into the same
+ * 16-deep RX FIFO the OBD replies use, and a display flush can stall the drain
+ * for hundreds of ms -- so the FIFO overflows routinely while sniffing. That is
+ * expected and self-heals (blocking mode drops the excess, then resumes on the
+ * next drain). What is NOT recoverable on its own is bus-off, and what looks
+ * identical to "bus asleep" from the table is "we stopped receiving": this
+ * exposes both so a frozen frame counter can be explained rather than guessed.
+ * Reads are gated to ~10 Hz; the message-lost flag is a single register bit. */
+static volatile uint16_t rx_lost_cnt;   /* RX FIFO0 overflow events            */
+static volatile uint16_t busoff_cnt;    /* bus-off recoveries attempted        */
+static volatile uint8_t  busoff_now, errpass_now;
+
+static void obd_check_health(void) {
+    static uint32_t t_last;
+    uint32_t now = HAL_GetTick();
+    if (now - t_last < 100u) return;
+    t_last = now;
+
+    if (__HAL_FDCAN_GET_FLAG(hfd, FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST)) {
+        __HAL_FDCAN_CLEAR_FLAG(hfd, FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST);
+        if (rx_lost_cnt < 0xFFFFu) rx_lost_cnt++;
+    }
+    FDCAN_ProtocolStatusTypeDef ps;
+    if (HAL_FDCAN_GetProtocolStatus(hfd, &ps) == HAL_OK) {
+        busoff_now  = ps.BusOff ? 1u : 0u;
+        errpass_now = ps.ErrorPassive ? 1u : 0u;
+        if (ps.BusOff) {
+            /* Bus-off latches the node off the bus until INIT is cleared;
+             * Stop then Start does that and begins the recovery sequence.
+             * Filters live in message RAM and survive the cycle. */
+            if (busoff_cnt < 0xFFFFu) busoff_cnt++;
+            HAL_FDCAN_Stop(hfd);
+            HAL_FDCAN_Start(hfd);
+        }
+    }
+}
+
+void obd_can_health(bool *bus_off, bool *err_passive,
+                    uint16_t *lost, uint16_t *recover) {
+    if (bus_off)     *bus_off     = busoff_now;
+    if (err_passive) *err_passive = errpass_now;
+    if (lost)        *lost        = rx_lost_cnt;
+    if (recover)     *recover     = busoff_cnt;
+}
+
 /* =============================== RX (polled) ============================= */
 void obd_rx_poll(void) {
     FDCAN_RxHeaderTypeDef rh;
     uint8_t d[8];
+    obd_check_health();
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
         /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */

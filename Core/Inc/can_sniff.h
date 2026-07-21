@@ -58,6 +58,9 @@ uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max);
 uint8_t  can_sniff_id_count(void);
 uint32_t can_sniff_frame_count(void);
 
+/* Frames received in the last ~1 s: 0 = bus silent, nonzero = live traffic. */
+uint16_t can_sniff_fps(void);
+
 /* Forget all history (the UI offers this so the user can mark a clean point
  * just before moving the selector). */
 void can_sniff_reset(void);

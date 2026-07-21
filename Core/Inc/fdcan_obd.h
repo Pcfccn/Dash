@@ -50,4 +50,10 @@ void obd_demo_tick(void);                     /* OBD_DEMO: inject test values   
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);
 
+/* CAN controller health, for the SNIFF page. Any pointer may be NULL.
+ * bus_off / err_passive are the current fault state; lost is a running count of
+ * RX FIFO0 overflow events; recover counts bus-off recovery attempts. */
+void obd_can_health(bool *bus_off, bool *err_passive,
+                    uint16_t *lost, uint16_t *recover);
+
 #endif /* FDCAN_OBD_H */

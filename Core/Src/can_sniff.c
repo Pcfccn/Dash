@@ -26,6 +26,12 @@ static uint8_t    n_ids;
 static uint32_t   n_frames;
 static bool       active;
 
+/* Rolling 1-second frame rate. This is the one number that tells "bus asleep"
+ * (0) apart from "receiving but nothing I track is moving" (nonzero) -- the
+ * exact ambiguity a frozen frame counter created. Bucketed lazily on read. */
+static uint16_t   fps_val, fps_cnt;
+static uint32_t   fps_t0;
+
 /* ------------------------------------------------------------------ filter */
 /* Acceptance is switched between "OBD replies only" and "everything". The wide
  * filter feeds ordinary bus traffic into the same 16-deep RX FIFO the OBD
@@ -50,6 +56,20 @@ void can_sniff_reset(void)
     memset(tbl, 0, sizeof tbl);
     n_ids = 0;
     n_frames = 0;
+    fps_val = 0; fps_cnt = 0; fps_t0 = HAL_GetTick();
+}
+
+/* Frames received in the last ~1 s. Bucket rolls over on read; called from the
+ * UI refresh (~25 Hz) while the SNIFF page is up, which is often enough. */
+uint16_t can_sniff_fps(void)
+{
+    uint32_t now = HAL_GetTick();
+    if (now - fps_t0 >= 1000u) {
+        fps_val = fps_cnt;
+        fps_cnt = 0;
+        fps_t0  = now;
+    }
+    return fps_val;
 }
 
 void can_sniff_set_active(bool on)
@@ -71,6 +91,7 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
     if (!active) return;
     if (len > 8u) len = 8u;
     n_frames++;
+    if (fps_cnt < 0xFFFFu) fps_cnt++;
 
     sniff_id_t *e = NULL;
     for (uint8_t i = 0; i < n_ids; i++) {
