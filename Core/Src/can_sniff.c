@@ -147,3 +147,54 @@ uint8_t can_sniff_top(sniff_hit_t *out, uint8_t max)
     }
     return n;
 }
+
+/* ------------------------------------------------------------------ watch */
+/* Latest full payload for one ID. Reading the whole frame (not just the byte
+ * the digest flagged) is what turns "byte 3 of 1F5 keeps changing" into
+ * "1F5 = 62 5A 00 03 ..., and 03 is the gear": stepping the lever one detent
+ * at a time and photographing the row gives an unambiguous value->position
+ * table that a single changed-byte cannot. */
+bool can_sniff_get(uint16_t id, uint8_t *out8, uint8_t *len_out)
+{
+    for (uint8_t i = 0; i < n_ids; i++) {
+        if (tbl[i].id != id) continue;
+        for (uint8_t b = 0; b < 8; b++)
+            out8[b] = (b < tbl[i].len) ? tbl[i].cur[b] : 0u;
+        if (len_out) *len_out = tbl[i].len;
+        return true;
+    }
+    return false;
+}
+
+/* The distinct IDs that changed most recently, chatty ones excluded, best
+ * first. Same ranking as can_sniff_top but collapsed to one row per frame so a
+ * selector move surfaces the WHOLE frame rather than one byte of it. */
+uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max)
+{
+    uint32_t now = HAL_GetTick();
+    uint8_t  n   = 0;
+
+    for (uint8_t slot = 0; slot < max; slot++) {
+        const sniff_id_t *best_e = NULL;
+        uint32_t best_ms = 0;
+
+        for (uint8_t i = 0; i < n_ids; i++) {
+            const sniff_id_t *e = &tbl[i];
+            uint32_t id_ms = 0;                     /* most recent non-chatty change */
+            for (uint8_t b = 0; b < e->len; b++) {
+                if (e->changes[b] == 0u || e->changes[b] > SNIFF_CHATTY) continue;
+                if (e->last_ms[b] > id_ms) id_ms = e->last_ms[b];
+            }
+            if (id_ms == 0u || id_ms <= best_ms) continue;
+            bool already = false;
+            for (uint8_t k = 0; k < n; k++) if (ids[k] == e->id) { already = true; break; }
+            if (already) continue;
+            best_e = e; best_ms = id_ms;
+        }
+        if (best_e == NULL) break;
+        ids[n] = best_e->id;
+        if (age_ms) age_ms[n] = now - best_ms;
+        n++;
+    }
+    return n;
+}

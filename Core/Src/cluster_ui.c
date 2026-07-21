@@ -575,18 +575,18 @@ static void build_sniff(void)
     ui.sn_stat = mk_label(pg, "LISTENING...", F12, C_MUTED);
     lv_obj_set_pos(ui.sn_stat, 10, 40);
 
-    lv_obj_t *hdr = mk_label(pg, "ID   B  WAS>NOW   N   AGE", F12, C_FAINT);
+    lv_obj_t *hdr = mk_label(pg, "ID  0 1 2 3 4 5 6 7   AGE", F12, C_FAINT);
     lv_obj_set_pos(hdr, 10, 60);
 
     ui.sn_rows = mk_label(pg, "", F14, C_TEXT2);
     lv_obj_set_pos(ui.sn_rows, 10, 80);
-    lv_obj_set_style_text_line_space(ui.sn_rows, 6, 0);
+    lv_obj_set_style_text_line_space(ui.sn_rows, 8, 0);
 
     lv_obj_t *hint = mk_label(pg,
-        "Park, ignition on. Move ONE control,\n"
-        "then read the top row. Leaving and\n"
-        "re-entering this page clears history.\n"
-        "OBD polling is paused while here.", F12, C_MUTED);
+        "Park, ignition on. Step the selector\n"
+        "ONE detent at a time and photograph\n"
+        "each: the byte that tracks it is the\n"
+        "gear. Re-enter to clear. OBD paused.", F12, C_MUTED);
     lv_obj_set_pos(hint, 10, 352);
     lv_obj_set_style_text_line_space(hint, 4, 0);
 
@@ -816,17 +816,22 @@ void cluster_ui_refresh(void)
                     (unsigned long)can_sniff_frame_count());
         lv_label_set_text(ui.sn_stat, sb);
 
-        sniff_hit_t hits[SNIFF_TOP_N];
-        uint8_t nh = can_sniff_top(hits, SNIFF_TOP_N);
-        char rows[SNIFF_TOP_N * 34 + 2];
+        /* One row per recently-changed frame, full 8-byte payload. Reading the
+         * whole frame is what lets a value->position table be built by stepping
+         * the lever; a lone changed byte cannot. */
+        uint16_t ids[SNIFF_TOP_N];
+        uint32_t ages[SNIFF_TOP_N];
+        uint8_t  nh = can_sniff_top_ids(ids, ages, SNIFF_TOP_N);
+        char rows[SNIFF_TOP_N * 40 + 2];
         int  off = 0;
         for (uint8_t i = 0; i < nh; i++) {
-            unsigned age_ds = (unsigned)(hits[i].age_ms / 100u);   /* 0.1 s */
+            uint8_t p[8], len = 0;
+            if (!can_sniff_get(ids[i], p, &len)) continue;
+            unsigned age_ds = (unsigned)(ages[i] / 100u);   /* 0.1 s */
             off += lv_snprintf(rows + off, sizeof rows - off,
-                               "%03X  %u  %02X>%02X  %3u  %u.%us\n",
-                               (unsigned)hits[i].id, (unsigned)hits[i].byte_idx,
-                               (unsigned)hits[i].prev, (unsigned)hits[i].cur,
-                               (unsigned)hits[i].changes,
+                               "%03X %02X%02X%02X%02X%02X%02X%02X%02X %u.%us\n",
+                               (unsigned)ids[i],
+                               p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
                                age_ds / 10u, age_ds % 10u);
             if (off >= (int)sizeof rows - 1) break;
         }

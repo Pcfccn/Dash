@@ -46,6 +46,14 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len);
  * Returns how many rows were written (<= max). */
 uint8_t can_sniff_top(sniff_hit_t *out, uint8_t max);
 
+/* Latest full 8-byte payload for one ID (missing bytes zero-filled).
+ * Returns false if that ID has not been seen. */
+bool can_sniff_get(uint16_t id, uint8_t *out8, uint8_t *len_out);
+
+/* Most-recently-changed distinct IDs (chatty bytes excluded), best first.
+ * One row per frame, for the full-payload watch view. */
+uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max);
+
 /* Distinct IDs seen and total frames counted, for a "is it even listening?" readout. */
 uint8_t  can_sniff_id_count(void);
 uint32_t can_sniff_frame_count(void);
