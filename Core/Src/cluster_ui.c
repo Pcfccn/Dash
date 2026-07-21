@@ -542,22 +542,22 @@ static void build_diag(void)
     static const char *SL[4] = { "BATT", "IAT", "LOAD", "RAIL" };
     static const char *SU[4] = { "V", DEG "C", "%", "MPa" };
     const int sx[4] = { 10, 165, 10, 165 };
-    const int sy[4] = { 200, 200, 308, 308 };   /* taller cards fill down to the pager */
+    const int sy[4] = { 198, 198, 292, 292 };   /* room below for two probe lines */
     for (int i = 0; i < 4; i++) {
-        lv_obj_t *c = mk_card(pg, sx[i], sy[i], 145, 100);
+        lv_obj_t *c = mk_card(pg, sx[i], sy[i], 145, 88);
         lv_obj_t *nm = mk_label(c, SL[i], F12, C_MUTED);
         lv_obj_set_pos(nm, 0, 0);
         ui.st_val[i] = mk_value(c, F28, C_TEXT, SU[i], F14);
         lv_obj_set_pos(lv_obj_get_parent(ui.st_val[i]), 0, 20);
     }
 
-    /* Enhanced-DID probe readout, in the gap above the pager. Deliberately
-     * terse and dim — it is a workbench aid for pinning down the GM DIDs, not
-     * part of the design. GEAR shows the raw byte behind the gear label; NRC
-     * shows the last negative response (service/code), which distinguishes
-     * "module rejected the identifier" from "nothing answered at all". */
+    /* Enhanced-DID probe readout (two lines), in the gap above the pager. A
+     * workbench aid for pinning down the GM DIDs, not part of the design: line
+     * 1 = gear raw byte, oil-pressure raw/decoded, last NRC; line 2 = raw bytes
+     * of the last diesel PID probe that answered. */
     ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
-    lv_obj_set_pos(ui.did_dbg, 10, 412);
+    lv_obj_set_pos(ui.did_dbg, 10, 388);
+    lv_obj_set_style_text_line_space(ui.did_dbg, 4, 0);
 
     mk_pager(pg, 2);
 }
@@ -730,6 +730,8 @@ void cluster_ui_refresh(void)
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.oil_press_raw = g_obd.oil_press_raw;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
+    d.probe_pid = g_obd.probe_pid; d.probe_len = g_obd.probe_len;
+    for (int k = 0; k < 6; k++) d.probe_raw[k] = g_obd.probe_raw[k];
     bool live = d.can_ok;
 
     char b[16];
@@ -808,21 +810,33 @@ void cluster_ui_refresh(void)
     {   /* DID probe line — enhanced-DID calibration aids. OILP shows the raw
          * 0x1470 byte and the bar value it decodes to, so the scaling can be
          * checked against a known idle pressure; NRC is the last rejection. */
-        char db[64];
+        char db[96];
         char nrc[16];
         if (d.last_nrc_sid)
             lv_snprintf(nrc, sizeof nrc, "%02X/%02X",
                         (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
         else
             lv_snprintf(nrc, sizeof nrc, "--");
+        int o;
         if (has_value(d.oil_press))
-            lv_snprintf(db, sizeof db, "GR %02X  OILP %02X=%d.%02u  NRC %s",
-                        (unsigned)d.gear_raw, (unsigned)d.oil_press_raw,
-                        (int)d.oil_press,
-                        (unsigned)((d.oil_press - (int)d.oil_press) * 100), nrc);
+            o = lv_snprintf(db, sizeof db, "GR %02X  OILP %02X=%d.%02u  NRC %s\n",
+                            (unsigned)d.gear_raw, (unsigned)d.oil_press_raw,
+                            (int)d.oil_press,
+                            (unsigned)((d.oil_press - (int)d.oil_press) * 100), nrc);
         else
-            lv_snprintf(db, sizeof db, "GR %02X  OILP --  NRC %s",
-                        (unsigned)d.gear_raw, nrc);
+            o = lv_snprintf(db, sizeof db, "GR %02X  OILP --  NRC %s\n",
+                            (unsigned)d.gear_raw, nrc);
+
+        /* Second line: raw bytes of the last diesel PID probe that answered.
+         * A PID that shows here is supported by this ECM; its bytes let the
+         * scaling be derived on the car (see docs/enhanced-dids.md). */
+        if (d.probe_pid) {
+            o += lv_snprintf(db + o, sizeof db - o, "PID %02X:", (unsigned)d.probe_pid);
+            for (int k = 0; k < d.probe_len && o < (int)sizeof db - 4; k++)
+                o += lv_snprintf(db + o, sizeof db - o, " %02X", (unsigned)d.probe_raw[k]);
+        } else {
+            lv_snprintf(db + o, sizeof db - o, "PID probe: no reply yet");
+        }
         lv_label_set_text(ui.did_dbg, db);
     }
 

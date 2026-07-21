@@ -30,17 +30,34 @@ The standard oil-temp PID `0x5C` and the wide diesel PIDs `0x6B` (EGR temp) and
 real source. Oil pressure decodes to bar and its raw byte is shown on DIAG as
 `OILP xx=b.bb` — verify against ~2–3 bar warm idle before adding a gauge card.
 
-## Still unmapped (candidates to try)
+## Being probed on the car (standard diesel PIDs)
 
-The diesel emissions set — DPF soot mass, DPF differential pressure, distance
-since regen, EGT — did not surface a reliable DID for the **LWN 2.8** (most
-community lists are for the 6.6 L LML/LMM). Options, in order of effort:
+No open source gives a verified formula for the LWN 2.8 diesel-emissions set, and
+the Colorado forums are paywalled. So instead of guessing scaling, the poller
+now **probes the standard J1979 diesel PIDs one per cycle** (`obd_poll_tick`
+step 6) and the DIAG page shows the **raw bytes of whichever answered**:
 
-1. Read them from the broadcast bus via the SNIFF page's ANALOG list (a warm-up
-   / throttle-blip capture) — same method that found the selector.
-2. Probe candidate mode-22 DIDs and watch the DIAG NRC line: a `0x62` response
-   means the DID exists, a `0x7F` NRC means it was rejected. The poller already
-   rotates a small probe slot (`obd_poll_tick`, step 6) for exactly this.
+| PID | parameter | data bytes | notes |
+|---|---|---|---|
+| `0x78` | EGT bank 1 | 9 | sensor 1 = (256·B+C)/10−40 °C (already decoded) |
+| `0x7A` | DPF differential pressure | 7–9 | scaling TBD from raw |
+| `0x7C` | DPF temperature | 9 | (256·B+C)/10−40 °C likely, confirm from raw |
+| `0x8B` | diesel aftertreatment status | 7 | bit-encoded regen/soot status |
+| `0x86` | particulate matter (soot) | 5 | scaling TBD from raw |
+| `0x6B` | EGR temperature | 5 | B−40 °C (this ECM did not answer earlier) |
+
+DIAG line 2 reads `PID xx: b0 b1 b2 …`. **Reading it on the car tells us two
+things at once:** which PIDs this ECM actually supports (only supported ones
+ever appear), and their raw bytes — from which the real scaling is derived
+against known conditions (e.g. DPF dp ≈ 0 at idle, EGT ≈ ambient cold). Then
+each gets a proper decode + gauge.
+
+Community hint to check against the raw: on the 2.8 the DPF **soot is reported
+in percent, not grams**, and one forum listed soot via `PID 8B` byte C as
+`(100/255)·C`.
+
+If a standard PID never answers, the fallback is the SNIFF ANALOG list (a
+warm-up / throttle-blip broadcast capture) — the method that found the selector.
 
 ## Sources
 

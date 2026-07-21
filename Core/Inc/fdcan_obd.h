@@ -39,6 +39,14 @@ typedef struct {
     uint8_t oil_press_raw;   /* last raw byte from the oil-pressure DID        */
     uint8_t last_nrc_sid;    /* service that was rejected (0 = none seen)      */
     uint8_t last_nrc;        /* its negative-response code                     */
+
+    /* Raw capture for the diesel PID probes (DPF dp/temp, aftertreatment, PM):
+     * these have no verified formula for this ECM, so the last one that
+     * answered is surfaced byte-for-byte on DIAG. A PID that answers proves it
+     * is supported; its raw bytes let the scaling be worked out on the car. */
+    uint8_t probe_pid;       /* the mode-01 PID these bytes came from (0=none)  */
+    uint8_t probe_len;       /* how many raw bytes captured                     */
+    uint8_t probe_raw[6];
 } obd_data_t;
 
 extern volatile obd_data_t g_obd;

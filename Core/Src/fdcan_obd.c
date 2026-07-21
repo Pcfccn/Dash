@@ -168,6 +168,20 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
              * (A + up to 4 sensors); we take sensor 1 and skip the rest.
              * MUST be requested in its own frame (see obd_poll_tick). */
             case 0x6B: set_f(&g_obd.egr_t, (float)B - 40.0f);           i += 5; break;
+            /* Diesel aftertreatment probes with no verified scaling on this ECM
+             * (DPF differential pressure, DPF temp, aftertreatment status, PM).
+             * Each is requested on its own so this is the only PID in the frame:
+             * capture the raw bytes for DIAG and stop. If the ECM does not
+             * support one, it simply never reaches here. */
+            case 0x7A: case 0x7C: case 0x8B: case 0x86: {
+                g_obd.probe_pid = pid;
+                uint8_t m = 0;
+                for (; m < 6 && (i + m) < n; m++) g_obd.probe_raw[m] = p[i + m];
+                g_obd.probe_len = m;
+                obd_on_update();
+                i = n;                       /* dedicated single-PID response   */
+                break;
+            }
             case 0x01: g_obd.mil = (A & 0x80) != 0;
                        g_obd.dtc_count = A & 0x7F; obd_on_update();     i += 4; break;
             default:   i += 2; break; /* unknown: assume 2 data bytes          */
@@ -374,12 +388,21 @@ void obd_poll_tick(void) {
     static const uint8_t fast[]  = { 0x0C, 0x0D, 0x04, 0x0B };     /* rpm,speed,load,MAP */
     static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };           /* cool,oil,iat       */
     static const uint8_t misc[]  = { 0x23, 0x42, 0x33, 0x01 };     /* rail,batt,baro,mil */
-    /* 0x6B and 0x78 each return 5/9 data bytes; they share a step and alternate
-     * rather than riding along with the short temps, so one unsupported wide PID
-     * cannot desynchronise the parse of the ones that do work. */
-    static const uint8_t egr[]   = { 0x6B };  /* EGR temperature                  */
-    static const uint8_t egt[]   = { 0x78 };  /* exhaust gas temperature          */
     static uint8_t probe = 0;
+    /* One PID per probe request (never grouped): a wide/unsupported PID then
+     * cannot desynchronise the parse of another. 0 selects a mode-22 DID
+     * instead (handled in the switch). */
+    static const uint8_t probe_pid[] = {
+        0x00,  /* -> DID 0x1154 oil temp  */
+        0x00,  /* -> DID 0x1470 oil press */
+        0x78,  /* EGT bank 1              */
+        0x6B,  /* EGR temperature         */
+        0x7A,  /* DPF differential press  */
+        0x7C,  /* DPF temperature         */
+        0x8B,  /* diesel aftertreatment   */
+        0x86,  /* particulate matter      */
+    };
+    #define N_PROBE (sizeof probe_pid)
 
     /* GM-enhanced ENGINE DIDs (mode 22 to the ECM 0x7E0), researched from the
      * Colorado/Duramax scan-tool community. Standard oil temp (0x5C) and the
@@ -408,15 +431,13 @@ void obd_poll_tick(void) {
         case 3: req_mode22(OBD_REQ_TCM2, 0x199A); break; /* current gear           */
         case 4: req_mode01(fast,  sizeof fast);   break;
         case 5: req_mode01(misc,  sizeof misc);   break;
-        case 6: /* rotate the enhanced-engine probes: oil temp, oil pressure,
-                 * then the two standard wide PIDs that may or may not answer */
-                switch (probe & 3u) {
-                    case 0: req_mode22(OBD_REQ_ECM, eng_did[0]); break; /* oil temp  */
-                    case 1: req_mode22(OBD_REQ_ECM, eng_did[1]); break; /* oil press */
-                    case 2: req_mode01(egr, sizeof egr);         break; /* EGR temp  */
-                    case 3: req_mode01(egt, sizeof egt);         break; /* EGT       */
-                }
-                probe++;
+        case 6: /* rotate one enhanced/diesel probe per cycle. 0 = a mode-22
+                 * engine DID (oil temp / oil pressure), otherwise the mode-01
+                 * PID itself. Which ones actually answer is read off DIAG. */
+                if (probe == 0)      req_mode22(OBD_REQ_ECM, eng_did[0]); /* oil temp  */
+                else if (probe == 1) req_mode22(OBD_REQ_ECM, eng_did[1]); /* oil press */
+                else                 req_mode01(&probe_pid[probe], 1);
+                probe = (uint8_t)((probe + 1) % N_PROBE);
                 break;
         case 7: req_mode03();                     break; /* DTC list ~ once/cycle  */
     }
