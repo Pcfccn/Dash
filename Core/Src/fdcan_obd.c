@@ -504,22 +504,36 @@ void obd_watchdog_tick_1hz(void) {
 }
 
 #if OBD_DEMO
-/* Bench demo: fill g_obd with the reference "cruise" scenario, and sweep the
- * coolant 85..100..85 (~30 s) so the 93/97 warn/crit thresholds are visible. */
+/* Bench demo: cycle a 40 s scripted scenario so every new visual can be checked
+ * without a car — normal cruise (green) -> REVERSE (orange border + orange "R")
+ * -> PARK -> coolant into the red (full-screen red border). OBD_DEMO must be 0
+ * before use in the vehicle (see cluster_config.h). */
 void obd_demo_tick(void) {
-    uint32_t s = (HAL_GetTick() / 100u) % 300u;          /* 0..299 over 30 s   */
-    /* sweep coolant 40..100..40 so every band shows: <50 cold-blue, ok green,
-     * >=93 warn amber, >=97 crit red */
-    int cool = (s < 150) ? 40 + (int)(s * 60 / 150)
-                         : 40 + (int)((299 - s) * 60 / 150);
+    uint32_t s = (HAL_GetTick() / 100u) % 400u;          /* 0..399 over 40 s   */
 
-    g_obd.speed = 95;   g_obd.rpm = 2150;  g_obd.cool = (float)cool;
+    /* shared "engine warm and healthy" backdrop */
     g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
     g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 58;   g_obd.battery = 14.1f;
     g_obd.atf = 82;     g_obd.soot = 42;   g_obd.dpf_dp = 3.1f;
-    g_obd.since_regen = 180; g_obd.egr_t = 96;   g_obd.gear = 6;
-    g_obd.mil = false;  g_obd.dtc_count = 0;
-    g_obd.can_ok = true;
+    g_obd.since_regen = 180; g_obd.egr_t = 96;
+    g_obd.oil_press = 3.6f;  g_obd.oil_press_raw = 79;
+    g_obd.mil = false;  g_obd.dtc_count = 0;  g_obd.can_ok = true;
+
+    if (s < 120u) {                 /* 0-12 s: DRIVE cruise, all nominal green   */
+        g_obd.sel_range = 4; g_obd.gear = 6;
+        g_obd.speed = 95;    g_obd.rpm = 2150;  g_obd.cool = 88;
+    } else if (s < 200u) {          /* 12-20 s: REVERSE -> orange border + "R"   */
+        g_obd.sel_range = 2; g_obd.gear = -1;
+        g_obd.speed = 4;     g_obd.rpm = 820;   g_obd.cool = 88;
+    } else if (s < 260u) {          /* 20-26 s: PARK                             */
+        g_obd.sel_range = 1; g_obd.gear = -1;
+        g_obd.speed = 0;     g_obd.rpm = 760;   g_obd.cool = 89;
+    } else {                        /* 26-40 s: coolant climbs into crit -> red  */
+        uint32_t t = s - 260u;      /* 0..139 */
+        g_obd.sel_range = 4; g_obd.gear = 5;
+        g_obd.speed = 110;   g_obd.rpm = 2600;
+        g_obd.cool = (float)(88 + (int)(t * 20u / 140u));  /* 88 -> 108, crosses 93/97 */
+    }
     obd_on_update();
 }
 #endif
