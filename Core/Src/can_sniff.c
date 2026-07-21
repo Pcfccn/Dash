@@ -19,6 +19,14 @@ typedef struct {
     uint8_t  prev[8];
     uint16_t changes[8];
     uint32_t last_ms[8];
+    /* Distinct values ever seen per byte, in FIRST-SEEN order (capped). This is
+     * what isolates a selector from a counter: a PRNDL byte only ever takes the
+     * handful of detent codes and holds each for seconds, so it collects a
+     * small, stable set; a counter/checksum saturates SNIFF_DISTINCT_MAX almost
+     * at once. And because the set is kept in first-seen order, sweeping the
+     * lever P->R->N->D->M->1->2->3 makes the value list read out as the map. */
+    uint8_t  nvals[8];
+    uint8_t  vals[8][SNIFF_DISTINCT_MAX];
 } sniff_id_t;
 
 static sniff_id_t tbl[SNIFF_MAX_IDS];
@@ -109,6 +117,15 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
 
     uint32_t now = HAL_GetTick();
     for (uint8_t b = 0; b < len; b++) {
+        /* Record the value in the distinct set (first sight included, so a byte
+         * that never changes still shows its one value). Linear scan of <=
+         * SNIFF_DISTINCT_MAX; saturates and stops growing for chatty bytes. */
+        bool known = false;
+        for (uint8_t k = 0; k < e->nvals[b]; k++)
+            if (e->vals[b][k] == data[b]) { known = true; break; }
+        if (!known && e->nvals[b] < SNIFF_DISTINCT_MAX)
+            e->vals[b][e->nvals[b]++] = data[b];
+
         if (!e->primed) {                    /* first sight is the baseline,  */
             e->cur[b] = data[b];             /* not a change                  */
             continue;
@@ -121,6 +138,50 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
         }
     }
     e->primed = true;
+}
+
+/* ------------------------------------------------------------- candidates */
+/* Bytes with a small distinct-value set: the selector shape. Ranked by most
+ * recent change so a byte you just stepped floats up. Counters/checksums have
+ * saturated nvals and are excluded; static bytes (nvals < 2) are not candidates.
+ * The returned vals[] are in first-seen order, i.e. the order you swept. */
+uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max)
+{
+    uint32_t now = HAL_GetTick();
+    uint8_t  n   = 0;
+
+    for (uint8_t slot = 0; slot < max; slot++) {
+        const sniff_id_t *best_e = NULL;
+        uint8_t  best_b  = 0;
+        uint32_t best_ms = 0;
+
+        for (uint8_t i = 0; i < n_ids; i++) {
+            const sniff_id_t *e = &tbl[i];
+            for (uint8_t b = 0; b < e->len; b++) {
+                if (e->nvals[b] < 2u) continue;                 /* never moved   */
+                if (e->nvals[b] >= SNIFF_DISTINCT_MAX) continue;/* saturated=noise*/
+                if (e->changes[b] == 0u) continue;
+                uint32_t ms = e->last_ms[b];
+                if (ms <= best_ms) continue;
+                bool taken = false;
+                for (uint8_t k = 0; k < n; k++)
+                    if (out[k].id == e->id && out[k].byte_idx == b) { taken = true; break; }
+                if (taken) continue;
+                best_e = e; best_b = b; best_ms = ms;
+            }
+        }
+        if (best_e == NULL) break;
+
+        out[n].id       = best_e->id;
+        out[n].byte_idx = best_b;
+        out[n].nvals    = best_e->nvals[best_b];
+        for (uint8_t k = 0; k < best_e->nvals[best_b]; k++)
+            out[n].vals[k] = best_e->vals[best_b][k];
+        out[n].changes  = best_e->changes[best_b];
+        out[n].age_ms   = now - best_ms;
+        n++;
+    }
+    return n;
 }
 
 /* --------------------------------------------------------------------- top */

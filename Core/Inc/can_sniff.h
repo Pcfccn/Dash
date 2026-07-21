@@ -20,8 +20,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SNIFF_MAX_IDS   80u      /* distinct standard IDs tracked             */
-#define SNIFF_TOP_N      8u      /* rows the UI asks for                      */
+#define SNIFF_MAX_IDS      80u   /* distinct standard IDs tracked             */
+#define SNIFF_TOP_N         8u   /* rows the UI asks for                      */
+#define SNIFF_DISTINCT_MAX 10u   /* distinct values kept per byte before it   */
+                                 /* is written off as a counter/checksum      */
 
 typedef struct {
     uint16_t id;
@@ -31,6 +33,16 @@ typedef struct {
     uint16_t changes;            /* total changes seen since reset            */
     uint32_t age_ms;             /* how long ago it last changed              */
 } sniff_hit_t;
+
+/* One low-cardinality byte: a selector-shaped signal and its value set. */
+typedef struct {
+    uint16_t id;
+    uint8_t  byte_idx;
+    uint8_t  nvals;                        /* distinct values seen (2..MAX-1)  */
+    uint8_t  vals[SNIFF_DISTINCT_MAX];     /* in first-seen (== swept) order   */
+    uint16_t changes;
+    uint32_t age_ms;
+} sniff_cand_t;
 
 /* Enable/disable listening. Enabling widens the FDCAN acceptance filter to the
  * whole standard-ID space and clears the table; disabling restores the narrow
@@ -53,6 +65,11 @@ bool can_sniff_get(uint16_t id, uint8_t *out8, uint8_t *len_out);
 /* Most-recently-changed distinct IDs (chatty bytes excluded), best first.
  * One row per frame, for the full-payload watch view. */
 uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max);
+
+/* Bytes whose distinct-value set is small enough to be a selector/state signal
+ * (counters excluded). Best = most recently changed. This is the primary
+ * discovery view: it names the position byte and lists its codes directly. */
+uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max);
 
 /* Distinct IDs seen and total frames counted, for a "is it even listening?" readout. */
 uint8_t  can_sniff_id_count(void);
