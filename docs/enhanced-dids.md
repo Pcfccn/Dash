@@ -21,12 +21,31 @@ Header: engine parameters are requested from the **ECM at 0x7E0** (response
 | DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | ✅ answers — 0.0 kPa engine-off (correct); scaling under load TBD |
 | Selector / PRNDL | (broadcast `0x1F5`, not a DID) | — | b3: 1 P / 2 R / 3 N / 4 D | see [sniff-selector.md](sniff-selector.md) |
 
-## Added, awaiting on-car confirmation
+## Oil pressure — mode 22 confirmed absent on this E98
 
-| Parameter | DID | request | formula | source / status |
-|---|---|---|---|---|
-| ~~Engine oil pressure~~ | `0x115C` | `22 11 5C` → 7E0 | (A × 0.65 − 17.5) psi → bar | ❌ **confirmed NRC 22/31 (requestOutOfRange) with engine running** — 2026-07-23. KOEO sometimes returns A=0 (unphysical; guarded in code to not show 0 bar). DID not in this E98's table. **Next step: scan with BiScan/Torque for a DID that changes KOEO→running.** |
-| ~~Engine oil pressure~~ | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | ❌ rejected by this E98 (`NRC 22/31`, requestOutOfRange) — decode kept for other GM years but no longer polled |
+Both known GM mode-22 DIDs have been probed with engine running and rejected:
+
+| DID | result |
+|-----|--------|
+| `0x1470` | ❌ NRC 22/31 (requestOutOfRange) — not in this ECM's table |
+| `0x115C` | ❌ NRC 22/31 (requestOutOfRange) with engine running, confirmed 2026-07-23 |
+
+The gasoline Colorado V6 uses a different ECM where `0x1470` works; it does not carry over to the diesel E98. No other mode-22 DID for LWN oil pressure has been found in any public source.
+
+### Oil pressure via passive CAN broadcast
+
+The OEM cluster reads oil pressure from a periodic broadcast frame the ECM transmits unconditionally (same approach as the selector via `0x1F5`).
+
+**Candidate: CAN ID `0x1BA`, byte 3**
+- Source: SNIFF ANALOG capture, 2026-07-23
+- Observed range: `0x06..0xF6` (6–246 counts)
+- Values at cold idle (RPM ≈ 1056): 214–246 counts
+- Provisional formula: `bar = A / 100.0` → 2.14–2.46 bar at cold idle ✓
+- KOEO: 6 counts → 0.06 bar (sensor unloaded) ✓
+- **Status: FDCAN filter 2 + passive decode ADDED to firmware** (provisional)
+- **Confirmation needed:** throttle blip with SNIFF active — byte 3 of `0x1BA` must track RPM rise; if it doesn't, try byte 6 (range `0x09..0xF9`, near-identical) or other ANALOG candidates (`0x1AA` byte 2, `0x287` byte 0)
+
+## Added, awaiting on-car confirmation
 | Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | ⚠️ answers **0xFFFF** = no-data (now guarded → `--`); confirm real value after a recorded regen |
 | DPF regen status | `0x20F6` | `22 20 F6` → 7E0 | A & 1 → active | reads Inactive KOEO — can't distinguish answer from default; verify during active regen |
 

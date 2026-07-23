@@ -105,13 +105,13 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
-    "mtime": 1784766132.8438435,
-    "ast_hash": "ec6354b0ca84dfc21e2577703950938b",
+    "mtime": 1784774372.7683277,
+    "ast_hash": "b61005318bcf7995bb65a3b7fdd1c2ae",
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1784773471.8133788,
-    "ast_hash": "592e38cf245fbacbf734f66388b4f938",
+    "mtime": 1784774411.1011071,
+    "ast_hash": "43bec2690ad860947474c507a2ba7721",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "docs/enhanced-dids.md": {
-    "mtime": 1784773489.1369233,
-    "ast_hash": "4c8c57fde2bf0ae5e94a7e7624495ba4",
+    "mtime": 1784774601.2819889,
+    "ast_hash": "ebb343da092921e7031e606983a33daf",
     "semantic_hash": ""
   },
   "docs/run-2026-07-21.md": {

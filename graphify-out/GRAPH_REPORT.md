@@ -1,16 +1,16 @@
 # Graph Report - Dash  (2026-07-23)
 
 ## Corpus Check
-- 44 files · ~181,361 words
+- 44 files · ~181,805 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 252 nodes · 399 edges · 31 communities (30 shown, 1 thin omitted)
+- 254 nodes · 402 edges · 31 communities (30 shown, 1 thin omitted)
 - Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 49 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5876ff29`
+- Built from commit: `49c65be7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,21 +37,21 @@
 5. `AppMain_Run()` - 10 edges
 6. `mk_value()` - 9 edges
 7. `build_dpf()` - 9 edges
-8. `AppMain_Init()` - 8 edges
-9. `cluster_ui_build()` - 8 edges
-10. `obd_on_update()` - 8 edges
+8. `obd_rx_poll()` - 9 edges
+9. `AppMain_Init()` - 8 edges
+10. `cluster_ui_build()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `obd_poll_tick()` --calls--> `can_sniff_is_active()`  [INFERRED]
   Core/Src/fdcan_obd.c → Core/Src/can_sniff.c
 - `obd_rx_poll()` --calls--> `can_sniff_feed()`  [INFERRED]
   Core/Src/fdcan_obd.c → Core/Src/can_sniff.c
-- `set_metric()` --calls--> `metric_state()`  [INFERRED]
-  Core/Src/cluster_ui.c → Core/Inc/cluster_config.h
 - `AppMain_Init()` --calls--> `cluster_app_init()`  [INFERRED]
   Core/Src/app_main.c → Core/Src/cluster_app.c
 - `AppMain_Init()` --calls--> `lv_port_disp_init()`  [INFERRED]
   Core/Src/app_main.c → Core/Src/lv_port_disp.c
+- `StartDefaultTask()` --calls--> `AppMain_Init()`  [INFERRED]
+  Core/Src/freertos.c → Core/Src/app_main.c
 
 ## Import Cycles
 - None detected.
@@ -75,8 +75,8 @@ Cohesion: 0.19
 Nodes (19): AppMain_Init(), AppMain_Run(), backlight_set(), heartbeat_led_init(), heartbeat_led_tick(), key_button_init(), cluster_ui_get_page(), lv_display_t (+11 more)
 
 ### Community 3 - "UI Page Builders"
-Cohesion: 0.20
-Nodes (30): build_diag(), build_dpf(), build_drive(), build_sniff(), build_strip(), metric_key_t, metric_state_t, cluster_ui_build() (+22 more)
+Cohesion: 0.32
+Nodes (20): build_diag(), build_dpf(), build_drive(), build_sniff(), build_strip(), cluster_ui_build(), cluster_ui_next_page(), cluster_ui_set_page() (+12 more)
 
 ### Community 4 - "LVGL Display Port"
 Cohesion: 0.33
@@ -99,19 +99,19 @@ Cohesion: 0.15
 Nodes (12): 1. Powering the board in the car, 2. Connecting to the CAN bus (OBD-II port), 3. Read-only safety, 4. Bring-up sequence, 5. Known gaps for a "complete" in-car build, Appendix: full connection & power map, ⚠️ Bus termination — the #1 thing to get right, In-vehicle install — from bench demo to a live car (+4 more)
 
 ### Community 27 - "set_metric"
-Cohesion: 0.11
-Nodes (19): metric_key_t, metric_state_t, metric_state(), apply_filter(), can_sniff_candidates(), can_sniff_feed(), can_sniff_fps(), can_sniff_id_count() (+11 more)
+Cohesion: 0.09
+Nodes (29): metric_key_t, metric_state_t, metric_state(), apply_filter(), can_sniff_candidates(), can_sniff_feed(), can_sniff_fps(), can_sniff_id_count() (+21 more)
 
 ### Community 30 - "metric_state_t"
 Cohesion: 0.20
 Nodes (9): Анализ: что ответили новые enhanced-DID, Выводы / что дальше, КРИТИЧНО: скорость/обороты/rail/batt/load не читались, Прогон 2026-07-21 (после ~5 мин поездки, снимок на парковке), Расшифровка, Фото 1–4 — SNIFF (широковещательные кадры, мотор заглушён), Фото 5 — DIAG, Фото 6 — DPF (+1 more)
 
 ### Community 31 - "SNIFF capture — selector / PRNDL search"
-Cohesion: 0.15
-Nodes (11): Added, awaiting on-car confirmation, Being probed on the car (standard diesel PIDs), Confirmed on this vehicle, GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98, Sources, Analysis — distinct value set per interesting byte, Conclusion, Next (+3 more)
+Cohesion: 0.13
+Nodes (13): Added, awaiting on-car confirmation, Being probed on the car (standard diesel PIDs), Confirmed on this vehicle, GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98, Oil pressure — mode 22 confirmed absent on this E98, Oil pressure via passive CAN broadcast, Sources, Analysis — distinct value set per interesting byte (+5 more)
 
 ## Knowledge Gaps
-- **41 isolated node(s):** `What this is`, `Git workflow: commit and push automatically`, `Build / flash / debug`, `Architecture`, `Use graphify before and after non-trivial changes` (+36 more)
+- **42 isolated node(s):** `What this is`, `Git workflow: commit and push automatically`, `Build / flash / debug`, `Architecture`, `Use graphify before and after non-trivial changes` (+37 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -119,15 +119,15 @@ Nodes (11): Added, awaiting on-car confirmation, Being probed on the car (standa
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `AppMain_Run()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `UI Page Builders`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
+  _High betweenness centrality (0.100) - this node is a cross-community bridge._
 - **Why does `AppMain_Init()` connect `App Main & Superloop` to `FDCAN & OBD Bus Init`, `Metric Model & App Glue`, `LVGL Display Port`?**
-  _High betweenness centrality (0.093) - this node is a cross-community bridge._
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
 - **Why does `cluster_app_init()` connect `Metric Model & App Glue` to `App Main & Superloop`, `UI Page Builders`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `cluster_ui_refresh()` (e.g. with `cluster_app_run()` and `metric_state()`) actually correct?**
   _`cluster_ui_refresh()` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `What this is`, `Git workflow: commit and push automatically`, `Build / flash / debug` to the rest of the system?**
-  _41 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _42 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `FDCAN & OBD Bus Init` be split into smaller, more focused modules?**
   _Cohesion score 0.10344827586206896 - nodes in this community are weakly interconnected._
 - **Should `UI Refresh & Metric Helpers` be split into smaller, more focused modules?**

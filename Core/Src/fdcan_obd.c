@@ -343,6 +343,25 @@ void obd_rx_poll(void) {
             continue;
         }
 
+        /* 0x1BA oil-pressure broadcast candidate (PROVISIONAL — see obd_init).
+         * Byte 3 range 0x06..0xF6 observed in SNIFF ANALOG 2026-07-23; treating
+         * it as kPa directly (/100 → bar) gives 2.0-2.5 bar at cold idle which
+         * is physically plausible. Byte 6 shows nearly identical values so is
+         * likely a scaled copy; ignored for now.
+         * CONFIRM via a throttle blip: oil pressure should spike 1-2 s after
+         * RPM rise. If byte 3 does NOT track RPM, delete this block and disable
+         * filter 2 in obd_init to stop the frame reaching the FIFO. */
+        if (rh.Identifier == CAN_ID_OILP_BCAST) {
+            last_rx_ms = HAL_GetTick();
+            g_obd.can_ok = true;
+            float bar = (float)d[3] / 100.0f;
+            if (bar > 0.05f)                    /* ignore sensor-at-rest noise     */
+                set_f(&g_obd.oil_press, bar);
+            else
+                set_f(&g_obd.oil_press, 0.0f);  /* KOEO / engine off               */
+            continue;
+        }
+
         /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */
         if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) {
             /* Everything else only reaches here with the sniffer's wide filter
@@ -412,6 +431,28 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fs.FilterID2    = 0x7FFu;                 /* full mask = exact match         */
     HAL_FDCAN_ConfigFilter(hfd, &fs);
 
+    /* Filter 2: 0x1BA — candidate broadcast frame carrying oil pressure.
+     * Mode-22 DIDs 0x115C and 0x1470 both return NRC 22/31 (requestOutOfRange)
+     * on this E98 with the engine running; the ECM must therefore transmit oil
+     * pressure as a periodic broadcast, which the OEM cluster reads passively.
+     * SNIFF ANALOG on 2026-07-23 showed 0x1BA byte 3 varying 0x06..0xF6 in a
+     * pattern consistent with oil pressure (low KOEO, ~200-250 counts at cold
+     * idle). Decode here is PROVISIONAL — formula and byte index need
+     * confirmation via a warm-up / throttle-blip run with SNIFF active.
+     * Until confirmed the value feeds g_obd.oil_press exactly like a polled
+     * answer and the DRIVE OIL P tile will populate.
+     * If the byte turns out to be the wrong parameter, change CAN_ID_OILP_BCAST
+     * and the formula below, or set OILP_BCAST_ENABLED 0 to disable entirely. */
+    #define CAN_ID_OILP_BCAST  0x1BAu
+    FDCAN_FilterTypeDef fo = {0};
+    fo.IdType       = FDCAN_STANDARD_ID;
+    fo.FilterIndex  = 2;
+    fo.FilterType   = FDCAN_FILTER_MASK;
+    fo.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    fo.FilterID1    = CAN_ID_OILP_BCAST;
+    fo.FilterID2    = 0x7FFu;                   /* exact match                     */
+    HAL_FDCAN_ConfigFilter(hfd, &fo);
+
     HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
                                  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
 
@@ -447,9 +488,9 @@ void obd_poll_tick(void) {
     static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 6 */
     static const uint8_t mil1[]  = { 0x01 };
 
-    /* medium: 7 items, one per MED_DIV ticks */
+    /* medium: 6 items, one per MED_DIV ticks */
     static uint8_t med_idx = 0;
-    #define N_MED    7u
+    #define N_MED    6u
     #define MED_DIV  3u   /* fire medium item every 3 ticks */
 
     /* slow probes: mode-22 engine DIDs then mode-01 diesel PIDs, one per SLOW_DIV ticks */
@@ -498,7 +539,9 @@ void obd_poll_tick(void) {
             case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
             case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
             case 5: req_mode03();                            break; /* DTC list         */
-            case 6: req_mode22(OBD_REQ_ECM, 0x115C);        break; /* oil pressure     */
+            /* case 6 was 0x115C oil pressure — confirmed NRC 22/31 (requestOutOfRange)
+             * on this E98 with engine running; oil pressure arrives as a CAN broadcast
+             * (passive, no request needed). See obd_rx_poll / can_sniff.c. */
         }
         med_idx++;
     } else {
