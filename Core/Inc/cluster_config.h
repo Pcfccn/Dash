@@ -45,6 +45,11 @@
  * byte 2 carries the manual/commanded gear. See docs/sniff-selector.md. */
 #define CAN_ID_SELECTOR        0x1F5u
 
+/* Provisional oil-pressure broadcast (byte 3 → /100 = bar), identified with the
+ * SNIFF ANALOG page 2026-07-23; still needs a throttle-blip confirmation. Used
+ * by both the RX decode and the acceptance filter in fdcan_obd.c. */
+#define CAN_ID_OILP_BCAST      0x1BAu
+
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
 #define OBD_MODE_FREEZE        0x02u

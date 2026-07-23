@@ -442,8 +442,9 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
      * Until confirmed the value feeds g_obd.oil_press exactly like a polled
      * answer and the DRIVE OIL P tile will populate.
      * If the byte turns out to be the wrong parameter, change CAN_ID_OILP_BCAST
-     * and the formula below, or set OILP_BCAST_ENABLED 0 to disable entirely. */
-    #define CAN_ID_OILP_BCAST  0x1BAu
+     * and the formula below, or set OILP_BCAST_ENABLED 0 to disable entirely.
+     * (CAN_ID_OILP_BCAST lives in cluster_config.h — it is also used by the RX
+     * decode in obd_rx_poll, which is compiled before this function.) */
     FDCAN_FilterTypeDef fo = {0};
     fo.IdType       = FDCAN_STANDARD_ID;
     fo.FilterIndex  = 2;
