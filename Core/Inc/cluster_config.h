@@ -108,7 +108,7 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "BATTERY",     THR_WINDOW,     9,     16,  12.0f, 11.5f, 15.0f, 15.5f,  1 },
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
-  { "RAIL",        THR_INFO,       0,    200,     0,     0,     0,     0,   0 }, /* MPa            */
+  { "RAIL",        THR_INFO,       0,   2000,     0,     0,     0,     0,   0 }, /* bar            */
   { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,   8.0f,  9.0f,  1 }, /* bar; low = danger, high never trips within 0-7 */
   { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
@@ -156,7 +156,7 @@ static const pid_map_t pid_map[] = {
   { M_IAT,          SRC_ECM, OBD_MODE_CURRENT, 0x000F, "A-40  (degC)" },
   { M_LOAD,         SRC_ECM, OBD_MODE_CURRENT, 0x0004, "A*100/255  (%)" },
   { M_BOOST,        SRC_ECM, OBD_MODE_CURRENT, 0x000B, "MAP=A kPa; boost=MAP-baro(0x33)" },
-  { M_RAIL,         SRC_ECM, OBD_MODE_CURRENT, 0x0023, "((A*256)+B)*10 kPa -> /1000 = MPa" },
+  { M_RAIL,         SRC_ECM, OBD_MODE_CURRENT, 0x0023, "((A*256)+B)/10  (bar)" },
   { M_EGT,          SRC_ECM, OBD_MODE_CURRENT, 0x0078, "sensor bank1; ((A*256+B)/10)-40, pick DPF-zone sensor" },
   { M_BATTERY,      SRC_ECM, OBD_MODE_CURRENT, 0x0042, "((A*256)+B)/1000  (V)" },
 

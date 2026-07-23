@@ -156,7 +156,7 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x04: set_f(&g_obd.load,    A * 100.0f / 255.0f);      i += 1; break;
             case 0x0B: last_map_kpa = (float)A; update_boost();          i += 1; break; /* absolute MAP, kPa */
             case 0x33: baro_kpa     = (float)A; update_boost();          i += 1; break; /* barometric, kPa   */
-            case 0x23: set_f(&g_obd.rail,    ((A * 256) + B) * 10 / 1000.0f); i += 2; break; /* MPa */
+            case 0x23: set_f(&g_obd.rail,    ((A * 256) + B) / 10.0f);         i += 2; break; /* bar */
             /* Exhaust gas temperature, 9 data bytes: A = supported-sensor bit
              * mask, then FOUR 2-byte sensors. Sensor 1 is B,C as (x/10)-40.
              * Decoding A,B as the value (and stepping 2) reads the mask as the
@@ -497,7 +497,7 @@ void obd_poll_tick(void) {
     static uint8_t probe_idx = 0;
     static const uint16_t probe_did[] = {
         0x1154,  /* oil temperature (GM enhanced)    */
-        0x115C,  /* oil pressure (Colorado)          */
+        /* 0x115C removed: NRC 22/31 on this E98, oil press via 0x1BA broadcast */
         0x336A,  /* DPF soot %                       */
         0x3039,  /* distance since last regen        */
         0x20F4,  /* DPF differential pressure        */
@@ -567,7 +567,7 @@ void obd_demo_tick(void) {
 
     /* shared "engine warm and healthy" backdrop */
     g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
-    g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 58;   g_obd.battery = 14.1f;
+    g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 580;  g_obd.battery = 14.1f;
     g_obd.atf = 82;     g_obd.soot = 42;   g_obd.dpf_dp = 3.1f;
     g_obd.since_regen = 180; g_obd.egr_t = 96;
     g_obd.oil_press = 3.6f;  g_obd.oil_press_raw = 79;

@@ -550,7 +550,7 @@ static void build_diag(void)
 
     /* 2x2 stat cards */
     static const char *SL[4] = { "BATT", "IAT", "LOAD", "RAIL" };
-    static const char *SU[4] = { "V", DEG "C", "%", "MPa" };
+    static const char *SU[4] = { "V", DEG "C", "%", "bar" };
     const int sx[4] = { 10, 165, 10, 165 };
     const int sy[4] = { 198, 198, 292, 292 };   /* room below for two probe lines */
     for (int i = 0; i < 4; i++) {
