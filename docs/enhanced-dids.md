@@ -25,7 +25,7 @@ Header: engine parameters are requested from the **ECM at 0x7E0** (response
 
 | Parameter | DID | request | formula | source / status |
 |---|---|---|---|---|
-| Engine oil pressure | `0x115C` | `22 11 5C` → 7E0 | (A × 0.65 − 17.5) psi → bar | **now probed** — Colorado community DID, sits right next to the working oil-temp `0x1154`. Replaces `0x1470`, which this E98 rejects with `NRC 22/31`. Confirm on car: OILP populates + NRC 22/31 clears. Scaling provisional — calibrate from the raw byte vs a known warm-idle pressure. |
+| ~~Engine oil pressure~~ | `0x115C` | `22 11 5C` → 7E0 | (A × 0.65 − 17.5) psi → bar | ❌ **confirmed NRC 22/31 (requestOutOfRange) with engine running** — 2026-07-23. KOEO sometimes returns A=0 (unphysical; guarded in code to not show 0 bar). DID not in this E98's table. **Next step: scan with BiScan/Torque for a DID that changes KOEO→running.** |
 | ~~Engine oil pressure~~ | `0x1470` | `22 14 70` → 7E0 | A × (116/256) psi → bar | ❌ rejected by this E98 (`NRC 22/31`, requestOutOfRange) — decode kept for other GM years but no longer polled |
 | Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | ⚠️ answers **0xFFFF** = no-data (now guarded → `--`); confirm real value after a recorded regen |
 | DPF regen status | `0x20F6` | `22 20 F6` → 7E0 | A & 1 → active | reads Inactive KOEO — can't distinguish answer from default; verify during active regen |

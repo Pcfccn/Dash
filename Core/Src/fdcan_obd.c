@@ -204,16 +204,18 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
             set_f(&g_obd.oil, (float)A - 40.0f);
             break;
         case 0x115C:                            /* engine oil pressure (Colorado) */
-            /* DID 0x1470 is rejected by this E98 (NRC 22/31). The Colorado
-             * community uses 0x115C (right next to oil-temp 0x1154, which works
-             * here) with (A*0.65 - 17.5) psi. Provisional: capture the raw byte
-             * on DIAG and calibrate the scaling against a known warm-idle
-             * pressure before trusting the number. */
+            /* 0x1470 and 0x115C both return NRC 22/31 (requestOutOfRange) on this
+             * specific E98 calibration — confirmed on-car 2026-07-23 with engine
+             * running. The DID is simply not in this ECM's table.
+             * Keep raw byte for DIAG, but only commit a decoded value when psi > 0;
+             * A=0 (KOEO / no-reply fluke) maps to -17.5 psi which is unphysical and
+             * would paint a false 0.0 bar CRIT alert on the dash. */
             g_obd.oil_press_raw = A;
             {
                 float psi = (float)A * 0.65f - 17.5f;
-                if (psi < 0.0f) psi = 0.0f;
-                set_f(&g_obd.oil_press, psi / 14.5038f);       /* psi -> bar      */
+                if (psi > 0.0f)
+                    set_f(&g_obd.oil_press, psi / 14.5038f);   /* psi -> bar      */
+                /* else: leave NAN → shows "--", no false alarm */
             }
             break;
         case 0x1470:                            /* engine oil pressure (alt DID) */
