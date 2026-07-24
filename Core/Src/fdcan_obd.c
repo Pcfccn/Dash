@@ -425,17 +425,17 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *
  * Three priority bands share a single tick counter:
  *
- *   FAST  (default, ~2/3 of ticks): rpm+speed (fastA) on EVERY fast tick. RPM
- *         is the only value whose lag the driver actually feels, so it no
- *         longer shares the fast band with anything — it now polls ~2x as
- *         often as before (was alternated with load/MAP/baro). At 25 ms/tick
- *         that is RPM every ~40 ms; even with the display blocking the loop to
- *         ~300 ms/tick it lands every ~500 ms instead of ~1 s.
+ *   FAST  (default, ~2/3 of ticks): rpm + MAP (fastA) on EVERY fast tick. These
+ *         are the two values whose lag is actually felt — RPM on the tach, and
+ *         MAP because boost is derived from it. Pairing them (one 6-byte
+ *         single-frame request) keeps both snappy. Speed moves to MEDIUM: on a
+ *         no-load bench it is 0, and on the road it changes slowly enough that
+ *         ~0.5 s is fine. RPM lands every ~40 ms nominal (~500 ms worst case
+ *         with the display blocking the loop).
  *
  *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, temps, MIL, DTC, and
- *         load/MAP/baro (fastB, demoted from FAST). Boost is derived from MAP,
- *         so it now updates on the medium cadence (~0.5 s) rather than the fast
- *         one — a deliberate trade to give RPM the fast band to itself.
+ *         load+speed+baro (fastB). Baro is ambient and barely moves, so pairing
+ *         it here with MAP-on-FAST still gives a responsive boost = MAP-baro.
  *
  *   SLOW  (every SLOW_DIV ticks): oil-temp DID (0x1154) + EGT PID (0x78), one
  *         per slow tick. (The DPF/soot/EGR probes were removed — this ECM never
@@ -447,8 +447,8 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
 void obd_poll_tick(void) {
     static uint32_t tick = 0;
 
-    static const uint8_t fastA[] = { 0x0C, 0x0D };        /* rpm(3)+speed(2)  = 5 */
-    static const uint8_t fastB[] = { 0x04, 0x0B, 0x33 };  /* load+MAP+baro    = 6 */
+    static const uint8_t fastA[] = { 0x0C, 0x0B };        /* rpm(2)+MAP(1)    = 6 payload */
+    static const uint8_t fastB[] = { 0x04, 0x0D, 0x33 };  /* load+speed+baro  = 7 payload */
     static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };  /* cool+oil+iat    <= 7 */
     static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 6 */
     static const uint8_t mil1[]  = { 0x01 };
@@ -495,7 +495,7 @@ void obd_poll_tick(void) {
             case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
             case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
             case 5: req_mode03();                            break; /* DTC list         */
-            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, MAP, baro  */
+            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, speed, baro*/
             /* oil pressure is NOT polled: 0x115C DID returns NRC 22/31 on this
              * E98; it arrives as a passive CAN broadcast (see obd_rx_poll). */
         }
