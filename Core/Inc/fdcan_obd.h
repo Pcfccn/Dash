@@ -23,13 +23,12 @@
  * the bus actually produced. */
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
-    float   atf, soot, dpf_dp, egr_t, since_regen, oil_press;
+    float   atf, oil_press;
     int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     int8_t  sel_range;       /* selector 0x1F5.b3: -1 unknown, 1 P 2 R 3 N 4 D  */
     bool    mil;
     uint8_t dtc_count;
     bool    can_ok;          /* set false if no valid frame within timeout     */
-    bool    regen_active;    /* DPF regeneration requested/active (DID 0x20F6)  */
 
     /* ---- DID discovery aids (DIAG page) --------------------------------
      * The GM-enhanced DIDs are still being identified for this truck, so the
@@ -37,17 +36,15 @@ typedef struct {
      * silently dropped: a stuck raw byte means "wrong DID", while an NRC means
      * "right module, wrong/unsupported identifier". */
     uint8_t gear_raw;        /* last raw byte from the gear DID                */
-    uint8_t oil_press_raw;   /* last raw byte from the oil-pressure DID        */
     uint8_t last_nrc_sid;    /* service that was rejected (0 = none seen)      */
     uint8_t last_nrc;        /* its negative-response code                     */
 
-    /* Raw capture for the diesel PID probes (DPF dp/temp, aftertreatment, PM):
-     * these have no verified formula for this ECM, so the last one that
-     * answered is surfaced byte-for-byte on DIAG. A PID that answers proves it
-     * is supported; its raw bytes let the scaling be worked out on the car. */
-    uint8_t probe_pid;       /* the mode-01 PID these bytes came from (0=none)  */
-    uint8_t probe_len;       /* how many raw bytes captured                     */
-    uint8_t probe_raw[6];
+    /* ---- oil-pressure candidate capture (DIAG page, TEST SCAFFOLD) ------
+     * Oil pressure has no confirmed source. Two broadcast bytes are captured
+     * raw and shown next to live RPM on DIAG so a throttle blip reveals which
+     * (if either) tracks engine speed. See CAN_ID_OILP_BCAST / _CAND2. */
+    uint8_t oilp_1ba_raw;    /* 0x1BA byte 3 (currently feeds oil_press)       */
+    uint8_t oilp_0c9_raw;    /* 0x0C9 byte 2 (second candidate under test)     */
 } obd_data_t;
 
 extern volatile obd_data_t g_obd;

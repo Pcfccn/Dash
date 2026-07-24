@@ -75,8 +75,8 @@ static struct {
 
     /* alert strip */
     lv_obj_t *strip;
-    lv_obj_t *tag[9];               /* MIL CLT OIL ATF EGT DPF BAT DTC CAN */
-    lv_obj_t *tag_ul[9];            /* per-tag state underline (design signature) */
+    lv_obj_t *tag[8];               /* MIL CLT OIL ATF EGT BAT DTC CAN */
+    lv_obj_t *tag_ul[8];            /* per-tag state underline (design signature) */
     lv_obj_t *summary;
     lv_obj_t *count;
 
@@ -151,9 +151,7 @@ static float mval(const obd_data_t *d, metric_key_t k)
         case M_COOL:  return d->cool;    case M_OIL:  return d->oil;
         case M_ATF:   return d->atf;     case M_EGT:  return d->egt;
         case M_OILP:  return d->oil_press;
-        case M_BOOST: return d->boost;   case M_SOOT: return d->soot;
-        case M_DPF_DP:return d->dpf_dp;  case M_SINCE_REGEN: return d->since_regen;
-        case M_EGR_T: return d->egr_t;   case M_BATTERY: return d->battery;
+        case M_BOOST: return d->boost;   case M_BATTERY: return d->battery;
         case M_IAT:   return d->iat;     case M_LOAD: return d->load;
         case M_RAIL:  return d->rail;    case M_GEAR: return d->gear;
         default: return 0;
@@ -550,8 +548,8 @@ static void build_strip(lv_obj_t *scr)
     lv_obj_set_style_pad_all(ui.strip, 0, 0);
     lv_obj_clear_flag(ui.strip, LV_OBJ_FLAG_SCROLLABLE);
 
-    static const char *TAG[9] = { "MIL","CLT","OIL","ATF","EGT","DPF","BAT","DTC","CAN" };
-    for (int i = 0; i < 9; i++) {
+    static const char *TAG[8] = { "MIL","CLT","OIL","ATF","EGT","BAT","DTC","CAN" };
+    for (int i = 0; i < 8; i++) {
         ui.tag[i] = mk_label(ui.strip, TAG[i], F12, C_FAINT);
         lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, -3);
         /* hairline state underline beneath each tag (coloured in refresh) */
@@ -674,16 +672,12 @@ void cluster_ui_refresh(void)
     d.speed = g_obd.speed; d.rpm = g_obd.rpm; d.cool = g_obd.cool;
     d.oil = g_obd.oil; d.iat = g_obd.iat; d.load = g_obd.load;
     d.boost = g_obd.boost; d.rail = g_obd.rail; d.egt = g_obd.egt;
-    d.battery = g_obd.battery; d.atf = g_obd.atf; d.soot = g_obd.soot;
-    d.dpf_dp = g_obd.dpf_dp; d.egr_t = g_obd.egr_t; d.since_regen = g_obd.since_regen;
+    d.battery = g_obd.battery; d.atf = g_obd.atf;
     d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
-    d.regen_active = g_obd.regen_active;
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
-    d.oil_press_raw = g_obd.oil_press_raw;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
-    d.probe_pid = g_obd.probe_pid; d.probe_len = g_obd.probe_len;
-    for (int k = 0; k < 6; k++) d.probe_raw[k] = g_obd.probe_raw[k];
+    d.oilp_1ba_raw = g_obd.oilp_1ba_raw; d.oilp_0c9_raw = g_obd.oilp_0c9_raw;
     bool live = d.can_ok;
 
     char b[16];
@@ -751,11 +745,13 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
-    {   /* DID probe line — enhanced-DID calibration aids. OILP shows the raw
-         * oil-pressure DID byte (now 0x115C; 0x1470 gave NRC 22/31) and the bar
-         * value it decodes to, so the scaling can be checked against a known
-         * idle pressure; NRC is the last rejection (should clear if 0x115C is
-         * supported). */
+    {   /* Oil-pressure candidate readout (TEST SCAFFOLD, 2026-07-24).
+         * Line 1: the currently-decoded oil_press (from 0x1BA) + last NRC.
+         * Line 2: live RPM next to the two raw candidate bytes, so ONE photo of
+         *         this page during a throttle blip shows which byte tracks
+         *         engine speed. Oil pressure should rise with RPM and decay
+         *         slowly; an RPM-derived echo tracks instantly in both
+         *         directions. Whichever byte follows RPM is the real source. */
         char db[96];
         char nrc[16];
         if (d.last_nrc_sid)
@@ -765,24 +761,15 @@ void cluster_ui_refresh(void)
             lv_snprintf(nrc, sizeof nrc, "--");
         int o;
         if (has_value(d.oil_press))
-            o = lv_snprintf(db, sizeof db, "GR %02X  OILP %02X=%d.%02u  NRC %s\n",
-                            (unsigned)d.gear_raw, (unsigned)d.oil_press_raw,
+            o = lv_snprintf(db, sizeof db, "OILP %d.%02u bar  NRC %s\n",
                             (int)d.oil_press,
                             (unsigned)((d.oil_press - (int)d.oil_press) * 100), nrc);
         else
-            o = lv_snprintf(db, sizeof db, "GR %02X  OILP --  NRC %s\n",
-                            (unsigned)d.gear_raw, nrc);
+            o = lv_snprintf(db, sizeof db, "OILP --  NRC %s\n", nrc);
 
-        /* Second line: raw bytes of the last diesel PID probe that answered.
-         * A PID that shows here is supported by this ECM; its bytes let the
-         * scaling be derived on the car (see docs/enhanced-dids.md). */
-        if (d.probe_pid) {
-            o += lv_snprintf(db + o, sizeof db - o, "PID %02X:", (unsigned)d.probe_pid);
-            for (int k = 0; k < d.probe_len && o < (int)sizeof db - 4; k++)
-                o += lv_snprintf(db + o, sizeof db - o, " %02X", (unsigned)d.probe_raw[k]);
-        } else {
-            lv_snprintf(db + o, sizeof db - o, "PID probe: no reply yet");
-        }
+        int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
+        lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
+                    rpm, (unsigned)d.oilp_1ba_raw, (unsigned)d.oilp_0c9_raw);
         lv_label_set_text(ui.did_dbg, db);
     }
 
@@ -847,24 +834,23 @@ void cluster_ui_refresh(void)
      * A tag only judges a value we actually have: metric_state() on NaN would
      * fall through every comparison and report a confident ST_OK, and a PID
      * that reads 0 because it is unsupported must not raise CHECK either. */
-    metric_state_t ts[9];
+    metric_state_t ts[8];
     #define TAG_ST(k, v) ((live && has_value(v)) ? metric_state((k), (v)) : ST_OK)
     ts[0] = d.mil ? ST_CRIT : ST_OK;                        /* MIL */
     ts[1] = TAG_ST(M_COOL, d.cool);                         /* CLT */
     ts[2] = TAG_ST(M_OIL, d.oil);                           /* OIL */
     ts[3] = TAG_ST(M_ATF, d.atf);                           /* ATF */
     ts[4] = TAG_ST(M_EGT, d.egt);                           /* EGT */
-    ts[5] = TAG_ST(M_SOOT, d.soot);                         /* DPF */
-    ts[6] = TAG_ST(M_BATTERY, d.battery);                   /* BAT */
-    ts[7] = d.dtc_count > 0 ? ST_WARN : ST_OK;              /* DTC */
-    ts[8] = live ? ST_OK : ST_CRIT;                         /* CAN */
+    ts[5] = TAG_ST(M_BATTERY, d.battery);                   /* BAT */
+    ts[6] = d.dtc_count > 0 ? ST_WARN : ST_OK;              /* DTC */
+    ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
     #undef TAG_ST
 
     int worst = ST_OK, nalarm = 0;
-    for (int i = 0; i < 9; i++) {
-        /* MIL (0) and DTC (7) are indicators: grey/dim when nominal, not green.
+    for (int i = 0; i < 8; i++) {
+        /* MIL (0) and DTC (6) are indicators: grey/dim when nominal, not green.
          * The monitored systems glow green when healthy (design signature). */
-        bool indicator = (i == 0 || i == 7);
+        bool indicator = (i == 0 || i == 6);
         lv_color_t tc, ulc;
         if      (ts[i] == ST_CRIT) { tc = C_CRIT; ulc = C_CRIT; }
         else if (ts[i] == ST_WARN) { tc = C_WARN; ulc = C_WARN; }

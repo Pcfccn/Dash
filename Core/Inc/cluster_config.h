@@ -50,6 +50,14 @@
  * by both the RX decode and the acceptance filter in fdcan_obd.c. */
 #define CAN_ID_OILP_BCAST      0x1BAu
 
+/* Second oil-pressure candidate under test (2026-07-24): 0x0C9 byte 2 showed a
+ * wide range (0x27..0xFF) on the SNIFF ANALOG page, plausibly A/36 → bar. Both
+ * 0x1BA[3] and 0x0C9[2] are captured raw and shown alongside live RPM on DIAG
+ * so a throttle-blip photo reveals which one actually tracks engine speed.
+ * TEST SCAFFOLD — once the real source is known, drop the loser (its filter in
+ * obd_init + RX branch) to stop the frame loading the shared RX FIFO. */
+#define CAN_ID_OILP_CAND2      0x0C9u
+
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
 #define OBD_MODE_FREEZE        0x02u
@@ -68,7 +76,7 @@ typedef enum {
 /* Which thresholds are meaningful for a metric */
 typedef enum {
     THR_NONE      = 0,      /* raw value, no colour logic (speed, rpm-info…)   */
-    THR_HIGH_ONLY = 1,      /* temps, soot: warn/crit when value rises         */
+    THR_HIGH_ONLY = 1,      /* temps: warn/crit when value rises               */
     THR_WINDOW    = 2,      /* battery: warn/crit on BOTH low and high sides   */
     THR_INFO      = 3       /* shown, but always ST_INFO                       */
 } thr_kind_t;
@@ -76,7 +84,6 @@ typedef enum {
 /* ---- Metric keys (index into metrics[]) ---------------------------------- */
 typedef enum {
     M_SPEED = 0, M_RPM, M_COOL, M_OIL, M_ATF, M_EGT, M_BOOST,
-    M_SOOT, M_DPF_DP, M_SINCE_REGEN, M_EGR_T,
     M_BATTERY, M_IAT, M_LOAD, M_RAIL,
     M_OILP,
     M_GEAR,
@@ -104,12 +111,8 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "COOLANT",     THR_HIGH_ONLY, 40,    120,     0,     0,    93,    97,   0 },
   { "OIL",         THR_HIGH_ONLY, 40,    140,     0,     0,   120,   130,   0 },
   { "ATF",         THR_HIGH_ONLY, 40,    150,     0,     0,   120,   130,   0 },
-  { "EGT",         THR_HIGH_ONLY,  0,    800,     0,     0,   650,   720,   0 }, /* DPF-zone probe */
+  { "EGT",         THR_HIGH_ONLY,  0,    800,     0,     0,   650,   720,   0 }, /* exhaust temp   */
   { "BOOST",       THR_INFO,       0,    2.5f,    0,     0,     0,     0,   1 }, /* bar gauge      */
-  { "SOOT",        THR_HIGH_ONLY,  0,    100,     0,     0,    70,    85,   0 }, /* 85 = regen trip*/
-  { "DP_DPF",      THR_INFO,       0,     30,     0,     0,     0,     0,   1 }, /* kPa            */
-  { "SINCE_REGEN", THR_INFO,       0,   1000,     0,     0,     0,     0,   0 }, /* km             */
-  { "EGR_T",       THR_INFO,       0,    500,     0,     0,     0,     0,   0 }, /* deg C          */
   { "BATTERY",     THR_WINDOW,     9,     16,  12.0f, 11.5f, 15.0f, 15.5f,  1 },
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
@@ -168,16 +171,12 @@ static const pid_map_t pid_map[] = {
   /* ENHANCED / non-standard. DIDs from GM/Torque/EFILive community configs for
    * the 2.8 LWN + E98 — NOT yet verified on this car. Confidence: [H]/[M]/[L].
    * This table is documentation; the actual requests are hardcoded in
-   * fdcan_obd.c's obd_poll_tick()/decoders. ATF, GEAR and EGR_T are now polled;
-   * SOOT / DPF_DP / SINCE_REGEN are left for on-car DID discovery (BiScan/Gretio)
-   * and are not requested until a real DID is known. */
+   * fdcan_obd.c's obd_poll_tick()/decoders. ATF and GEAR are polled; oil
+   * pressure arrives as a passive CAN broadcast (see CAN_ID_OILP_BCAST), not a
+   * request — the 0x115C DID returns NRC 22/31 on this E98. The DPF/soot/EGR
+   * signals were dropped: this ECM never answered any of their DIDs/PIDs. */
   { M_ATF,          SRC_TCM, OBD_MODE_ENHANCED, 0x1940, "[H] TCM@7E2 A-40 degC — trans fluid temp (Torque 221940) — POLLED" },
   { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x199A, "[M] TCM@7E2 current gear = A — verify scaling on car — POLLED" },
-  { M_OILP,         SRC_ECM, OBD_MODE_ENHANCED, 0x115C, "[M] oil pressure (Colorado) A*0.65-17.5 psi->bar; 0x1470 gave NRC 22/31 — POLLED, confirm on car" },
-  { M_EGR_T,        SRC_ECM, OBD_MODE_CURRENT,  0x006B, "[M] std J1979 PID 6B EGR temp, sensor1 = B-40 degC — POLLED" },
-  { M_SOOT,         SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF soot %% — DID varies by year; discover on car — NOT polled" },
-  { M_DPF_DP,       SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] DPF delta-p — GM enhanced DID guarded; discover on car — NOT polled" },
-  { M_SINCE_REGEN,  SRC_ECM, OBD_MODE_ENHANCED, 0x0000, "[L] distance since regen — GM-guarded; discover on car — NOT polled" },
 };
 
 /*

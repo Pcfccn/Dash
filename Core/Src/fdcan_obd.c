@@ -21,10 +21,9 @@
  * would paint a plausible lie on the screen (0 V battery, 0 degC oil). The UI
  * renders NaN as "--". */
 volatile obd_data_t g_obd = {
-    .speed = NAN, .rpm   = NAN, .cool   = NAN, .oil = NAN, .iat     = NAN,
-    .load  = NAN, .boost = NAN, .rail   = NAN, .egt = NAN, .battery = NAN,
-    .atf   = NAN, .soot  = NAN, .dpf_dp = NAN, .egr_t = NAN, .since_regen = NAN,
-    .oil_press = NAN,
+    .speed = NAN, .rpm   = NAN, .cool = NAN, .oil = NAN, .iat     = NAN,
+    .load  = NAN, .boost = NAN, .rail = NAN, .egt = NAN, .battery = NAN,
+    .atf   = NAN, .oil_press = NAN,
     .gear  = -1,  .sel_range = -1, .can_ok = false,
 };
 
@@ -163,25 +162,6 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
              * high byte and desynchronises everything after it. */
             case 0x78: set_f(&g_obd.egt, (((B * 256) + C) / 10.0f) - 40.0f); i += 9; break;
             case 0x42: set_f(&g_obd.battery, ((A * 256) + B) / 1000.0f);i += 2; break;
-            /* Standard J1979 diesel EGR temperature: A = supported-sensor bits,
-             * B = EGR temp sensor 1 (bank1) as B-40 degC. 5 data bytes total
-             * (A + up to 4 sensors); we take sensor 1 and skip the rest.
-             * MUST be requested in its own frame (see obd_poll_tick). */
-            case 0x6B: set_f(&g_obd.egr_t, (float)B - 40.0f);           i += 5; break;
-            /* Diesel aftertreatment probes with no verified scaling on this ECM
-             * (DPF differential pressure, DPF temp, aftertreatment status, PM).
-             * Each is requested on its own so this is the only PID in the frame:
-             * capture the raw bytes for DIAG and stop. If the ECM does not
-             * support one, it simply never reaches here. */
-            case 0x7A: case 0x7C: case 0x8B: case 0x86: {
-                g_obd.probe_pid = pid;
-                uint8_t m = 0;
-                for (; m < 6 && (i + m) < n; m++) g_obd.probe_raw[m] = p[i + m];
-                g_obd.probe_len = m;
-                obd_on_update();
-                i = n;                       /* dedicated single-PID response   */
-                break;
-            }
             case 0x01: g_obd.mil = (A & 0x80) != 0;
                        g_obd.dtc_count = A & 0x7F; obd_on_update();     i += 4; break;
             default:   i += 2; break; /* unknown: assume 2 data bytes          */
@@ -203,51 +183,6 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
         case 0x1154:                            /* engine oil temp (GM enhanced) */
             set_f(&g_obd.oil, (float)A - 40.0f);
             break;
-        case 0x115C:                            /* engine oil pressure (Colorado) */
-            /* 0x1470 and 0x115C both return NRC 22/31 (requestOutOfRange) on this
-             * specific E98 calibration — confirmed on-car 2026-07-23 with engine
-             * running. The DID is simply not in this ECM's table.
-             * Keep raw byte for DIAG, but only commit a decoded value when psi > 0;
-             * A=0 (KOEO / no-reply fluke) maps to -17.5 psi which is unphysical and
-             * would paint a false 0.0 bar CRIT alert on the dash. */
-            g_obd.oil_press_raw = A;
-            {
-                float psi = (float)A * 0.65f - 17.5f;
-                if (psi > 0.0f)
-                    set_f(&g_obd.oil_press, psi / 14.5038f);   /* psi -> bar      */
-                /* else: leave NAN → shows "--", no false alarm */
-            }
-            break;
-        case 0x1470:                            /* engine oil pressure (alt DID) */
-            /* Not supported on this E98 (NRC 22/31); kept for other GM years.  */
-            g_obd.oil_press_raw = A;
-            set_f(&g_obd.oil_press,
-                  (float)A * (116.0f / 256.0f) / 14.5038f);   /* psi -> bar      */
-            break;
-        /* GM diesel DPF DIDs, from the Opel/Vauxhall Astra-K set (same GM
-         * Global-B diesel family as this E98). Verified on the car by whether
-         * they answer; scaling from that community and checked against known
-         * conditions (dP ~0 at idle, soot a low %). See docs/enhanced-dids.md. */
-        case 0x336A:                            /* DPF soot accumulation, %      */
-            set_f(&g_obd.soot, (float)A * 100.0f / 255.0f);
-            break;
-        case 0x3039: {                          /* distance since last regen, km */
-            /* The E98 answers this DID but reports 0xFFFF when it has no value
-             * to give (KOEO / no regen recorded). Treat that sentinel as "no
-             * data" rather than painting a literal 65535 km. */
-            uint16_t km = ((uint16_t)A << 8) | p[4];
-            if (km != 0xFFFF)
-                set_f(&g_obd.since_regen, (float)km);
-            break;
-        }
-        case 0x20F4:                            /* DPF differential pressure, kPa */
-            set_f(&g_obd.dpf_dp, (float)(int8_t)A);   /* signed byte             */
-            break;
-        case 0x20F6: {                          /* DPF regeneration status       */
-            bool r = (A & 0x01u) != 0u;
-            if (g_obd.regen_active != r) { g_obd.regen_active = r; obd_on_update(); }
-            break;
-        }
         case 0x199A: {                          /* current gear (raw index in A) */
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
              * never moves while the selector does) can be told apart from a
@@ -343,22 +278,32 @@ void obd_rx_poll(void) {
             continue;
         }
 
-        /* 0x1BA oil-pressure broadcast candidate (PROVISIONAL — see obd_init).
+        /* 0x1BA oil-pressure broadcast candidate #1 (PROVISIONAL — see obd_init).
          * Byte 3 range 0x06..0xF6 observed in SNIFF ANALOG 2026-07-23; treating
-         * it as kPa directly (/100 → bar) gives 2.0-2.5 bar at cold idle which
-         * is physically plausible. Byte 6 shows nearly identical values so is
-         * likely a scaled copy; ignored for now.
-         * CONFIRM via a throttle blip: oil pressure should spike 1-2 s after
-         * RPM rise. If byte 3 does NOT track RPM, delete this block and disable
-         * filter 2 in obd_init to stop the frame reaching the FIFO. */
+         * it as kPa directly (/100 → bar) gave 2.0-2.5 bar at cold idle. But the
+         * 2026-07-24 run showed it does NOT rise with RPM (1.5 bar at 2550 rpm),
+         * so it is under re-test against candidate #2 (0x0C9). Raw byte is kept
+         * for the DIAG side-by-side; it still feeds oil_press / the OIL P tile
+         * until the correct source is confirmed. */
         if (rh.Identifier == CAN_ID_OILP_BCAST) {
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
+            g_obd.oilp_1ba_raw = d[3];
             float bar = (float)d[3] / 100.0f;
             if (bar > 0.05f)                    /* ignore sensor-at-rest noise     */
                 set_f(&g_obd.oil_press, bar);
             else
                 set_f(&g_obd.oil_press, 0.0f);  /* KOEO / engine off               */
+            continue;
+        }
+
+        /* 0x0C9 oil-pressure broadcast candidate #2 (TEST SCAFFOLD — see obd_init
+         * / CAN_ID_OILP_CAND2). Byte 2 spanned 0x27..0xFF on SNIFF; captured raw
+         * and shown next to RPM on DIAG. Not fed to oil_press until confirmed. */
+        if (rh.Identifier == CAN_ID_OILP_CAND2) {
+            last_rx_ms = HAL_GetTick();
+            g_obd.can_ok = true;
+            g_obd.oilp_0c9_raw = d[2];
             continue;
         }
 
@@ -454,6 +399,21 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fo.FilterID2    = 0x7FFu;                   /* exact match                     */
     HAL_FDCAN_ConfigFilter(hfd, &fo);
 
+    /* Filter 3: 0x0C9 — second oil-pressure candidate under test (2026-07-24).
+     * Same rationale as filter 2: capture the frame passively so its byte 2 can
+     * be compared against RPM on the DIAG page. TEST SCAFFOLD — remove this
+     * filter (and drop StdFiltersNbr back to 3 in fdcan.c) once the real
+     * oil-pressure source is settled. 0x0C9 is a fast engine frame, so it adds
+     * RX-FIFO pressure; acceptable for a short warm-up/blip test. */
+    FDCAN_FilterTypeDef fc = {0};
+    fc.IdType       = FDCAN_STANDARD_ID;
+    fc.FilterIndex  = 3;
+    fc.FilterType   = FDCAN_FILTER_MASK;
+    fc.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    fc.FilterID1    = CAN_ID_OILP_CAND2;
+    fc.FilterID2    = 0x7FFu;                   /* exact match                     */
+    HAL_FDCAN_ConfigFilter(hfd, &fc);
+
     HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
                                  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
 
@@ -465,17 +425,21 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *
  * Three priority bands share a single tick counter:
  *
- *   FAST  (default, ~2/3 of ticks): alternate fastA (rpm+speed) and fastB
- *         (load+MAP+baro). At 25 ms/tick → RPM every ~80 ms. Even with the
- *         display blocking the loop to ~300 ms/tick, RPM still updates every
- *         ~500 ms instead of the old ~1500 ms.
+ *   FAST  (default, ~2/3 of ticks): rpm+speed (fastA) on EVERY fast tick. RPM
+ *         is the only value whose lag the driver actually feels, so it no
+ *         longer shares the fast band with anything — it now polls ~2x as
+ *         often as before (was alternated with load/MAP/baro). At 25 ms/tick
+ *         that is RPM every ~40 ms; even with the display blocking the loop to
+ *         ~300 ms/tick it lands every ~500 ms instead of ~1 s.
  *
- *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, temps, MIL, DTC,
- *         oil-pressure — things that matter but change on a ~500 ms timescale.
+ *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, temps, MIL, DTC, and
+ *         load/MAP/baro (fastB, demoted from FAST). Boost is derived from MAP,
+ *         so it now updates on the medium cadence (~0.5 s) rather than the fast
+ *         one — a deliberate trade to give RPM the fast band to itself.
  *
- *   SLOW  (every SLOW_DIV ticks): enhanced-DID probes + diesel mode-01 PIDs
- *         (EGT, soot, DPF) — one item per slow tick, full rotation every
- *         N_PROBE × SLOW_DIV ticks ≈ 5 s at 25 ms/tick.
+ *   SLOW  (every SLOW_DIV ticks): oil-temp DID (0x1154) + EGT PID (0x78), one
+ *         per slow tick. (The DPF/soot/EGR probes were removed — this ECM never
+ *         answered them.)
  *
  * Reply budget: every grouped mode-01 request must fit a single ISO-TP frame
  * (≤7 payload bytes: 0x41 echo + PID/data). Multi-frame replies do not survive
@@ -489,9 +453,9 @@ void obd_poll_tick(void) {
     static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 6 */
     static const uint8_t mil1[]  = { 0x01 };
 
-    /* medium: 6 items, one per MED_DIV ticks */
+    /* medium: 7 items, one per MED_DIV ticks */
     static uint8_t med_idx = 0;
-    #define N_MED    6u
+    #define N_MED    7u
     #define MED_DIV  3u   /* fire medium item every 3 ticks */
 
     /* slow probes: mode-22 engine DIDs then mode-01 diesel PIDs, one per SLOW_DIV ticks */
@@ -499,18 +463,9 @@ void obd_poll_tick(void) {
     static const uint16_t probe_did[] = {
         0x1154,  /* oil temperature (GM enhanced)    */
         /* 0x115C removed: NRC 22/31 on this E98, oil press via 0x1BA broadcast */
-        0x336A,  /* DPF soot %                       */
-        0x3039,  /* distance since last regen        */
-        0x20F4,  /* DPF differential pressure        */
-        0x20F6,  /* DPF regen status                 */
     };
     static const uint8_t probe_pid[] = {
         0x78,  /* EGT bank 1              */
-        0x6B,  /* EGR temperature         */
-        0x7A,  /* DPF differential press  */
-        0x7C,  /* DPF temperature         */
-        0x8B,  /* diesel aftertreatment   */
-        0x86,  /* particulate matter      */
     };
     #define N_PROBE_DID  (sizeof probe_did / sizeof probe_did[0])
     #define N_PROBE_PID  (sizeof probe_pid)
@@ -540,15 +495,15 @@ void obd_poll_tick(void) {
             case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
             case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
             case 5: req_mode03();                            break; /* DTC list         */
-            /* case 6 was 0x115C oil pressure — confirmed NRC 22/31 (requestOutOfRange)
-             * on this E98 with engine running; oil pressure arrives as a CAN broadcast
-             * (passive, no request needed). See obd_rx_poll / can_sniff.c. */
+            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, MAP, baro  */
+            /* oil pressure is NOT polled: 0x115C DID returns NRC 22/31 on this
+             * E98; it arrives as a passive CAN broadcast (see obd_rx_poll). */
         }
         med_idx++;
     } else {
-        /* fast: alternate rpm+speed and load+boost every tick */
-        if (tick & 1u) req_mode01(fastA, sizeof fastA);
-        else           req_mode01(fastB, sizeof fastB);
+        /* fast: rpm+speed every fast tick — RPM has the band to itself so it
+         * updates as often as possible (see the scheduler comment above). */
+        req_mode01(fastA, sizeof fastA);
     }
 }
 
@@ -569,9 +524,7 @@ void obd_demo_tick(void) {
     /* shared "engine warm and healthy" backdrop */
     g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
     g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 580;  g_obd.battery = 14.1f;
-    g_obd.atf = 82;     g_obd.soot = 42;   g_obd.dpf_dp = 3.1f;
-    g_obd.since_regen = 180; g_obd.egr_t = 96;
-    g_obd.oil_press = 3.6f;  g_obd.oil_press_raw = 79;
+    g_obd.atf = 82;     g_obd.oil_press = 3.6f;
     g_obd.mil = false;  g_obd.dtc_count = 0;  g_obd.can_ok = true;
 
     if (s < 120u) {                 /* 0-12 s: DRIVE cruise, all nominal green   */

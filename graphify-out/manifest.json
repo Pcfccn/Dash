@@ -20,13 +20,13 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_config.h": {
-    "mtime": 1784775951.246636,
-    "ast_hash": "4946d0b99e540191b252c85370dfa244",
+    "mtime": 1784873911.0058002,
+    "ast_hash": "e82531627dd7dc25116b0639a7ec573f",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
-    "mtime": 1784269129.710937,
-    "ast_hash": "a11def9e0f85d2f01a15b556cf68f836",
+    "mtime": 1784873127.3350074,
+    "ast_hash": "540e6744ac1a2ffb20ccdfc95ac14cb3",
     "semantic_hash": ""
   },
   "Core/Inc/fdcan.h": {
@@ -35,8 +35,8 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1784766132.8393135,
-    "ast_hash": "bcc300b5b3b7e21e309c97b098a93689",
+    "mtime": 1784873933.4441357,
+    "ast_hash": "b2c6b5042f62766a8d2197187b27d797",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -100,18 +100,18 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1784775939.7488494,
-    "ast_hash": "3dfa97c09135c3933ef36fc02018084a",
+    "mtime": 1784874333.9773974,
+    "ast_hash": "22e08bce3bc3e5f4890d73035fa8185c",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
-    "mtime": 1784774372.7683277,
-    "ast_hash": "b61005318bcf7995bb65a3b7fdd1c2ae",
+    "mtime": 1784874050.5605578,
+    "ast_hash": "1b60d4f975e9edbf00568a003dd6436a",
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1784775974.870141,
-    "ast_hash": "0fe9b72128bb36e934c64c0aaaf9ca6f",
+    "mtime": 1784874379.4253697,
+    "ast_hash": "9eef45b04ee6ace284825b87c33eaee0",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -264,41 +264,6 @@
     "ast_hash": "a27e1c3ec7ac8c790d1ac3583156a0b2",
     "semantic_hash": ""
   },
-  "design/Photos/20262207_21/photo_1_2026-07-21_22-55-05.jpg": {
-    "mtime": 1784766132.847829,
-    "ast_hash": "b589b2acc4efd2e5860e71fa92d2db11",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_2_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.849828,
-    "ast_hash": "ddb52512f3efa76bc4b60b6dfdfbc867",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_3_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.8518343,
-    "ast_hash": "5cad51a4f6f1e19ed361c6c0874958bd",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_4_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.8528335,
-    "ast_hash": "9e725221b5147123a1875911e38e60cb",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_5_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.8548355,
-    "ast_hash": "f5a4bae27dd9ba6a0116ba8852731002",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_6_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.8559241,
-    "ast_hash": "ed83c52be1b0467b5400f94f2669d6f5",
-    "semantic_hash": ""
-  },
-  "design/Photos/20262207_21/photo_7_2026-07-21_22-55-06.jpg": {
-    "mtime": 1784766132.8571398,
-    "ast_hash": "5e83ab77daa1243b9911dd9e96ae7580",
-    "semantic_hash": ""
-  },
   "design/Photos/20260723_9/photo_5407021963907111619_y.jpg": {
     "mtime": 1784765444.669324,
     "ast_hash": "fb2476efa25d3d491e1a1d93d9c8783a",
@@ -367,6 +332,181 @@
   "design/Photos/20260723_9/photo_5407021963907111632_y.jpg": {
     "mtime": 1784765458.5301585,
     "ast_hash": "1181d56c02bd97c5ba114af1f391c6e3",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260723_9/SESSION_NOTES.md": {
+    "mtime": 1784873129.9855392,
+    "ast_hash": "28ee8658fd02dd2ac0b27a85a5e33ebc",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/SESSION_NOTES.md": {
+    "mtime": 1784873130.0202882,
+    "ast_hash": "3e0f7448c2ec0edfefb05bb60efd118a",
+    "semantic_hash": ""
+  },
+  "docs/oil-pressure-test.md": {
+    "mtime": 1784874515.779144,
+    "ast_hash": "874415b725e9e0c6f89dcd4fe023ace7",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_1_2026-07-21_22-55-05.jpg": {
+    "mtime": 1784873129.942413,
+    "ast_hash": "b589b2acc4efd2e5860e71fa92d2db11",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_2_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9454124,
+    "ast_hash": "ddb52512f3efa76bc4b60b6dfdfbc867",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_3_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9508772,
+    "ast_hash": "5cad51a4f6f1e19ed361c6c0874958bd",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_4_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9538777,
+    "ast_hash": "9e725221b5147123a1875911e38e60cb",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_5_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9558752,
+    "ast_hash": "f5a4bae27dd9ba6a0116ba8852731002",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_6_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9578767,
+    "ast_hash": "ed83c52be1b0467b5400f94f2669d6f5",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260722_21/photo_7_2026-07-21_22-55-06.jpg": {
+    "mtime": 1784873129.9598794,
+    "ast_hash": "5e83ab77daa1243b9911dd9e96ae7580",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459434_y.jpg": {
+    "mtime": 1784873130.0566332,
+    "ast_hash": "4677a3b9391c22852930ced2850f7467",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459435_y.jpg": {
+    "mtime": 1784873130.117447,
+    "ast_hash": "255b722953de2eefde4dbacef2a7aa7a",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459436_y.jpg": {
+    "mtime": 1784873130.1451118,
+    "ast_hash": "2819619f3dd89327be2724afe0e53970",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459437_y.jpg": {
+    "mtime": 1784873130.1782098,
+    "ast_hash": "9b61a165a53a0b3c6c106e2e515a3197",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459438_y.jpg": {
+    "mtime": 1784873130.217696,
+    "ast_hash": "d7752cb3b2b71496990143d532d300b4",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459439_y.jpg": {
+    "mtime": 1784873130.2848635,
+    "ast_hash": "9ae4707479654176ee7957bfde8698db",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459440_y.jpg": {
+    "mtime": 1784873130.3575172,
+    "ast_hash": "14fa6886efb6ed6b5cc8936a9ec1bfd5",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459441_y.jpg": {
+    "mtime": 1784873130.394984,
+    "ast_hash": "f61f3258ce7e303980c33655676fe1f2",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459442_y.jpg": {
+    "mtime": 1784873130.4610496,
+    "ast_hash": "eabc50f488cb4f550fd1b5d20dfa5643",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459443_y.jpg": {
+    "mtime": 1784873130.5362284,
+    "ast_hash": "001bda90c17b95cbafaa659d2b97c2a0",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459444_y.jpg": {
+    "mtime": 1784873130.8333216,
+    "ast_hash": "e8c1acf1ff1f7c5d4b9abf8bf17343fa",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459445_y.jpg": {
+    "mtime": 1784873131.027989,
+    "ast_hash": "652be8750ec0984df6ba3546127b20f0",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459446_y.jpg": {
+    "mtime": 1784873131.0683658,
+    "ast_hash": "785832ba3b03dbdc9599ad8cecaec3ce",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459447_y.jpg": {
+    "mtime": 1784873131.09315,
+    "ast_hash": "29a5146f712971b76acdf54c739f9fb1",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459448_y.jpg": {
+    "mtime": 1784873131.1255808,
+    "ast_hash": "ed9051ac6bb4d215369b224c952fba70",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459449_y.jpg": {
+    "mtime": 1784873131.173499,
+    "ast_hash": "fb0789d463b346e62284a6173a2546b9",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459450_y.jpg": {
+    "mtime": 1784873131.2120087,
+    "ast_hash": "a69f87839952a711a33a4ce3cbca442d",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459451_y.jpg": {
+    "mtime": 1784873131.249746,
+    "ast_hash": "404f35a2741e12c61dedab1478bce8e0",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459452_y.jpg": {
+    "mtime": 1784873131.3216712,
+    "ast_hash": "2ff76217b401cd92d43d8bb7ab8d693f",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459453_y.jpg": {
+    "mtime": 1784873131.351053,
+    "ast_hash": "bf0298f5fc6ca9f07472aef34518d289",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459454_y.jpg": {
+    "mtime": 1784873131.3802338,
+    "ast_hash": "cc6e72be0da37aa24141e4f0047cd8af",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459455_y.jpg": {
+    "mtime": 1784873131.409381,
+    "ast_hash": "9865a9abeb3b49c5ba88c247e2c27adf",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459456_y.jpg": {
+    "mtime": 1784873131.4586768,
+    "ast_hash": "b6430ebd4c360f83a9419dfe4a581aee",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459457_y.jpg": {
+    "mtime": 1784873131.5065846,
+    "ast_hash": "50aa8b43610a7a68e38fe8d32a6c3921",
+    "semantic_hash": ""
+  },
+  "design/Photos/20260724_9/photo_5411108204382459458_y.jpg": {
+    "mtime": 1784873131.5420187,
+    "ast_hash": "452bed169afdf0d7a431131df0f3827b",
     "semantic_hash": ""
   }
 }
