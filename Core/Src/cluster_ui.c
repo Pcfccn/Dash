@@ -68,7 +68,7 @@ LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero 
 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
-    lv_obj_t *page[4];
+    lv_obj_t *page[3];
 
     /* full-screen alert border overlay (red = critical, orange = reverse) */
     lv_obj_t *border;
@@ -86,10 +86,6 @@ static struct {
     lv_obj_t *dm_val[4], *dm_bar[4], *dm_dot[4];   /* cool oil atf egt */
     lv_obj_t *boost_val;
 
-    /* DPF */
-    lv_obj_t *soot_arc, *soot_val, *regen_title, *regen_hint;
-    lv_obj_t *mc_val[4];            /* egt dp since egr */
-
     /* DIAG */
     lv_obj_t *mil_text, *dtc_msg, *dtc_ring, *dtc_ic;
     lv_obj_t *st_val[4];            /* batt iat load rail */
@@ -99,20 +95,15 @@ static struct {
     lv_obj_t *sn_stat, *sn_rows, *sn_ana;
 } ui;
 
-/* SNIFF is a workbench page, not part of the design: it only exists while the
- * remaining signals (selector range, soot, DPF dP, since-regen) have no known
- * identifier. It sits last so the three real pages keep their order. */
-#define PAGE_SNIFF  3
-#define PAGE_COUNT  4
+/* SNIFF is a workbench page for reverse-engineering unknown CAN IDs.
+ * It sits last so DRIVE and DIAG keep their natural order. */
+#define PAGE_SNIFF  2
+#define PAGE_COUNT  3
 
 static uint8_t s_page = 0;
 static volatile bool s_dirty = true;
 
-/* DRIVE grid: coolant, oil temp, ATF temp, oil pressure. EGT is not duplicated
- * here — it lives on the DPF page. Oil pressure is the driver-relevant health
- * number, so it takes the 4th tile. */
 static const metric_key_t DRIVE_M[4] = { M_COOL, M_OIL, M_ATF, M_OILP };
-static const metric_key_t MINI_M[4]  = { M_EGT, M_DPF_DP, M_SINCE_REGEN, M_EGR_T };
 static const metric_key_t STAT_M[4]  = { M_BATTERY, M_IAT, M_LOAD, M_RAIL };
 
 /* ------------------------------------------------------------------ helpers */
@@ -438,76 +429,10 @@ static void build_drive(void)
     mk_pager(pg, 0);
 }
 
-/* --------------------------------------------------------------- page: DPF */
-static void build_dpf(void)
-{
-    lv_obj_t *pg = ui.page[1];
-
-    mk_eyebrow(pg, "DPF");
-
-    /* hero: soot ring + regeneration summary */
-    lv_obj_t *hero = lv_obj_create(pg);
-    lv_obj_set_pos(hero, 0, 28);
-    lv_obj_set_size(hero, 320, 176);
-    plain(hero);
-    lv_obj_set_style_border_color(hero, C_LINE, 0);
-    lv_obj_set_style_border_width(hero, 1, 0);
-    lv_obj_set_style_border_side(hero, LV_BORDER_SIDE_BOTTOM, 0);
-
-    ui.soot_arc = lv_arc_create(hero);
-    lv_obj_set_size(ui.soot_arc, 128, 128);
-    lv_obj_set_pos(ui.soot_arc, 12, 22);
-    lv_arc_set_rotation(ui.soot_arc, 270);
-    lv_arc_set_bg_angles(ui.soot_arc, 0, 360);
-    lv_arc_set_range(ui.soot_arc, 0, 100);
-    lv_arc_set_value(ui.soot_arc, 0);
-    lv_obj_set_style_arc_width(ui.soot_arc, 12, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(ui.soot_arc, C_TRACK, LV_PART_MAIN);
-    lv_obj_set_style_arc_width(ui.soot_arc, 12, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(ui.soot_arc, C_OK, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(ui.soot_arc, LV_OPA_TRANSP, LV_PART_KNOB);
-    lv_obj_set_style_pad_all(ui.soot_arc, 0, LV_PART_KNOB);
-    lv_obj_clear_flag(ui.soot_arc, LV_OBJ_FLAG_CLICKABLE);
-
-    ui.soot_val = mk_value(ui.soot_arc, F48, C_TEXT, "%", F14);
-    lv_obj_align(lv_obj_get_parent(ui.soot_val), LV_ALIGN_CENTER, 0, -6);
-    lv_obj_t *sl = mk_label(ui.soot_arc, "SOOT", F12, C_MUTED);
-    lv_obj_align(sl, LV_ALIGN_CENTER, 0, 28);
-
-    lv_obj_t *ml = mk_label(hero, "REGENERATION", F12, C_MUTED);
-    lv_obj_set_pos(ml, 150, 34);
-    ui.regen_title = mk_label(hero, "Inactive", F20, C_TEXT);
-    lv_obj_set_pos(ui.regen_title, 150, 52);
-    ui.regen_hint = mk_label(hero, "No regeneration\nrequest from ECM.", F14, C_LABEL);
-    lv_obj_set_pos(ui.regen_hint, 150, 84);
-    mk_tick(hero, 150, 134, 13, 3, C_WARN);
-    lv_obj_t *tn1 = mk_label(hero, "70% warning", F12, C_MUTED);
-    lv_obj_set_pos(tn1, 168, 128);
-    mk_tick(hero, 150, 152, 13, 3, C_CRIT);
-    lv_obj_t *tn2 = mk_label(hero, "85% regen threshold", F12, C_MUTED);
-    lv_obj_set_pos(tn2, 168, 146);
-
-    /* 2x2 mini-cards. "dP" keeps ASCII: the Montserrat subset has no Greek
-     * delta (U+0394) glyph, so "ΔP" from the design would render as a box. */
-    static const char *ML[4] = { "EGT", "dP DPF", "SINCE REGEN", "EGR T" DEG };
-    static const char *MU[4] = { DEG "C", "kPa", "km", DEG "C" };
-    const int mx[4] = { 10, 165, 10, 165 };
-    const int my[4] = { 210, 210, 320, 320 };   /* taller cards fill the lower area */
-    for (int i = 0; i < 4; i++) {
-        lv_obj_t *c = mk_card(pg, mx[i], my[i], 145, 100);
-        lv_obj_t *nm = mk_label(c, ML[i], F12, C_LABEL);
-        lv_obj_set_pos(nm, 0, 0);
-        ui.mc_val[i] = mk_value(c, F28, C_TEXT, MU[i], F14);
-        lv_obj_set_pos(lv_obj_get_parent(ui.mc_val[i]), 0, 20);
-    }
-
-    mk_pager(pg, 1);
-}
-
 /* -------------------------------------------------------------- page: DIAG */
 static void build_diag(void)
 {
-    lv_obj_t *pg = ui.page[2];
+    lv_obj_t *pg = ui.page[1];
 
     mk_eyebrow(pg, "DIAG");
 
@@ -569,7 +494,7 @@ static void build_diag(void)
     lv_obj_set_pos(ui.did_dbg, 10, 388);
     lv_obj_set_style_text_line_space(ui.did_dbg, 4, 0);
 
-    mk_pager(pg, 2);
+    mk_pager(pg, 1);
 }
 
 /* ---------------------------------------------------------------- SNIFF page */
@@ -659,7 +584,6 @@ void cluster_ui_build(void)
         lv_obj_clear_flag(ui.page[i], LV_OBJ_FLAG_SCROLLABLE);
     }
     build_drive();
-    build_dpf();
     build_diag();
     build_sniff();
     build_strip(scr);
@@ -798,25 +722,6 @@ void cluster_ui_refresh(void)
         set_metric(ui.dm_val[i], ui.dm_bar[i], ui.dm_dot[i], DRIVE_M[i], &d, live);
     set_metric(ui.boost_val, NULL, NULL, M_BOOST, &d, live);
     /* MIL and CAN state now live only in the rail (see alert strip below). */
-
-    /* ----- DPF ----- */
-    set_metric(ui.soot_val, NULL, NULL, M_SOOT, &d, live);
-    {
-        bool ok = live && has_value(d.soot);
-        int sv = ok ? pct_of(M_SOOT, d.soot) : 0;
-        lv_arc_set_value(ui.soot_arc, sv);
-        metric_state_t ss = ok ? metric_state(M_SOOT, d.soot) : ST_OK;
-        lv_obj_set_style_arc_color(ui.soot_arc, ok ? state_color(ss) : C_FAINT, LV_PART_INDICATOR);
-    }
-    for (int i = 0; i < 4; i++)
-        set_metric(ui.mc_val[i], NULL, NULL, MINI_M[i], &d, live);
-    {   /* regeneration status from DID 0x20F6 */
-        bool rg = live && d.regen_active;
-        lv_label_set_text(ui.regen_title, rg ? "Active" : "Inactive");
-        lv_obj_set_style_text_color(ui.regen_title, rg ? C_WARN : C_TEXT, 0);
-        lv_label_set_text(ui.regen_hint, rg ? "Regenerating —\ndo not switch off."
-                                            : "No regeneration\nrequest from ECM.");
-    }
 
     /* ----- DIAG ----- */
     lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");
