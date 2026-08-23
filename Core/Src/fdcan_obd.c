@@ -147,7 +147,9 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
         uint8_t B = (i + 1 < n) ? p[i + 1] : 0;
         uint8_t C = (i + 2 < n) ? p[i + 2] : 0;
         switch (pid) {
-            case 0x0D: set_f(&g_obd.speed,   A);                        i += 1; break;
+            /* PID 0x0D is A km/h raw, but this ECM reads ~12% optimistic vs GPS
+             * (60 GPS = 67 on screen, 2026-08-23 run) — scale to match GPS.     */
+            case 0x0D: set_f(&g_obd.speed,   A * (60.0f / 67.0f));      i += 1; break;
             case 0x0C: set_f(&g_obd.rpm,     ((A * 256) + B) / 4.0f);   i += 2; break;
             case 0x05: set_f(&g_obd.cool,    A - 40);                   i += 1; break;
             case 0x5C: set_f(&g_obd.oil,     A - 40);                   i += 1; break;
@@ -278,32 +280,30 @@ void obd_rx_poll(void) {
             continue;
         }
 
-        /* 0x1BA oil-pressure broadcast candidate #1 (PROVISIONAL — see obd_init).
-         * Byte 3 range 0x06..0xF6 observed in SNIFF ANALOG 2026-07-23; treating
-         * it as kPa directly (/100 → bar) gave 2.0-2.5 bar at cold idle. But the
-         * 2026-07-24 run showed it does NOT rise with RPM (1.5 bar at 2550 rpm),
-         * so it is under re-test against candidate #2 (0x0C9). Raw byte is kept
-         * for the DIAG side-by-side; it still feeds oil_press / the OIL P tile
-         * until the correct source is confirmed. */
+        /* 0x1BA oil-pressure broadcast candidate #1 — REJECTED (2026-08-23 run).
+         * Byte 3 (/100 → bar) does NOT track RPM: it stayed 0.1-0.4 bar at warm
+         * idle and 0.2 bar at 1599 rpm / 71 km/h under way, where real oil pressure
+         * would be 3-5 bar. No longer fed to oil_press; raw byte still captured for
+         * the DIAG side-by-side until candidate #2 is confirmed and this is removed. */
         if (rh.Identifier == CAN_ID_OILP_BCAST) {
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             g_obd.oilp_1ba_raw = d[3];
-            float bar = (float)d[3] / 100.0f;
-            if (bar > 0.05f)                    /* ignore sensor-at-rest noise     */
-                set_f(&g_obd.oil_press, bar);
-            else
-                set_f(&g_obd.oil_press, 0.0f);  /* KOEO / engine off               */
             continue;
         }
 
-        /* 0x0C9 oil-pressure broadcast candidate #2 (TEST SCAFFOLD — see obd_init
-         * / CAN_ID_OILP_CAND2). Byte 2 spanned 0x27..0xFF on SNIFF; captured raw
-         * and shown next to RPM on DIAG. Not fed to oil_press until confirmed. */
+        /* 0x0C9 oil-pressure broadcast candidate #2 (UNDER TEST — see obd_init /
+         * CAN_ID_OILP_CAND2). Byte 2 spanned 0x27..0xFF on SNIFF; /36 → bar maps
+         * that to ~1.1-7.1 bar, a plausible oil-pressure range (candidate #1's
+         * range was too low). Now feeds the OIL P tile so the next drive live-tests
+         * whether it rises with RPM and lags on decay; raw byte also on DIAG.
+         * Formula still provisional — confirm/refit against a known warm-idle bar. */
         if (rh.Identifier == CAN_ID_OILP_CAND2) {
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             g_obd.oilp_0c9_raw = d[2];
+            float bar = (float)d[2] / 36.0f;
+            set_f(&g_obd.oil_press, bar);
             continue;
         }
 
@@ -425,17 +425,16 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *
  * Three priority bands share a single tick counter:
  *
- *   FAST  (default, ~2/3 of ticks): rpm + MAP (fastA) on EVERY fast tick. These
- *         are the two values whose lag is actually felt — RPM on the tach, and
- *         MAP because boost is derived from it. Pairing them (one 6-byte
- *         single-frame request) keeps both snappy. Speed moves to MEDIUM: on a
- *         no-load bench it is 0, and on the road it changes slowly enough that
- *         ~0.5 s is fine. RPM lands every ~40 ms nominal (~500 ms worst case
- *         with the display blocking the loop).
+ *   FAST  (default, ~2/3 of ticks): rpm on EVERY fast tick, with MAP and speed
+ *         alternating as the 2nd PID (rpm+MAP, then rpm+speed). RPM, MAP (boost)
+ *         and speed are the three whose lag is felt; the payload budget is only
+ *         7 bytes so rpm+MAP+speed cannot share one single-frame request, hence
+ *         the alternation — RPM every fast tick, MAP and speed each every other.
+ *         Speed was on MEDIUM before but lagged ~10 s worst-case behind the
+ *         blocking flush (2026-08-23 run); on FAST it lands sub-second.
  *
  *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, temps, MIL, DTC, and
- *         load+speed+baro (fastB). Baro is ambient and barely moves, so pairing
- *         it here with MAP-on-FAST still gives a responsive boost = MAP-baro.
+ *         load+baro (fastB). Baro is ambient and barely moves.
  *
  *   SLOW  (every SLOW_DIV ticks): oil-temp DID (0x1154) + EGT PID (0x78), one
  *         per slow tick. (The DPF/soot/EGR probes were removed — this ECM never
@@ -447,8 +446,9 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
 void obd_poll_tick(void) {
     static uint32_t tick = 0;
 
-    static const uint8_t fastA[] = { 0x0C, 0x0B };        /* rpm(2)+MAP(1)    = 6 payload */
-    static const uint8_t fastB[] = { 0x04, 0x0D, 0x33 };  /* load+speed+baro  = 7 payload */
+    static const uint8_t fastRM[] = { 0x0C, 0x0B };       /* rpm(2)+MAP(1)    = 6 payload */
+    static const uint8_t fastRS[] = { 0x0C, 0x0D };       /* rpm(2)+speed(1)  = 6 payload */
+    static const uint8_t fastB[] = { 0x04, 0x33 };        /* load+baro        = 5 payload */
     static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };  /* cool+oil+iat    <= 7 */
     static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 6 */
     static const uint8_t mil1[]  = { 0x01 };
@@ -495,15 +495,18 @@ void obd_poll_tick(void) {
             case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
             case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
             case 5: req_mode03();                            break; /* DTC list         */
-            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, speed, baro*/
+            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
             /* oil pressure is NOT polled: 0x115C DID returns NRC 22/31 on this
              * E98; it arrives as a passive CAN broadcast (see obd_rx_poll). */
         }
         med_idx++;
     } else {
-        /* fast: rpm+speed every fast tick — RPM has the band to itself so it
-         * updates as often as possible (see the scheduler comment above). */
-        req_mode01(fastA, sizeof fastA);
+        /* fast band: RPM every tick, with MAP and SPEED alternating as the 2nd
+         * PID so both stay sub-second even when the display flush stalls the loop.
+         * Each request is a single ISO-TP frame (rpm + one PID = 6 payload). */
+        static uint8_t fast_tog = 0;
+        if (fast_tog++ & 1u) req_mode01(fastRS, sizeof fastRS);  /* rpm + speed */
+        else                 req_mode01(fastRM, sizeof fastRM);  /* rpm + MAP   */
     }
 }
 
