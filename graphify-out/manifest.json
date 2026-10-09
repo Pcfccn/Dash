@@ -125,13 +125,13 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1791550596.5185049,
-    "ast_hash": "e24a11872db4de20661c4a76ff013e23",
+    "mtime": 1791551795.3150373,
+    "ast_hash": "2bc9d6f56a8b2736688e3750996a1445",
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
-    "mtime": 1791550617.9967618,
-    "ast_hash": "603b6bbc44c40bcc9d25a93607ee55f7",
+    "mtime": 1791551797.2369406,
+    "ast_hash": "7b2f68dffa04b0ad4dd01fb247b2b3b1",
     "semantic_hash": ""
   },
   "Core/Src/spi.c": {
@@ -175,8 +175,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1791551020.7546215,
-    "ast_hash": "0c9d50eb5c885499cb71688101886ea6",
+    "mtime": 1791551914.29497,
+    "ast_hash": "0053893e5662091fe0165d313d90a2f1",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -685,8 +685,8 @@
     "semantic_hash": ""
   },
   "docs/REVIEW.md": {
-    "mtime": 1791550998.4639857,
-    "ast_hash": "90ffa6fccc57b8c8f33189e10b9c5fdd",
+    "mtime": 1791551914.2937317,
+    "ast_hash": "446564bdd6286400f1d07cdaeacf3aef",
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
