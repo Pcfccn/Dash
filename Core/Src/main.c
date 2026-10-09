@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "fault.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -84,7 +84,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  /* As early as the HAL tick runs (HAL_Init started the TIM6 timebase): latch
+   * the reset cause, then start the watchdog with its long boot timeout, so a
+   * hang in SystemClock_Config (its VOSRDY / PLL waits), peripheral init, RTOS
+   * start or the display bring-up also ends in a reset. The IWDG runs from the
+   * LSI, independent of the clock tree being reconfigured. AppMain_Init
+   * switches it to the run timeout. */
+  fault_init();
+  fault_wdg_start_boot();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -246,6 +253,10 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+  /* Recorded for the next boot. Once AppMain_Init has started the IWDG this
+   * stop ends in a watchdog reset; before that (clock/peripheral init) it
+   * still hangs, as there is nothing to show a fault on yet. */
+  fault_record(FAULT_ERROR_HANDLER);
   __disable_irq();
   while (1)
   {
