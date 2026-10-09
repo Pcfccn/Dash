@@ -61,15 +61,21 @@ static void heartbeat_led_init(void)
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET); /* on */
 }
 
-/* A press latched by the PC13 EXTI edge. The superloop samples the key once
+/* Presses counted by the PC13 EXTI edge. The superloop samples the key once
  * per iteration and an iteration can block ~0.4 s in a full-screen flush, so a
  * tap that started and ended inside one iteration was never seen at all. A
- * rising edge after KEY_DEBOUNCE_MS of quiet latches a press; the closer edges
- * of contact bounce (release bounce included) only restart the quiet window,
- * so they cannot latch a phantom press. */
-static volatile uint8_t  s_key_latched;
-static volatile uint32_t s_key_press_t;   /* tick of the latched press          */
+ * rising edge after KEY_DEBOUNCE_MS of quiet counts as a press; the closer
+ * edges of contact bounce (release bounce included) only restart the quiet
+ * window, so they cannot count a phantom press. The ISR only ever increments
+ * s_key_presses and the loop only ever advances its own copy (s_key_seen), so
+ * neither side can overwrite the other's update, and several taps inside one
+ * iteration stay several taps. */
+static volatile uint8_t  s_key_presses;   /* free-running press count (ISR)     */
+static volatile uint32_t s_key_press_t;   /* tick of the latest counted press   */
 static volatile uint32_t s_key_edge_t;    /* tick of the last edge of any kind  */
+static uint8_t           s_key_seen;      /* presses already turned into taps   */
+
+#define KEY_MAX_BURST 4u                  /* cap on taps replayed in one go     */
 
 void EXTI15_10_IRQHandler(void)
 {
@@ -84,7 +90,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     s_key_edge_t = now;
     if (quiet && HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET) {
         s_key_press_t = now;
-        s_key_latched = 1;
+        s_key_presses++;
     }
 }
 
@@ -170,26 +176,32 @@ void AppMain_Run(void)
     static uint32_t key_last_edge = 0;   /* tick of the last accepted edge (debounce) */
     uint8_t key_now = (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET);
 
-    /* A whole tap between two samples: the level never looked pressed, but
-     * the EXTI latched the press. Wait out the debounce window first, so a
-     * sample that happened to land on press bounce is not taken as a tap. */
-    if (s_key_latched && !key_now && !key_prev &&
-        (t - s_key_press_t) >= KEY_DEBOUNCE_MS) {
-        s_key_latched = 0;
-        key_tap();
+    /* Presses the EXTI counted that this loop has not handled yet. */
+    uint8_t presses = s_key_presses;
+    uint8_t unseen  = (uint8_t)(presses - s_key_seen);
+    if (unseen > KEY_MAX_BURST) unseen = KEY_MAX_BURST;
+
+    /* Whole taps between two samples: the level never looked pressed, but the
+     * EXTI counted the presses. Wait out the debounce window after the latest
+     * one, so a sample that landed on press bounce is not taken as a release. */
+    if (unseen && !key_now && !key_prev && (t - s_key_press_t) >= KEY_DEBOUNCE_MS) {
+        while (unseen--) key_tap();
+        s_key_seen = presses;
     }
 
     /* Edge-triggered with time-based debounce. A tap fires on the RELEASE edge
      * regardless of how briefly the key was held. Bounce is rejected by
      * ignoring any edge within KEY_DEBOUNCE_MS of the previous accepted one
      * (key_prev is left unchanged so the edge is re-evaluated once the window
-     * passes). A press seen here is tracked by level, so its latch is dropped. */
+     * passes). A press seen here by level is the newest counted press; any
+     * counted before it were whole taps inside the stalled iteration. */
     if (key_now != key_prev && (t - key_last_edge) >= KEY_DEBOUNCE_MS) {
         key_last_edge = t;
         if (key_now) {                                   /* press begins        */
+            while (unseen-- > 1u) key_tap();
+            s_key_seen = presses;
             key_down_t = t;
             key_hold_done = 0;
-            s_key_latched = 0;
         } else if (!key_hold_done) {                     /* release -> short tap */
             key_tap();
         }
