@@ -28,7 +28,8 @@ typedef struct {
     int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     int8_t  sel_range;       /* selector 0x1F5.b3: -1 unknown, 1 P 2 R 3 N 4 D  */
     bool    mil;
-    uint8_t dtc_count;
+    uint8_t dtc_count;       /* emission-related DTC count from PID 0x01      */
+    bool    mil_valid;       /* PID 0x01 has answered: mil/dtc_count are real */
     bool    can_ok;          /* set false if no valid frame within timeout     */
 
     /* ---- DID discovery aids (DIAG page) --------------------------------

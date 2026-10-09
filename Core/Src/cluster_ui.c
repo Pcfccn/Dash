@@ -467,7 +467,7 @@ static void build_diag(void)
     ui.dtc_ic = mk_label(ui.dtc_ring, LV_SYMBOL_OK, F20, C_OK);
     lv_obj_center(ui.dtc_ic);
 
-    ui.dtc_msg = mk_label(box, "NO STORED CODES", F14, C_TEXT2);
+    ui.dtc_msg = mk_label(box, "NO DATA", F14, C_MUTED);
     lv_obj_set_style_text_align(ui.dtc_msg, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(ui.dtc_msg, LV_ALIGN_BOTTOM_MID, 0, -14);
 
@@ -674,6 +674,7 @@ void cluster_ui_refresh(void)
     d.battery = g_obd.battery; d.atf = g_obd.atf;
     d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
+    d.mil_valid = g_obd.mil_valid;
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
     d.oilp_1ba_raw = g_obd.oilp_1ba_raw; d.oilp_0c9_raw = g_obd.oilp_0c9_raw;
@@ -716,30 +717,40 @@ void cluster_ui_refresh(void)
     set_metric(ui.boost_val, NULL, NULL, M_BOOST, &d, live);
     /* MIL and CAN state now live only in the rail (see alert strip below). */
 
-    /* ----- DIAG ----- */
-    lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");
-    lv_obj_set_style_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2, 0);
-    if (d.dtc_count > 0) {
+    /* ----- DIAG -----
+     * MIL and the DTC count both come from PID 0x01. Until it has answered,
+     * mil=false / dtc_count=0 are just initial values, so show "--" / NO DATA
+     * rather than a reassuring OFF / no-codes. The count is the emission-related
+     * DTC count only (the mode-03 list is not decoded), hence the wording. */
+    bool mil_ok = live && d.mil_valid;
+    if (!mil_ok) {
+        lv_label_set_text(ui.mil_text, "--");
+        lv_obj_set_style_text_color(ui.mil_text, C_MUTED, 0);
+    } else {
+        lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");
+        lv_obj_set_style_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2, 0);
+    }
+    if (!mil_ok) {
+        lv_label_set_text(ui.dtc_msg, "NO DATA");
+        lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
+        lv_label_set_text(ui.dtc_ic, "-");
+        lv_obj_set_style_text_color(ui.dtc_ic, C_MUTED, 0);
+        lv_obj_set_style_border_color(ui.dtc_ring, C_FAINT, 0);
+    } else if (d.dtc_count > 0) {
         char mb[40];
-        lv_snprintf(mb, sizeof mb, "%u STORED CODE%s",
+        lv_snprintf(mb, sizeof mb, "%u EMISSION CODE%s",
                     (unsigned)d.dtc_count, d.dtc_count == 1 ? "" : "S");
         lv_label_set_text(ui.dtc_msg, mb);
         lv_obj_set_style_text_color(ui.dtc_msg, C_WARN, 0);
         lv_label_set_text(ui.dtc_ic, "!");
         lv_obj_set_style_text_color(ui.dtc_ic, C_WARN, 0);
         lv_obj_set_style_border_color(ui.dtc_ring, C_WARN, 0);
-    } else if (live) {
-        lv_label_set_text(ui.dtc_msg, "NO STORED CODES");
+    } else {
+        lv_label_set_text(ui.dtc_msg, "NO EMISSION CODES");
         lv_obj_set_style_text_color(ui.dtc_msg, C_OK, 0);
         lv_label_set_text(ui.dtc_ic, LV_SYMBOL_OK);
         lv_obj_set_style_text_color(ui.dtc_ic, C_OK, 0);
         lv_obj_set_style_border_color(ui.dtc_ring, C_OK, 0);
-    } else {
-        lv_label_set_text(ui.dtc_msg, "NO DATA");
-        lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
-        lv_label_set_text(ui.dtc_ic, "-");
-        lv_obj_set_style_text_color(ui.dtc_ic, C_MUTED, 0);
-        lv_obj_set_style_border_color(ui.dtc_ring, C_FAINT, 0);
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
@@ -833,13 +844,13 @@ void cluster_ui_refresh(void)
      * that reads 0 because it is unsupported must not raise CHECK either. */
     metric_state_t ts[8];
     #define TAG_ST(k, v) ((live && has_value(v)) ? metric_state((k), (v)) : ST_OK)
-    ts[0] = d.mil ? ST_CRIT : ST_OK;                        /* MIL */
+    ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
     ts[1] = TAG_ST(M_COOL, d.cool);                         /* CLT */
     ts[2] = TAG_ST(M_OIL, d.oil);                           /* OIL */
     ts[3] = TAG_ST(M_ATF, d.atf);                           /* ATF */
     ts[4] = TAG_ST(M_EGT, d.egt);                           /* EGT */
     ts[5] = TAG_ST(M_BATTERY, d.battery);                   /* BAT */
-    ts[6] = d.dtc_count > 0 ? ST_WARN : ST_OK;              /* DTC */
+    ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
     ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
     #undef TAG_ST
 

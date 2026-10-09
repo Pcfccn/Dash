@@ -191,7 +191,8 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x78: set_f(&g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
             case 0x42: set_f(&g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
-                       g_obd.dtc_count = v[0] & 0x7F; obd_on_update();     break;
+                       g_obd.dtc_count = v[0] & 0x7F;
+                       g_obd.mil_valid = true; obd_on_update();            break;
             default:                                                       break;
         }
     }
@@ -586,7 +587,8 @@ void obd_demo_tick(void) {
     g_obd.oil = 98;     g_obd.egt = 421;   g_obd.boost = 1.4f;
     g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 580;  g_obd.battery = 14.1f;
     g_obd.atf = 82;     g_obd.oil_press = 3.6f;
-    g_obd.mil = false;  g_obd.dtc_count = 0;  g_obd.can_ok = true;
+    g_obd.mil = false;  g_obd.dtc_count = 0;  g_obd.mil_valid = true;
+    g_obd.can_ok = true;
 
     if (s < 120u) {                 /* 0-12 s: DRIVE cruise, all nominal green   */
         g_obd.sel_range = 4; g_obd.gear = 6;
