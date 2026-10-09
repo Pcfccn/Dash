@@ -10,8 +10,10 @@
 
 /* ---- Bench self-test -------------------------------------------------------
  * 0 = off. With the key held for FAULT_TEST_HOLD_MS:
- *   1 = the superloop hangs  -> expect a reset after ~3 s, DIAG "LAST RESET: WATCHDOG"
- *   2 = MPU-blocked read     -> expect an immediate reset,  DIAG "LAST RESET: HARDFAULT"
+ *   1 = the superloop hangs  -> the IWDG resets after ~3 s; DIAG "LAST RESET: WATCHDOG"
+ *   2 = MPU-blocked read     -> HardFault records the code and stops, then the
+ *                               IWDG resets after ~3 s; DIAG "LAST RESET: HARDFAULT"
+ * (Times are nominal: the LSI behind the IWDG is untrimmed.)
  * SET TO 0 BEFORE USING IN THE CAR.                                          */
 #define FAULT_TEST         0
 #define FAULT_TEST_HOLD_MS 10000u
