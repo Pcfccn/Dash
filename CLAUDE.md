@@ -26,6 +26,8 @@ export PATH="/c/ST/STM32CubeCLT_1.22.0/GNU-tools-for-STM32/bin:/c/ST/STM32CubeCL
 cd Debug && make all -j8
 ```
 
+Without CubeIDE (fresh clone, no `Debug/`), `python tools/build.py` builds the same Debug configuration with a plain Arm GNU Toolchain 13.3 (found via `--toolchain`, `$ARM_GCC_DIR`, PATH or `~/tools/arm-gnu-toolchain-*/bin`) into `build/`. It compiles from `build/` with `../` paths exactly like CubeIDE, so image sizes are comparable (baseline `f9635ab`: text 593960 vs CubeIDE 593728 — ST's vs Arm's GCC build). It picks up new `Core/Src` files automatically. Its flags are copied from `.cproject`: keep them in sync if the CubeIDE settings change.
+
 Two gotchas with the generated makefile:
 - **Use `make all`, never a bare `make`.** The `Debug/makefile` `-include`s the per-folder `subdir.mk` files (which define `clean-*` targets) before its own `all`, so the default goal resolves to *clean* — a bare `make` wipes every `.o`.
 - **A new source file added to `Core/Src/` is invisible to the raw CLI build** until it's added to `Debug/Core/Src/subdir.mk` (the C_SRCS/OBJS/C_DEPS lists) **and** `Debug/objects.list` — or you let CubeIDE regenerate them (it auto-discovers new files on Build/Refresh). `Debug/` is git-ignored and CubeIDE-owned; hand-editing it is only for a one-off CLI build.
@@ -40,7 +42,9 @@ No test framework is present — this is bare-metal firmware with no host-side u
 
 **Entry point / task flow:** `freertos.c`'s `StartDefaultTask` calls `AppMain_Init()` once, then loops `AppMain_Run()` + `osDelay(5)` forever. Almost all application logic is reached from `Core/Src/app_main.c`, not from `main.c` (which is CubeMX-generated boilerplate + HAL/clock init only).
 
-**`AppMain_Init()`** (`app_main.c`) brings up, in order: the heartbeat LED (PE3), the KEY button (PC13), the main display (`lv_port_disp_init`), the cluster UI + OBD poller (`cluster_app_init`), and the secondary status display (`st7735_status_init`) — then starts the backlight PWM.
+**`AppMain_Init()`** (`app_main.c`) brings up, in order: the reset-cause latch (`fault_init`), the heartbeat LED (PE3), the KEY button (PC13), the main display (`lv_port_disp_init`), the cluster UI + OBD poller (`cluster_app_init`), and the secondary status display (`st7735_status_init`) — then starts the backlight PWM and, last, the IWDG.
+
+**`fault.c`/`.h`**: IWDG1 (3 s), started at the end of `AppMain_Init` and fed only at the end of a complete `AppMain_Run`. HardFault, FreeRTOS stack overflow (`configCHECK_FOR_STACK_OVERFLOW 2`) and `Error_Handler` record a code in an unused DTCM word and stop, so the IWDG resets the board instead of freezing the last frame on the panel; DIAG shows `LAST RESET: ...` on the next boot. Anything that legitimately blocks the loop for more than ~3 s will now reset the board — keep that in mind before adding long blocking calls.
 
 **`AppMain_Run()`** (`app_main.c`) is the superloop body: services the heartbeat/backlight-indicator LED, runs the KEY button gesture state machine (short press = next page or +10% backlight depending on mode; 3s hold = toggle page/backlight mode), pumps `lv_timer_handler()`, calls `cluster_app_run()`, and refreshes the status screen every 250ms.
 
@@ -64,8 +68,9 @@ Note a grouped mode-01 request drops unsupported PIDs from the reply instead of 
 
 **`fdcan_obd.c`/`.h`** implements the actual OBD-II protocol over FDCAN1 (H743 uses FDCAN, not bxCAN, but this project speaks classic CAN 2.0 frames at 500kbps, not CAN-FD). RX is **polled** from `obd_rx_poll()` in the main loop rather than interrupt-driven — there's no FDCAN NVIC handler wired. Live decoded values land in the global `g_obd` (`obd_data_t`), which both displays read from.
 
-Two conventions in `g_obd` matter and are easy to break:
+Three conventions in the OBD path matter and are easy to break:
 
+- **Every received byte is length-checked before it is decoded.** `obd_rx_poll()` checks the DLC for each broadcast, ISO-TP SF/FF/CF lengths, and validates a whole mode-01 reply (known PIDs, exact fit) before writing anything; mode 01 is only accepted from the ECM and each mode-22 DID only from the module it is requested from. Rejected frames increment the `BAD` counter on DIAG. Never decode a missing byte as 0.
 - **Every float starts as `NaN`, meaning "the bus has never sent this."** The UI renders NaN as `--`. Do not "fix" a metric by defaulting it to 0 — an unsupported PID would then paint a believable lie (0 V battery, 0 °C oil), which is exactly the bug that once made an entirely dead poller look like a working one.
 - **Any timeout reached from the superloop must be counted in poll ticks, not `HAL_GetTick()` milliseconds.** `lv_port_disp`'s flush is a blocking row-by-row `HAL_SPI_Transmit` of the whole panel, so one loop iteration can take hundreds of ms. A wall-clock deadline expires before `obd_rx_poll()` next runs; that silently killed every multi-frame ISO-TP reply while single-frame ones kept working.
 
@@ -85,7 +90,7 @@ Skip this for trivial edits (renaming a constant, fixing a typo, adjusting a thr
 
 ## Hardware notes worth knowing before touching related code
 
-- KEY button (PC13) is pulled down and reads **HIGH when pressed** (opposite of many reference designs) — see `key_button_init()` in `app_main.c`.
+- KEY button (PC13) is pulled down and reads **HIGH when pressed** (opposite of many reference designs) — see `key_button_init()` in `app_main.c`. It also raises EXTI15_10 on both edges: the ISR latches presses so a tap that starts and ends inside one (flush-stalled) loop iteration is still counted.
 - The onboard heartbeat LED (PE3, active-low) doubles as a backlight-level blink-code indicator once past init — see the comment block above `heartbeat_led_tick()` for the encoding, and above `AppMain_Init()`/`heartbeat_led_init()` for what "off / solid / blinking" mean during boot diagnosis.
 - The two displays are fully independent SPI buses/GPIO groups (SPI2 for the main ILI9488 via CubeMX, SPI4 for the ST7735 status screen via hand-written HAL init) and must stay that way — `st7735_status.c`'s header comment explains why it intentionally avoids the `.ioc`.
 - ILI9488 has no 16bpp SPI mode; `lv_port_disp.c` expands LVGL's RGB565 buffer to 3-byte RGB666 per row (`row_scratch`) on every flush.
