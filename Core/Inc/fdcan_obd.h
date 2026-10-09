@@ -23,7 +23,8 @@
  * the bus actually produced. */
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
-    float   atf, oil_press;
+    float   atf;
+    float   oil_press;       /* no confirmed source yet: stays NaN on the car  */
     int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     int8_t  sel_range;       /* selector 0x1F5.b3: -1 unknown, 1 P 2 R 3 N 4 D  */
     bool    mil;
@@ -43,8 +44,8 @@ typedef struct {
      * Oil pressure has no confirmed source. Two broadcast bytes are captured
      * raw and shown next to live RPM on DIAG so a throttle blip reveals which
      * (if either) tracks engine speed. See CAN_ID_OILP_BCAST / _CAND2. */
-    uint8_t oilp_1ba_raw;    /* 0x1BA byte 3 (currently feeds oil_press)       */
-    uint8_t oilp_0c9_raw;    /* 0x0C9 byte 2 (second candidate under test)     */
+    uint8_t oilp_1ba_raw;    /* 0x1BA byte 3 (candidate #1, rejected)          */
+    uint8_t oilp_0c9_raw;    /* 0x0C9 byte 2 (candidate #2, unverified)        */
 } obd_data_t;
 
 extern volatile obd_data_t g_obd;
@@ -58,10 +59,11 @@ void obd_demo_tick(void);                     /* OBD_DEMO: inject test values   
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);
 
-/* CAN controller health, for the SNIFF page. Any pointer may be NULL.
+/* CAN controller health, for the SNIFF and DIAG pages. Any pointer may be NULL.
  * bus_off / err_passive are the current fault state; lost is a running count of
- * RX FIFO0 overflow events; recover counts bus-off recovery attempts. */
+ * RX FIFO0 overflow events; recover counts bus-off recovery attempts; bad counts
+ * received frames dropped as truncated or malformed. */
 void obd_can_health(bool *bus_off, bool *err_passive,
-                    uint16_t *lost, uint16_t *recover);
+                    uint16_t *lost, uint16_t *recover, uint16_t *bad);
 
 #endif /* FDCAN_OBD_H */

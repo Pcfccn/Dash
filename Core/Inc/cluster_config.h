@@ -45,17 +45,15 @@
  * byte 2 carries the manual/commanded gear. See docs/sniff-selector.md. */
 #define CAN_ID_SELECTOR        0x1F5u
 
-/* Provisional oil-pressure broadcast (byte 3 → /100 = bar), identified with the
- * SNIFF ANALOG page 2026-07-23; still needs a throttle-blip confirmation. Used
- * by both the RX decode and the acceptance filter in fdcan_obd.c. */
+/* Oil-pressure candidate #1 (byte 3), found with SNIFF ANALOG 2026-07-23 and
+ * REJECTED on 2026-08-23: it does not track RPM. Raw byte kept on DIAG only. */
 #define CAN_ID_OILP_BCAST      0x1BAu
 
-/* Second oil-pressure candidate under test (2026-07-24): 0x0C9 byte 2 showed a
- * wide range (0x27..0xFF) on the SNIFF ANALOG page, plausibly A/36 → bar. Both
- * 0x1BA[3] and 0x0C9[2] are captured raw and shown alongside live RPM on DIAG
- * so a throttle-blip photo reveals which one actually tracks engine speed.
- * TEST SCAFFOLD — once the real source is known, drop the loser (its filter in
- * obd_init + RX branch) to stop the frame loading the shared RX FIFO. */
+/* Oil-pressure candidate #2 (byte 2, range 0x27..0xFF on SNIFF ANALOG), still
+ * UNVERIFIED. Both candidates are captured raw and shown next to live RPM on
+ * DIAG; neither feeds the OIL P tile. TEST SCAFFOLD — once the real source is
+ * known, drop the loser (its filter in obd_init + RX branch) so the frame stops
+ * loading the shared RX FIFO. */
 #define CAN_ID_OILP_CAND2      0x0C9u
 
 /* OBD service (mode) bytes */

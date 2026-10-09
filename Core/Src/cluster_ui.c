@@ -484,10 +484,9 @@ static void build_diag(void)
         lv_obj_set_pos(lv_obj_get_parent(ui.st_val[i]), 0, 20);
     }
 
-    /* Enhanced-DID probe readout (two lines), in the gap above the pager. A
-     * workbench aid for pinning down the GM DIDs, not part of the design: line
-     * 1 = gear raw byte, oil-pressure raw/decoded, last NRC; line 2 = raw bytes
-     * of the last diesel PID probe that answered. */
+    /* Workbench readout (two lines) in the gap above the pager, not part of
+     * the design: line 1 = last NRC; line 2 = RPM next to the raw oil-pressure
+     * candidate bytes. Filled in cluster_ui_refresh(). */
     ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
     lv_obj_set_pos(ui.did_dbg, 10, 388);
     lv_obj_set_style_text_line_space(ui.did_dbg, 4, 0);
@@ -745,13 +744,14 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
-    {   /* Oil-pressure candidate readout (TEST SCAFFOLD, 2026-07-24).
-         * Line 1: the currently-decoded oil_press (from 0x1BA) + last NRC.
-         * Line 2: live RPM next to the two raw candidate bytes, so ONE photo of
-         *         this page during a throttle blip shows which byte tracks
-         *         engine speed. Oil pressure should rise with RPM and decay
-         *         slowly; an RPM-derived echo tracks instantly in both
-         *         directions. Whichever byte follows RPM is the real source. */
+    {   /* Workbench readout. Line 1: last negative response, RX FIFO overflow
+         *         events and frames dropped as malformed — whether the normal
+         *         DRIVE/DIAG traffic already overruns the 16-deep FIFO while a
+         *         flush blocks the loop is an open question worth a photo.
+         * Line 2: live RPM next to the two raw oil-pressure candidate bytes, so
+         *         ONE photo during a throttle blip shows which byte tracks
+         *         engine speed (docs/oil-pressure-test.md). Both are UNVERIFIED:
+         *         shown raw only, never decoded into the OIL P tile or an alarm. */
         char db[96];
         char nrc[16];
         if (d.last_nrc_sid)
@@ -759,13 +759,10 @@ void cluster_ui_refresh(void)
                         (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
         else
             lv_snprintf(nrc, sizeof nrc, "--");
-        int o;
-        if (has_value(d.oil_press))
-            o = lv_snprintf(db, sizeof db, "OILP %d.%02u bar  NRC %s\n",
-                            (int)d.oil_press,
-                            (unsigned)((d.oil_press - (int)d.oil_press) * 100), nrc);
-        else
-            o = lv_snprintf(db, sizeof db, "OILP --  NRC %s\n", nrc);
+        uint16_t lost = 0, bad = 0;
+        obd_can_health(NULL, NULL, &lost, NULL, &bad);
+        int o = lv_snprintf(db, sizeof db, "NRC %s  LOST %u  BAD %u\n",
+                            nrc, (unsigned)lost, (unsigned)bad);
 
         int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
         lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
@@ -781,7 +778,7 @@ void cluster_ui_refresh(void)
          * nothing if you cannot see whether frames are still arriving. fps 0 =
          * bus asleep (procedural, not a bug); BOFF/EP/LOST = a real fault. */
         bool boff = false, ep = false; uint16_t lost = 0, rec = 0;
-        obd_can_health(&boff, &ep, &lost, &rec);
+        obd_can_health(&boff, &ep, &lost, &rec, NULL);
         char sb[64];
         lv_snprintf(sb, sizeof sb, "%u fps  IDS %u  %s%s L%u",
                     (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),

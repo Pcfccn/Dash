@@ -1,10 +1,10 @@
 /* ============================================================================
  *  fdcan_obd.c  — read-only OBD-II poller over FDCAN1 (classic CAN, 500 kbps)
  *
- *  Requests go to the ECM (0x7E0) / TCM (0x7E1); responses arrive on
- *  0x7E8 / 0x7E9. Multi-byte responses (mode 03 DTC list, multi-PID) use
- *  ISO-TP, so we answer First Frames with a Flow Control (30 00 00) and
- *  reassemble Consecutive Frames.
+ *  Requests go to the ECM (0x7E0) and the trans controller (0x7E2); responses
+ *  arrive on 0x7E8 / 0x7EA. Multi-byte responses (mode 03 DTC list, EGT) use
+ *  ISO-TP, so we answer our own First Frames with a Flow Control (30 00 00)
+ *  and reassemble Consecutive Frames.
  *
  *  Project note: the vehicle bus is RECEIVED BY POLLING (obd_rx_poll) from the
  *  main loop -- the project has no FDCAN NVIC handler. FDCAN bit timing is set
@@ -35,6 +35,12 @@ static uint8_t  itp_buf[64];
 static uint16_t itp_len, itp_got;
 static uint8_t  itp_next_seq;
 static bool     itp_active;
+static uint32_t itp_src_id;          /* CFs must come from the FF's sender      */
+
+/* Frames dropped because their length / PCI did not add up (truncated or
+ * malformed). Surfaced on DIAG next to the RX FIFO loss count. */
+static volatile uint16_t rx_bad_cnt;
+static void rx_bad(void) { if (rx_bad_cnt < 0xFFFFu) rx_bad_cnt++; }
 
 /* ---- outstanding-request gate -------------------------------------------
  * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
@@ -138,54 +144,79 @@ static void update_boost(void) {
     set_f(&g_obd.boost, bar);
 }
 
-/* Decode a completed mode-01 payload: [0x41][PID][A][B]... (concatenated) */
+/* Data bytes after each mode-01 PID we decode (SAE J1979). Any other PID has
+ * an unknown length, so nothing after it in the same reply can be located. */
+static int8_t mode01_len(uint8_t pid) {
+    switch (pid) {
+        case 0x04: case 0x05: case 0x0B: case 0x0D:
+        case 0x0F: case 0x33: case 0x5C:            return 1;
+        case 0x0C: case 0x23: case 0x42:            return 2;
+        case 0x01:                                  return 4;
+        case 0x78:                                  return 9;
+        default:                                    return -1;
+    }
+}
+
+/* Decode a completed mode-01 payload: [0x41][PID][data]... (concatenated).
+ * The whole reply is validated before anything is written: every PID known and
+ * complete, and together exactly filling the payload. A truncated reply used to
+ * decode its missing bytes as 0 — a believable 0 rpm. An unknown PID (another
+ * tester's request) is skipped silently; a short one counts as malformed. */
 static void decode_mode01(const uint8_t *p, uint16_t n) {
     uint16_t i = 1;                  /* skip 0x41                              */
     while (i < n) {
-        uint8_t pid = p[i++];
-        uint8_t A = (i < n) ? p[i] : 0;
-        uint8_t B = (i + 1 < n) ? p[i + 1] : 0;
-        uint8_t C = (i + 2 < n) ? p[i + 2] : 0;
-        switch (pid) {
+        int8_t len = mode01_len(p[i]);
+        if (len < 0) return;
+        if (i + 1u + (uint16_t)len > n) { rx_bad(); return; }
+        i += 1u + (uint16_t)len;
+    }
+
+    for (i = 1; i < n; i += 1u + (uint16_t)mode01_len(p[i])) {
+        const uint8_t *v = &p[i + 1];
+        switch (p[i]) {
             /* PID 0x0D is A km/h raw, but this ECM reads ~12% optimistic vs GPS
              * (60 GPS = 67 on screen, 2026-08-23 run) — scale to match GPS.     */
-            case 0x0D: set_f(&g_obd.speed,   A * (60.0f / 67.0f));      i += 1; break;
-            case 0x0C: set_f(&g_obd.rpm,     ((A * 256) + B) / 4.0f);   i += 2; break;
-            case 0x05: set_f(&g_obd.cool,    A - 40);                   i += 1; break;
-            case 0x5C: set_f(&g_obd.oil,     A - 40);                   i += 1; break;
-            case 0x0F: set_f(&g_obd.iat,     A - 40);                   i += 1; break;
-            case 0x04: set_f(&g_obd.load,    A * 100.0f / 255.0f);      i += 1; break;
-            case 0x0B: last_map_kpa = (float)A; update_boost();          i += 1; break; /* absolute MAP, kPa */
-            case 0x33: baro_kpa     = (float)A; update_boost();          i += 1; break; /* barometric, kPa   */
-            case 0x23: set_f(&g_obd.rail,    ((A * 256) + B) / 10.0f);         i += 2; break; /* bar */
-            /* Exhaust gas temperature, 9 data bytes: A = supported-sensor bit
-             * mask, then FOUR 2-byte sensors. Sensor 1 is B,C as (x/10)-40.
-             * Decoding A,B as the value (and stepping 2) reads the mask as the
-             * high byte and desynchronises everything after it. */
-            case 0x78: set_f(&g_obd.egt, (((B * 256) + C) / 10.0f) - 40.0f); i += 9; break;
-            case 0x42: set_f(&g_obd.battery, ((A * 256) + B) / 1000.0f);i += 2; break;
-            case 0x01: g_obd.mil = (A & 0x80) != 0;
-                       g_obd.dtc_count = A & 0x7F; obd_on_update();     i += 4; break;
-            default:   i += 2; break; /* unknown: assume 2 data bytes          */
+            case 0x0D: set_f(&g_obd.speed,   v[0] * (60.0f / 67.0f));          break;
+            case 0x0C: set_f(&g_obd.rpm,     ((v[0] * 256) + v[1]) / 4.0f);    break;
+            case 0x05: set_f(&g_obd.cool,    v[0] - 40);                       break;
+            case 0x5C: set_f(&g_obd.oil,     v[0] - 40);                       break;
+            case 0x0F: set_f(&g_obd.iat,     v[0] - 40);                       break;
+            case 0x04: set_f(&g_obd.load,    v[0] * 100.0f / 255.0f);          break;
+            case 0x0B: last_map_kpa = (float)v[0]; update_boost();             break; /* absolute MAP, kPa */
+            case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
+            case 0x23: set_f(&g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
+            /* Exhaust gas temperature, 9 data bytes: v[0] = supported-sensor bit
+             * mask, then FOUR 2-byte sensors. Sensor 1 is v[1],v[2] as (x/10)-40.
+             * Reading the mask as the high byte desynchronises everything. */
+            case 0x78: set_f(&g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
+            case 0x42: set_f(&g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
+            case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
+                       g_obd.dtc_count = v[0] & 0x7F; obd_on_update();     break;
+            default:                                                       break;
         }
     }
 }
 
 /* Decode a mode-22 payload: [0x62][DID_hi][DID_lo][data...]. Scaling for the
  * GM-enhanced DIDs is community-sourced and unverified on this car -- if a value
- * looks wrong, the fix is here (the formula), not the request. */
-static void decode_mode22(const uint8_t *p, uint16_t n) {
-    if (n < 4) return;                          /* need SID + DID + >=1 data     */
+ * looks wrong, the fix is here (the formula), not the request. Each DID is only
+ * accepted from the module it is requested from, so another tester's reply from
+ * a different module cannot land in the wrong field. */
+static void decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
+    if (n < 4) { rx_bad(); return; }            /* need SID + DID + >=1 data     */
     uint16_t did = ((uint16_t)p[1] << 8) | p[2];
     uint8_t  A   = p[3];
     switch (did) {
         case 0x1940:                            /* trans fluid (ATF) temp        */
+            if (resp_id != OBD_RESP_TCM2) break;
             set_f(&g_obd.atf, (float)A - 40.0f);
             break;
         case 0x1154:                            /* engine oil temp (GM enhanced) */
+            if (resp_id != OBD_RESP_ECM) break;
             set_f(&g_obd.oil, (float)A - 40.0f);
             break;
         case 0x199A: {                          /* current gear (raw index in A) */
+            if (resp_id != OBD_RESP_TCM2) break;
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
              * never moves while the selector does) can be told apart from a
              * wrong scaling (byte moves, gear label doesn't match). */
@@ -198,10 +229,13 @@ static void decode_mode22(const uint8_t *p, uint16_t n) {
     }
 }
 
-static void dispatch(const uint8_t *p, uint16_t n) {
+/* Mode 01 is only ever requested from the ECM (0x7E0), so only its replies are
+ * decoded; a TCM answering another tester's functional request with its own
+ * idea of e.g. vehicle speed must not overwrite the ECM's value. */
+static void dispatch(uint32_t resp_id, const uint8_t *p, uint16_t n) {
     if (n == 0) return;
-    if (p[0] == 0x41) decode_mode01(p, n);
-    else if (p[0] == 0x62) decode_mode22(p, n);
+    if (p[0] == 0x41) { if (resp_id == OBD_RESP_ECM) decode_mode01(p, n); }
+    else if (p[0] == 0x62) decode_mode22(resp_id, p, n);
     else if (p[0] == 0x7F && n >= 3) {
         /* Negative response. Silently dropping these is what makes an unknown
          * DID indistinguishable from a dead module: an NRC proves the module
@@ -254,25 +288,39 @@ static void obd_check_health(void) {
 }
 
 void obd_can_health(bool *bus_off, bool *err_passive,
-                    uint16_t *lost, uint16_t *recover) {
+                    uint16_t *lost, uint16_t *recover, uint16_t *bad) {
     if (bus_off)     *bus_off     = busoff_now;
     if (err_passive) *err_passive = errpass_now;
     if (lost)        *lost        = rx_lost_cnt;
     if (recover)     *recover     = busoff_cnt;
+    if (bad)         *bad         = rx_bad_cnt;
 }
 
 /* =============================== RX (polled) ============================= */
 void obd_rx_poll(void) {
     FDCAN_RxHeaderTypeDef rh;
-    uint8_t d[8];
+    /* 64, not 8: HAL_FDCAN_GetRxMessage copies DLCtoBytes[DLC] bytes, and a
+     * classic frame may legally carry DLC 9..15 (still 8 data bytes), which the
+     * HAL would expand to up to 64 bytes and overrun an 8-byte buffer. */
+    uint8_t d[64];
     obd_check_health();
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
+
+        /* In this HAL DataLength is the DLC code, equal to the byte count for
+         * 0..8 (FDCAN_DLC_BYTES_8 == 8); classic DLC 9..15 means 8 bytes. Every
+         * byte read below is checked against dlc. */
+        if (rh.IdType != FDCAN_STANDARD_ID || rh.RxFrameType != FDCAN_DATA_FRAME) {
+            rx_bad();
+            continue;
+        }
+        uint8_t dlc = (rh.DataLength >= FDCAN_DLC_BYTES_8) ? 8u : (uint8_t)rh.DataLength;
 
         /* Selector/PRNDL broadcast: a plain 8-byte frame, not ISO-TP. byte 3 is
          * 01 P / 02 R / 03 N / 04 D (see docs/sniff-selector.md). Decoded here,
          * ahead of the OBD-range gate, and it also keeps can_ok alive. */
         if (rh.Identifier == CAN_ID_SELECTOR) {
+            if (dlc < 4u) { rx_bad(); continue; }
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
@@ -286,24 +334,24 @@ void obd_rx_poll(void) {
          * would be 3-5 bar. No longer fed to oil_press; raw byte still captured for
          * the DIAG side-by-side until candidate #2 is confirmed and this is removed. */
         if (rh.Identifier == CAN_ID_OILP_BCAST) {
+            if (dlc < 4u) { rx_bad(); continue; }
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             g_obd.oilp_1ba_raw = d[3];
             continue;
         }
 
-        /* 0x0C9 oil-pressure broadcast candidate #2 (UNDER TEST — see obd_init /
-         * CAN_ID_OILP_CAND2). Byte 2 spanned 0x27..0xFF on SNIFF; /36 → bar maps
-         * that to ~1.1-7.1 bar, a plausible oil-pressure range (candidate #1's
-         * range was too low). Now feeds the OIL P tile so the next drive live-tests
-         * whether it rises with RPM and lags on decay; raw byte also on DIAG.
-         * Formula still provisional — confirm/refit against a known warm-idle bar. */
+        /* 0x0C9 oil-pressure broadcast candidate #2 — UNVERIFIED. Byte 2 spanned
+         * 0x27..0xFF on SNIFF and A/36 was only a guess, never calibrated. It is
+         * captured raw for the DIAG side-by-side and deliberately does NOT feed
+         * oil_press: a guessed pressure with a red low-pressure state is worse
+         * than "--". Wire a decode back only after it is checked against an
+         * independent gauge (docs/oil-pressure-test.md). */
         if (rh.Identifier == CAN_ID_OILP_CAND2) {
+            if (dlc < 3u) { rx_bad(); continue; }
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             g_obd.oilp_0c9_raw = d[2];
-            float bar = (float)d[2] / 36.0f;
-            set_f(&g_obd.oil_press, bar);
             continue;
         }
 
@@ -311,37 +359,55 @@ void obd_rx_poll(void) {
         if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) {
             /* Everything else only reaches here with the sniffer's wide filter
              * installed; normally the hardware rejects it. */
-            can_sniff_feed((uint16_t)rh.Identifier, d,
-                           (uint8_t)(rh.DataLength > 8u ? 8u : rh.DataLength));
+            can_sniff_feed((uint16_t)rh.Identifier, d, dlc);
             continue;
         }
+        if (dlc < 1u) { rx_bad(); continue; }
         last_rx_ms = HAL_GetTick();
         g_obd.can_ok = true;
 
         uint8_t pci = d[0] >> 4;
         if (pci == 0x0) {                       /* Single Frame                */
+            /* SF_DL is 1..7 on classic CAN and must fit in the received bytes;
+             * an unchecked 0x0F once read 8 bytes past the frame buffer. */
             uint8_t len = d[0] & 0x0F;
+            if (len == 0u || len > 7u || len > dlc - 1u) { rx_bad(); continue; }
             if (reply_is_ours(rh.Identifier)) await_resp_id = 0;  /* satisfied  */
-            dispatch(&d[1], len);               /* decode even if not ours     */
+            dispatch(rh.Identifier, &d[1], len); /* decode even if not ours    */
         } else if (pci == 0x1) {                /* First Frame                 */
             /* Only drive a multi-frame transfer we requested. Another tester's
              * First Frame must not get our Flow Control (see await_resp_id),
              * and must not clobber our reassembly buffer. */
             if (!reply_is_ours(rh.Identifier)) continue;
-            itp_len  = ((d[0] & 0x0F) << 8) | d[1];
+            uint16_t len = (uint16_t)(((d[0] & 0x0Fu) << 8) | d[1]);
+            /* FF_DL below 8 would have been a Single Frame; above the buffer the
+             * transfer could never complete. Reject before sending Flow Control,
+             * so the ECU times the transfer out instead of streaming it to us. */
+            if (dlc < 8u || len < 8u || len > sizeof itp_buf) {
+                rx_bad();
+                itp_active = false;
+                continue;
+            }
+            itp_len  = len;
             itp_got  = 0; itp_next_seq = 1; itp_active = true;
-            for (int i = 0; i < 6 && itp_got < itp_len; i++) itp_buf[itp_got++] = d[2 + i];
+            itp_src_id = rh.Identifier;
+            for (int i = 0; i < 6; i++) itp_buf[itp_got++] = d[2 + i];
             send_flow_control(rh.Identifier);
-        } else if (pci == 0x2 && itp_active) {  /* Consecutive Frame           */
+        } else if (pci == 0x2 && itp_active && rh.Identifier == itp_src_id) {
+            /* Consecutive Frame of our transfer. itp_len <= sizeof itp_buf was
+             * checked on the First Frame, so itp_got < itp_len bounds the copy. */
             if ((d[0] & 0x0F) == itp_next_seq) {
                 itp_next_seq = (itp_next_seq + 1) & 0x0F;
-                for (int i = 0; i < 7 && itp_got < itp_len && itp_got < sizeof(itp_buf); i++)
-                    itp_buf[itp_got++] = d[1 + i];
+                for (uint8_t i = 1; i < dlc && itp_got < itp_len; i++)
+                    itp_buf[itp_got++] = d[i];
                 if (itp_got >= itp_len) {
                     itp_active = false; await_resp_id = 0;
-                    dispatch(itp_buf, itp_len);
+                    dispatch(itp_src_id, itp_buf, itp_len);
                 }
-            } else { itp_active = false; }      /* sequence error -> drop       */
+            } else {                            /* sequence error -> drop       */
+                itp_active = false;
+                rx_bad();
+            }
         }
     }
 }
@@ -376,20 +442,12 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fs.FilterID2    = 0x7FFu;                 /* full mask = exact match         */
     HAL_FDCAN_ConfigFilter(hfd, &fs);
 
-    /* Filter 2: 0x1BA — candidate broadcast frame carrying oil pressure.
-     * Mode-22 DIDs 0x115C and 0x1470 both return NRC 22/31 (requestOutOfRange)
-     * on this E98 with the engine running; the ECM must therefore transmit oil
-     * pressure as a periodic broadcast, which the OEM cluster reads passively.
-     * SNIFF ANALOG on 2026-07-23 showed 0x1BA byte 3 varying 0x06..0xF6 in a
-     * pattern consistent with oil pressure (low KOEO, ~200-250 counts at cold
-     * idle). Decode here is PROVISIONAL — formula and byte index need
-     * confirmation via a warm-up / throttle-blip run with SNIFF active.
-     * Until confirmed the value feeds g_obd.oil_press exactly like a polled
-     * answer and the DRIVE OIL P tile will populate.
-     * If the byte turns out to be the wrong parameter, change CAN_ID_OILP_BCAST
-     * and the formula below, or set OILP_BCAST_ENABLED 0 to disable entirely.
-     * (CAN_ID_OILP_BCAST lives in cluster_config.h — it is also used by the RX
-     * decode in obd_rx_poll, which is compiled before this function.) */
+    /* Filter 2: 0x1BA — oil-pressure candidate #1. Mode-22 DIDs 0x115C and
+     * 0x1470 return NRC 22/31 on this E98, so oil pressure must be a broadcast
+     * the OEM cluster reads passively. Byte 3 was REJECTED on 2026-08-23 (it
+     * does not track RPM); the raw byte is still captured for the DIAG
+     * side-by-side. TEST SCAFFOLD — remove together with filter 3 once a real
+     * source is confirmed. */
     FDCAN_FilterTypeDef fo = {0};
     fo.IdType       = FDCAN_STANDARD_ID;
     fo.FilterIndex  = 2;

@@ -28,11 +28,14 @@ Both candidates are captured passively and printed at the bottom of the **DIAG**
 page, next to live RPM, so a single photo captures the correlation:
 
 ```
-OILP 1.5 bar  NRC --
+NRC --
 RPM 2550  1BA.3=96  0C9.2=A0
 ```
 
 - `1BA.3` and `0C9.2` are the **raw hex bytes** of the two candidate frames.
+- Neither is decoded: the DRIVE **OIL P** tile shows `--` until a source is
+  confirmed against an independent gauge. `0x1BA[3]` was rejected on
+  2026-08-23; `0x0C9[2]` is still unverified.
 - `RPM` is live (OBD keeps polling on DIAG, unlike SNIFF which pauses it).
 
 ## Procedure
