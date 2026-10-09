@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Firmware for a custom instrument cluster replacing the OEM dash in a Holden Colorado RG 2.8 Duramax (E98 ECM). Runs on an STM32H743VITx (WeAct MiniSTM32H743 board), reads live engine/transmission data **read-only** over the vehicle's HS-CAN bus via OBD-II, and renders it with LVGL across two independent SPI displays:
+Firmware for a custom auxiliary instrument display in a Holden Colorado RG 2.8 Duramax (E98 ECM). It is an add-on, not a replacement: the OEM cluster stays installed and keeps every legally required tell-tale (ABS, SRS, brakes, indicators, high beam, fuel), so this display does not need to replicate them. Runs on an STM32H743VITx (WeAct MiniSTM32H743 board), reads live engine/transmission data **read-only** over the vehicle's HS-CAN bus via OBD-II, and renders it with LVGL across two independent SPI displays:
 
-- **Main 4" ILI9488** (320x480, SPI2) — the actual 3-page cluster (DRIVE / DPF / DIAG), driven by `lv_port_disp.c`.
+- **Main 4" ILI9488** (320x480, SPI2) — the 3-page cluster (DRIVE / DIAG / SNIFF), driven by `lv_port_disp.c`.
 - **Secondary 0.96" ST7735** (160x80, SPI4) — an onboard debug/status screen (`st7735_status.c`), fully independent of the main dashboard's CubeMX config; its SPI/GPIO setup is hand-written directly via HAL rather than through the `.ioc`, specifically so it never touches the main project's peripheral config.
 
 This is a STM32CubeIDE-managed project (Eclipse `.project`/`.cproject`), not a CMake or plain-Makefile project.
@@ -56,7 +56,9 @@ What this truck actually answers, verified in-vehicle (don't re-derive it by gue
 | ATF temp | DID `0x1940` on 0x7E2 | works, `A - 40` |
 | gear | DID `0x199A` on 0x7E2 | works, but it is the **engaged gear ratio, not the selector range** — D1/D2/D3 give 1/2/3 and P also gives 1, so it cannot express P/R/N |
 | oil temp `0x5C`, EGR temp `0x6B` | mode 01 | **not supported** — silently omitted from grouped replies rather than refused |
-| selector range (PRNDL), soot, DPF ∆P, since-regen | — | **no known identifier**; use the SNIFF page (below) |
+| selector range (PRNDL) | broadcast `0x1F5` byte 3 | works: 1 P / 2 R / 3 N / 4 D (found with the SNIFF page) |
+| oil pressure | — | **no confirmed source**: mode-22 DIDs refused; broadcast candidates `0x1BA[3]` (rejected) and `0x0C9[2]` (unverified) are shown raw on DIAG only |
+| soot, DPF ∆P, since-regen | — | **not available** on this ECM; the DPF page was removed |
 
 Note a grouped mode-01 request drops unsupported PIDs from the reply instead of returning a negative response, so a missing value there is not an error and produces no NRC.
 
@@ -67,7 +69,7 @@ Two conventions in `g_obd` matter and are easy to break:
 - **Every float starts as `NaN`, meaning "the bus has never sent this."** The UI renders NaN as `--`. Do not "fix" a metric by defaulting it to 0 — an unsupported PID would then paint a believable lie (0 V battery, 0 °C oil), which is exactly the bug that once made an entirely dead poller look like a working one.
 - **Any timeout reached from the superloop must be counted in poll ticks, not `HAL_GetTick()` milliseconds.** `lv_port_disp`'s flush is a blocking row-by-row `HAL_SPI_Transmit` of the whole panel, so one loop iteration can take hundreds of ms. A wall-clock deadline expires before `obd_rx_poll()` next runs; that silently killed every multi-frame ISO-TP reply while single-frame ones kept working.
 
-**`cluster_ui.c`/`.h`** builds and refreshes the 4-page LVGL UI (`cluster_ui_build()` once, `cluster_ui_refresh()` at ~25Hz) plus an alert strip; pages are DRIVE(0)/DPF(1)/DIAG(2)/SNIFF(3), selected via `cluster_ui_set_page()`/`cluster_ui_next_page()`.
+**`cluster_ui.c`/`.h`** builds and refreshes the 3-page LVGL UI (`cluster_ui_build()` once, `cluster_ui_refresh()` at ~25Hz) plus an alert strip; pages are DRIVE(0)/DIAG(1)/SNIFF(2), selected via `cluster_ui_set_page()`/`cluster_ui_next_page()`.
 
 **`can_sniff.c`/`.h`** is a workbench-only passive CAN change detector behind the SNIFF page: it widens the FDCAN acceptance filter to all standard IDs and lists the bytes that changed most recently, so operating one control identifies the frame carrying it. It exists because the signals still missing an identifier (selector range/PRNDL, soot, DPF ∆P, since-regen) are broadcast as ordinary frames — the OEM cluster displayed them. Listening is deliberately tied to the page being visible: the wide filter competes with OBD replies for the same RX FIFO, and `obd_poll_tick()` is suspended while it runs.
 
