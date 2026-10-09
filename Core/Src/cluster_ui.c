@@ -777,10 +777,11 @@ void cluster_ui_refresh(void)
                         (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
         else
             lv_snprintf(nrc, sizeof nrc, "--");
-        uint16_t lost = 0, bad = 0;
-        obd_can_health(NULL, NULL, &lost, NULL, &bad);
-        int o = lv_snprintf(db, sizeof db, "NRC %s  LOST %u  BAD %u\n",
-                            nrc, (unsigned)lost, (unsigned)bad);
+        obd_health_t h;
+        obd_can_health(&h);
+        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u\n",
+                            nrc, (unsigned)h.rx_lost, (unsigned)h.rx_bad,
+                            (unsigned)h.tx_fail);
 
         int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
         lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
@@ -795,16 +796,16 @@ void cluster_ui_refresh(void)
         /* Lead with the frame rate and bus health: a frozen row table means
          * nothing if you cannot see whether frames are still arriving. fps 0 =
          * bus asleep (procedural, not a bug); BOFF/EP/LOST = a real fault. */
-        bool boff = false, ep = false; uint16_t lost = 0, rec = 0;
-        obd_can_health(&boff, &ep, &lost, &rec, NULL);
+        obd_health_t h;
+        obd_can_health(&h);
         char sb[64];
-        lv_snprintf(sb, sizeof sb, "%u fps  IDS %u  %s%s L%u",
+        lv_snprintf(sb, sizeof sb, "%u fps  IDS %u  %s L%u",
                     (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
-                    boff ? "BUSOFF " : (ep ? "ERRPASS " : "ok "),
-                    "", (unsigned)lost);
+                    h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
+                    (unsigned)h.rx_lost);
         lv_label_set_text(ui.sn_stat, sb);
         lv_obj_set_style_text_color(ui.sn_stat,
-                                    boff ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN), 0);
+                                    h.bus_off ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN), 0);
 
         /* STATE: low-cardinality bytes with their distinct value set. The
          * selector is the row whose values are the detent codes, listed in

@@ -36,6 +36,12 @@ static uint16_t itp_len, itp_got;
 static uint8_t  itp_next_seq;
 static bool     itp_active;
 static uint32_t itp_src_id;          /* CFs must come from the FF's sender      */
+/* A transfer with no progress for this many POLL TICKS is abandoned. Ticks,
+ * not milliseconds, for the same reason as OBD_AWAIT_TICKS below: CFs can sit
+ * in the RX FIFO while a display flush blocks the loop, and a wall-clock check
+ * at drain time would throw away a transfer that actually arrived in time. */
+#define ITP_TTL_TICKS 4u
+static uint8_t  itp_ttl;
 
 /* Frames dropped because their length / PCI did not add up (truncated or
  * malformed). Surfaced on DIAG next to the RX FIFO loss count. */
@@ -64,18 +70,41 @@ static void rx_bad(void) { if (rx_bad_cnt < 0xFFFFu) rx_bad_cnt++; }
 #define OBD_AWAIT_TICKS 2u
 static uint32_t await_resp_id;       /* 0 = nothing outstanding                 */
 static uint8_t  await_ttl;
+static uint8_t  await_sid;           /* service of the outstanding request      */
+static uint16_t await_key;           /* its first PID (mode 01) or DID (mode 22) */
 
-static void expect_reply(uint32_t req_id) {
+static volatile uint16_t tx_fail_cnt;   /* requests the TX FIFO refused         */
+
+static void expect_reply(uint32_t req_id, uint8_t sid, uint16_t key) {
     await_resp_id = req_id + 8u;     /* 0x7E0->0x7E8, 0x7E1->0x7E9, 0x7E2->0x7EA */
     await_ttl     = OBD_AWAIT_TICKS;
+    await_sid     = sid;
+    await_key     = key;
 }
 
-static bool reply_is_ours(uint32_t resp_id) {
-    return await_resp_id != 0u && await_resp_id == resp_id;
+/* Is this reply (its first payload bytes) the answer to OUR outstanding
+ * request? Matching the response ID alone let another tester's reply from the
+ * same ECU clear our slot, or get our Flow Control for its multi-frame
+ * transfer. The positive-response SID and the echoed PID/DID must match too
+ * (mode 03 echoes nothing); a negative response must name our service. A
+ * tester asking the very same thing still collides — unavoidable on a shared
+ * bus without seeing the requests. */
+static bool reply_is_ours(uint32_t resp_id, const uint8_t *p, uint16_t n) {
+    if (await_resp_id == 0u || resp_id != await_resp_id || n < 1u) return false;
+    if (p[0] == 0x7F) return n >= 2u && p[1] == await_sid;
+    if (p[0] != (uint8_t)(await_sid + 0x40u)) return false;
+    switch (await_sid) {
+        case 0x01: return n >= 2u && p[1] == (uint8_t)await_key;
+        case 0x22: return n >= 3u && ((((uint16_t)p[1]) << 8) | p[2]) == await_key;
+        default:   return true;
+    }
 }
 
 /* =============================== TX ====================================== */
-static void can_send(uint32_t req_id, const uint8_t *data8) {
+/* Returns false when the TX FIFO refused the frame (full, or the controller is
+ * not started, e.g. mid bus-off recovery): the caller must then not wait for a
+ * reply that cannot come. */
+static bool can_send(uint32_t req_id, const uint8_t *data8) {
     FDCAN_TxHeaderTypeDef tx = {0};
     tx.Identifier          = req_id;
     tx.IdType              = FDCAN_STANDARD_ID;
@@ -85,7 +114,11 @@ static void can_send(uint32_t req_id, const uint8_t *data8) {
     tx.BitRateSwitch       = FDCAN_BRS_OFF;
     tx.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
     tx.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
-    HAL_FDCAN_AddMessageToTxFifoQ(hfd, &tx, (uint8_t *)data8);
+    if (HAL_FDCAN_AddMessageToTxFifoQ(hfd, &tx, (uint8_t *)data8) != HAL_OK) {
+        if (tx_fail_cnt < 0xFFFFu) tx_fail_cnt++;
+        return false;
+    }
+    return true;
 }
 
 /* mode 01, one or more PIDs in a single frame (GM accepts up to 6) */
@@ -94,15 +127,13 @@ static void req_mode01(const uint8_t *pids, uint8_t n) {
     d[0] = (uint8_t)(1 + n);         /* PCI length: SID + n PIDs               */
     d[1] = 0x01;                     /* service                                */
     for (uint8_t i = 0; i < n && i < 6; i++) d[2 + i] = pids[i];
-    expect_reply(OBD_REQ_ECM);
-    can_send(OBD_REQ_ECM, d);
+    if (can_send(OBD_REQ_ECM, d)) expect_reply(OBD_REQ_ECM, 0x01, pids[0]);
 }
 
 /* mode 03: request stored DTCs */
 static void req_mode03(void) {
     uint8_t d[8] = { 0x01, 0x03, 0,0,0,0,0,0 };
-    expect_reply(OBD_REQ_ECM);
-    can_send(OBD_REQ_ECM, d);
+    if (can_send(OBD_REQ_ECM, d)) expect_reply(OBD_REQ_ECM, 0x03, 0);
 }
 
 /* mode 22 (UDS ReadDataByIdentifier): request one 2-byte DID from a module.
@@ -114,8 +145,7 @@ static void req_mode22(uint32_t req_id, uint16_t did) {
     d[1] = 0x22;                     /* service                                 */
     d[2] = (uint8_t)(did >> 8);
     d[3] = (uint8_t)(did & 0xFFu);
-    expect_reply(req_id);
-    can_send(req_id, d);
+    if (can_send(req_id, d)) expect_reply(req_id, 0x22, did);
 }
 
 /* Flow Control: clear-to-send, no block, no separation */
@@ -288,13 +318,13 @@ static void obd_check_health(void) {
     }
 }
 
-void obd_can_health(bool *bus_off, bool *err_passive,
-                    uint16_t *lost, uint16_t *recover, uint16_t *bad) {
-    if (bus_off)     *bus_off     = busoff_now;
-    if (err_passive) *err_passive = errpass_now;
-    if (lost)        *lost        = rx_lost_cnt;
-    if (recover)     *recover     = busoff_cnt;
-    if (bad)         *bad         = rx_bad_cnt;
+void obd_can_health(obd_health_t *h) {
+    h->bus_off        = busoff_now;
+    h->err_passive    = errpass_now;
+    h->rx_lost        = rx_lost_cnt;
+    h->busoff_recover = busoff_cnt;
+    h->rx_bad         = rx_bad_cnt;
+    h->tx_fail        = tx_fail_cnt;
 }
 
 /* =============================== RX (polled) ============================= */
@@ -373,18 +403,24 @@ void obd_rx_poll(void) {
              * an unchecked 0x0F once read 8 bytes past the frame buffer. */
             uint8_t len = d[0] & 0x0F;
             if (len == 0u || len > 7u || len > dlc - 1u) { rx_bad(); continue; }
-            if (reply_is_ours(rh.Identifier)) await_resp_id = 0;  /* satisfied  */
-            dispatch(rh.Identifier, &d[1], len); /* decode even if not ours    */
+            const uint8_t *pl = &d[1];
+            /* NRC 0x78 (response pending) promises the real answer later, so
+             * it must not close the slot that answer's First Frame needs. */
+            if (reply_is_ours(rh.Identifier, pl, len) &&
+                !(pl[0] == 0x7F && len >= 3u && pl[2] == 0x78))
+                await_resp_id = 0;              /* satisfied                   */
+            dispatch(rh.Identifier, pl, len);   /* decode even if not ours     */
         } else if (pci == 0x1) {                /* First Frame                 */
+            if (dlc < 8u) { rx_bad(); continue; }
             /* Only drive a multi-frame transfer we requested. Another tester's
              * First Frame must not get our Flow Control (see await_resp_id),
              * and must not clobber our reassembly buffer. */
-            if (!reply_is_ours(rh.Identifier)) continue;
+            if (!reply_is_ours(rh.Identifier, &d[2], 6u)) continue;
             uint16_t len = (uint16_t)(((d[0] & 0x0Fu) << 8) | d[1]);
             /* FF_DL below 8 would have been a Single Frame; above the buffer the
              * transfer could never complete. Reject before sending Flow Control,
              * so the ECU times the transfer out instead of streaming it to us. */
-            if (dlc < 8u || len < 8u || len > sizeof itp_buf) {
+            if (len < 8u || len > sizeof itp_buf) {
                 rx_bad();
                 itp_active = false;
                 continue;
@@ -392,22 +428,28 @@ void obd_rx_poll(void) {
             itp_len  = len;
             itp_got  = 0; itp_next_seq = 1; itp_active = true;
             itp_src_id = rh.Identifier;
+            itp_ttl  = ITP_TTL_TICKS;
             for (int i = 0; i < 6; i++) itp_buf[itp_got++] = d[2 + i];
             send_flow_control(rh.Identifier);
         } else if (pci == 0x2 && itp_active && rh.Identifier == itp_src_id) {
-            /* Consecutive Frame of our transfer. itp_len <= sizeof itp_buf was
-             * checked on the First Frame, so itp_got < itp_len bounds the copy. */
-            if ((d[0] & 0x0F) == itp_next_seq) {
-                itp_next_seq = (itp_next_seq + 1) & 0x0F;
-                for (uint8_t i = 1; i < dlc && itp_got < itp_len; i++)
-                    itp_buf[itp_got++] = d[i];
-                if (itp_got >= itp_len) {
-                    itp_active = false; await_resp_id = 0;
-                    dispatch(itp_src_id, itp_buf, itp_len);
-                }
-            } else {                            /* sequence error -> drop       */
+            /* Consecutive Frame of our transfer. Every CF but the last carries
+             * 7 bytes; the last carries the rest and may be unpadded. A CF short
+             * of that — an empty DLC-1 frame included — is malformed and must
+             * not advance the sequence. itp_len <= sizeof itp_buf was checked
+             * on the First Frame, so need bounds the copy. */
+            uint16_t need = (uint16_t)(itp_len - itp_got);
+            if (need > 7u) need = 7u;
+            if ((d[0] & 0x0F) != itp_next_seq || (uint16_t)(dlc - 1u) < need) {
                 itp_active = false;
                 rx_bad();
+                continue;
+            }
+            itp_next_seq = (itp_next_seq + 1) & 0x0F;
+            for (uint16_t i = 0; i < need; i++) itp_buf[itp_got++] = d[1 + i];
+            itp_ttl = ITP_TTL_TICKS;
+            if (itp_got >= itp_len) {
+                itp_active = false; await_resp_id = 0;
+                dispatch(itp_src_id, itp_buf, itp_len);
             }
         }
     }
@@ -533,6 +575,7 @@ void obd_poll_tick(void) {
 
     if (can_sniff_is_active()) return;
     if (await_ttl && --await_ttl == 0u) await_resp_id = 0u;
+    if (itp_active && itp_ttl && --itp_ttl == 0u) itp_active = false;
 
     ++tick;
 
