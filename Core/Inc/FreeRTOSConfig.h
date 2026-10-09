@@ -169,6 +169,12 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
+/* Method 2 (stack-end pattern check on every context switch). A 4 KB default
+ * task stack once overflowed silently and froze the loop; now the hook in
+ * fault.c records it and the IWDG resets the board. */
+#ifndef configCHECK_FOR_STACK_OVERFLOW
+#define configCHECK_FOR_STACK_OVERFLOW 2
+#endif
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

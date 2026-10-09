@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "fault.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -246,6 +246,10 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+  /* Recorded for the next boot. Once AppMain_Init has started the IWDG this
+   * stop ends in a watchdog reset; before that (clock/peripheral init) it
+   * still hangs, as there is nothing to show a fault on yet. */
+  fault_record(FAULT_ERROR_HANDLER);
   __disable_irq();
   while (1)
   {

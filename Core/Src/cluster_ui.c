@@ -19,6 +19,7 @@
 #include "cluster_config.h"
 #include "fdcan_obd.h"
 #include "can_sniff.h"
+#include "fault.h"
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -432,7 +433,13 @@ static void build_diag(void)
 {
     lv_obj_t *pg = ui.page[1];
 
-    mk_eyebrow(pg, "DIAG");
+    /* Left side of the eyebrow: why the previous run ended. A watchdog or
+     * fault reset is amber so it is noticed; a normal power-up stays quiet. */
+    lv_obj_t *tb = mk_eyebrow(pg, "DIAG");
+    char rb[32];
+    lv_snprintf(rb, sizeof rb, "LAST RESET: %s", fault_reset_text());
+    lv_obj_t *rst = mk_label(tb, rb, F12, fault_reset_abnormal() ? C_WARN : C_MUTED);
+    lv_obj_align(rst, LV_ALIGN_LEFT_MID, 8, 0);
 
     /* MIL summary row */
     lv_obj_t *mil = mk_card(pg, 10, 38, 300, 42);
