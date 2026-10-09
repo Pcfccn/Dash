@@ -36,7 +36,7 @@ Peripheral/pin config lives in `Dash.ioc` — regenerating code from it via Cube
 
 Flash/debug config is in `Dash.launch` (ST-LINK GDB server, configured in CubeIDE).
 
-No test framework is present — this is bare-metal firmware with no host-side unit tests.
+Host-side unit tests live in `tests/host/`: they `#include` the real `Core/Src/fdcan_obd.c` against a mocked HAL (`tests/host/mock/`) and cover frame validation, ISO-TP, reply ownership, TX errors and MIL freshness. Run them with `python tools/host_test.py` (gcc/clang, or `pip install ziglang`); UBSan is always on, ASan off Windows. When you change `fdcan_obd.c`, run them and add a case for the change. Nothing else (UI, LVGL, drivers) has tests.
 
 ## Architecture
 
@@ -72,7 +72,7 @@ Three conventions in the OBD path matter and are easy to break:
 
 - **Every received byte is length-checked before it is decoded.** `obd_rx_poll()` checks the DLC for each broadcast, ISO-TP SF/FF/CF lengths, and validates a whole mode-01 reply (known PIDs, exact fit) before writing anything; mode 01 is only accepted from the ECM and each mode-22 DID only from the module it is requested from. Rejected frames increment the `BAD` counter on DIAG. Never decode a missing byte as 0.
 - **Every float starts as `NaN`, meaning "the bus has never sent this."** The UI renders NaN as `--`. Do not "fix" a metric by defaulting it to 0 — an unsupported PID would then paint a believable lie (0 V battery, 0 °C oil), which is exactly the bug that once made an entirely dead poller look like a working one.
-- **Any timeout reached from the superloop must be counted in poll ticks, not `HAL_GetTick()` milliseconds.** `lv_port_disp`'s flush is a blocking row-by-row `HAL_SPI_Transmit` of the whole panel, so one loop iteration can take hundreds of ms. A wall-clock deadline expires before `obd_rx_poll()` next runs; that silently killed every multi-frame ISO-TP reply while single-frame ones kept working.
+- **Any timeout reached from the superloop must be counted in poll ticks, not `HAL_GetTick()` milliseconds.** `lv_port_disp`'s flush is a blocking row-by-row `HAL_SPI_Transmit` of the whole panel, so one loop iteration can take hundreds of ms. A wall-clock deadline expires before `obd_rx_poll()` next runs; that silently killed every multi-frame ISO-TP reply while single-frame ones kept working. This is a workaround for RX being polled from the same loop as the blocking display flush, not a goal: once FDCAN RX is interrupt-driven into a queue (planned stage C), real millisecond deadlines become correct and preferable. Staleness the user sees (MIL/DTC) is likewise counted in unanswered requests, not ms, for the same reason.
 
 **`cluster_ui.c`/`.h`** builds and refreshes the 3-page LVGL UI (`cluster_ui_build()` once, `cluster_ui_refresh()` at ~25Hz) plus an alert strip; pages are DRIVE(0)/DIAG(1)/SNIFF(2), selected via `cluster_ui_set_page()`/`cluster_ui_next_page()`.
 
