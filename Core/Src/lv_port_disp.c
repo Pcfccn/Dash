@@ -41,13 +41,19 @@
  * panel sits on ~15 cm jumper wires here; try it only after a clean run at /8. */
 #define LCD_SPI_PRESCALER SPI_BAUDRATEPRESCALER_8
 
-static lv_color_t buf1[LCD_H_RES * DISP_BUF_LINES];
-static lv_color_t buf2[LCD_H_RES * DISP_BUF_LINES];
+/* Render buffers sized in RGB565 bytes. Not lv_color_t[]: in LVGL 9 lv_color_t
+ * is 3 bytes whatever the display format, so such an array is 1.5x larger
+ * than meant and LVGL (which divides the byte size by the RGB565 stride) hands
+ * the flush taller areas than DISP_BUF_LINES. That overran tx_buf and zeroed
+ * the HAL handles behind it (htim6 -> tick IRQ storm -> watchdog reset loop). */
+#define DISP_BUF_PX    (LCD_H_RES * DISP_BUF_LINES)
+static uint8_t buf1[DISP_BUF_PX * 2u] __attribute__((aligned(4)));
+static uint8_t buf2[DISP_BUF_PX * 2u] __attribute__((aligned(4)));
 
 /* One converted RGB666 area, the DMA source. In AXI SRAM (.bss, RAM_D1), which
  * DMA1 can reach; DTCM it cannot. Cache-line aligned and sized so cleaning the
  * D-cache over it never touches a neighbour. */
-#define TX_BUF_BYTES (((LCD_H_RES * DISP_BUF_LINES * 3u) + 31u) & ~31u)
+#define TX_BUF_BYTES (((DISP_BUF_PX * 3u) + 31u) & ~31u)
 static uint8_t tx_buf[TX_BUF_BYTES] __attribute__((aligned(32)));
 
 static DMA_HandleTypeDef s_dma_tx;
@@ -197,6 +203,14 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
 
     /* tx_buf may still be on the wire from the previous area. */
     dma_wait();
+
+    /* Never write past tx_buf. Cannot happen with the buffers above; if it
+     * ever does, drop the area rather than corrupt memory (a missing patch
+     * repaints on the next change, a smashed HAL handle resets the board). */
+    if (n > TX_BUF_BYTES) {
+        lv_display_flush_ready(disp);
+        return;
+    }
 
     const uint16_t *src = (const uint16_t *)px_map;
     uint8_t *dst = tx_buf;
