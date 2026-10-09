@@ -1,4 +1,4 @@
-# Road-test session — 2026-08-23 (26 photos, loose in design/Photos/)
+# Road-test session — 2026-08-23 (26 photos)
 
 Firmware flashed: `1d56fd2` (fast RPM band, MAP paired with RPM, 0x1BA oil-pressure
 broadcast candidate, PRNDL from 0x1F5, oil-pressure A/B test on DIAG).
