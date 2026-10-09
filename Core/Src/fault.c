@@ -65,9 +65,10 @@ bool        fault_reset_abnormal(void) { return s_abnormal; }
  * LSI is not trimmed, so real timeouts can differ from nominal by tens of
  * percent. Boot: /256 -> 125 Hz, reload 1250 -> ~10 s, covering clock and
  * peripheral init, RTOS start and the slow display/LVGL bring-up. Run: /64 ->
- * 500 Hz, reload 1500 -> ~3 s, deliberately generous while one superloop
- * iteration can still hold a blocking full-screen SPI flush (~0.4 s on the
- * wire alone); tighten once the display path is non-blocking. Frozen while a
+ * 500 Hz, reload 1500 -> ~3 s, deliberately generous: a full repaint still
+ * holds the loop for ~0.2 s of SPI time even with the DMA flush (it was
+ * ~0.4 s blocking before); tighten once LOOP on DIAG has been measured on
+ * the bench and in the car. Frozen while a
  * debugger halts the core, so breakpoints do not reset it. */
 #define WDG_BOOT_PR    6u       /* /256 */
 #define WDG_BOOT_RLR   1250u

@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/app_main.h": {
-    "mtime": 1783605539.2818527,
-    "ast_hash": "be068dd6bf69eefaee990b27b141177d",
+    "mtime": 1791550676.896832,
+    "ast_hash": "05b5006590013304f85f1bbcb8aea2d5",
     "semantic_hash": ""
   },
   "Core/Inc/can_gauges.h": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/app_main.c": {
-    "mtime": 1791548258.4752953,
-    "ast_hash": "361ade127c5527eb3015562c2904d408",
+    "mtime": 1791550676.896832,
+    "ast_hash": "3bbff1d26784b5196f544bed6e21ef0b",
     "semantic_hash": ""
   },
   "Core/Src/can_gauges.c": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1791548258.4763012,
-    "ast_hash": "e9d11a67bf5de50dc9d035a4023b9d2f",
+    "mtime": 1791550710.762931,
+    "ast_hash": "8a84c600f72dceb07ea97d5ad59d3fbf",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -125,19 +125,19 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1784201036.054947,
-    "ast_hash": "e62afd9e9a9c675d14e5519bf4d42799",
+    "mtime": 1791550596.5185049,
+    "ast_hash": "e24a11872db4de20661c4a76ff013e23",
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
-    "mtime": 1791548258.479305,
-    "ast_hash": "6344c9c5f5a7e0e83c342e48511ee82b",
+    "mtime": 1791550617.9967618,
+    "ast_hash": "603b6bbc44c40bcc9d25a93607ee55f7",
     "semantic_hash": ""
   },
   "Core/Src/spi.c": {
-    "mtime": 1783940492.9707737,
-    "ast_hash": "c1be273808b399e0577f5e8667d3ff77",
-    "semantic_hash": "c1be273808b399e0577f5e8667d3ff77"
+    "mtime": 1791550778.1632154,
+    "ast_hash": "35e238e05f3441a81c2ad8b7cf104bc1",
+    "semantic_hash": ""
   },
   "Core/Src/st7735_status.c": {
     "mtime": 1784464785.5032825,
@@ -175,8 +175,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1791548258.469297,
-    "ast_hash": "bc45d749e8cb29688d7c89e871f82c5c",
+    "mtime": 1791551020.7546215,
+    "ast_hash": "0c9d50eb5c885499cb71688101886ea6",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -285,8 +285,8 @@
     "semantic_hash": ""
   },
   "docs/future/README.md": {
-    "mtime": 1791548199.3190036,
-    "ast_hash": "5cb63fda3410bfca5bbc45fb733bce87",
+    "mtime": 1791551020.7576182,
+    "ast_hash": "a373a992998388d39c66681479ec6a95",
     "semantic_hash": ""
   },
   "docs/future/gps-performance-meter.md": {
@@ -660,8 +660,8 @@
     "semantic_hash": ""
   },
   "Core/Src/fault.c": {
-    "mtime": 1791548258.477297,
-    "ast_hash": "a2bb9f4edd41066406982aa8fa46e0f5",
+    "mtime": 1791551031.8551755,
+    "ast_hash": "96d5a1d95a973a2eb8e8bdf4d6769e06",
     "semantic_hash": ""
   },
   "tests/host/mock/stm32h7xx_hal.h": {
@@ -685,8 +685,13 @@
     "semantic_hash": ""
   },
   "docs/REVIEW.md": {
-    "mtime": 1791548258.4833055,
-    "ast_hash": "4e6acacb5b2630edf6371c14552985f0",
+    "mtime": 1791550998.4639857,
+    "ast_hash": "90ffa6fccc57b8c8f33189e10b9c5fdd",
+    "semantic_hash": ""
+  },
+  "docs/future/display-upgrade.md": {
+    "mtime": 1791551020.756617,
+    "ast_hash": "ba60011a421487b4d5e604967a5073de",
     "semantic_hash": ""
   }
 }
