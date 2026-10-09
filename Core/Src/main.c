@@ -91,7 +91,12 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  /* As early as the HAL tick runs: latch the reset cause, then start the
+   * watchdog with its long boot timeout so a hang anywhere in peripheral init,
+   * RTOS start or the display bring-up also ends in a reset. AppMain_Init
+   * switches it to the run timeout. */
+  fault_init();
+  fault_wdg_start_boot();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */

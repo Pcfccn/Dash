@@ -138,7 +138,6 @@ static void heartbeat_led_tick(uint32_t t)
 
 void AppMain_Init(void)
 {
-    fault_init();           /* latch the reset cause before anything can clear it */
     heartbeat_led_init();   /* first, before anything that might block */
     key_button_init();      /* PC13 page-cycle button */
 
@@ -150,8 +149,9 @@ void AppMain_Init(void)
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
     backlight_set(BACKLIGHT_DUTY_PCT);
 
-    /* Last: the slow display/LVGL bring-up above must not count against it. */
-    fault_wdg_start();
+    /* Init is done: from here the watchdog must be fed every iteration
+     * (started with the long boot timeout in main.c). */
+    fault_wdg_run_mode();
 }
 
 void AppMain_Run(void)
@@ -200,6 +200,10 @@ void AppMain_Run(void)
         key_hold_done = 1;                               /* consume this hold   */
         s_bl_mode = !s_bl_mode;                          /* enter/leave mode    */
     }
+#if FAULT_TEST
+    /* Bench check of the watchdog / fault record (fault.h). */
+    if (key_now && (t - key_down_t) >= FAULT_TEST_HOLD_MS) fault_selftest();
+#endif
 
     lv_timer_handler();   /* LVGL rendering for both displays */
     cluster_app_run();    /* OBD-II: RX drain, request scheduler, UI refresh, watchdog */

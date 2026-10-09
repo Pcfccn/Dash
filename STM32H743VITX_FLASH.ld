@@ -166,6 +166,17 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
+  /* Not initialised and not cleared by the startup code, so it survives a
+   * software or watchdog reset: holds the fault record (Core/Src/fault.c).
+   * DTCM is otherwise unused by this image. */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    *(.noinit)
+    *(.noinit.*)
+    . = ALIGN(4);
+  } >DTCMRAM
+
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {
