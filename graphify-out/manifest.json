@@ -1,8 +1,8 @@
 {
   "Core/Inc/FreeRTOSConfig.h": {
-    "mtime": 1784120458.521143,
-    "ast_hash": "e23f629d3933b91b1c8937e2f02a60db",
-    "semantic_hash": "e23f629d3933b91b1c8937e2f02a60db"
+    "mtime": 1791548258.470297,
+    "ast_hash": "74d1ba2c7bf4decfad982a1a4120eb60",
+    "semantic_hash": ""
   },
   "Core/Inc/app_main.h": {
     "mtime": 1783605539.2818527,
@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_config.h": {
-    "mtime": 1784901343.604787,
-    "ast_hash": "e82531627dd7dc25116b0639a7ec573f",
+    "mtime": 1791548258.4722977,
+    "ast_hash": "279c981dce185da15af0d9eb8d704c3b",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
@@ -35,8 +35,8 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1784901343.6073146,
-    "ast_hash": "b2c6b5042f62766a8d2197187b27d797",
+    "mtime": 1791548258.4732988,
+    "ast_hash": "ddbf8e4decd08d7e26a3b1d7f3fb68f5",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/app_main.c": {
-    "mtime": 1784464801.768973,
-    "ast_hash": "dea0073dcc2c26807c58b3c49be5b41f",
+    "mtime": 1791548258.4752953,
+    "ast_hash": "361ade127c5527eb3015562c2904d408",
     "semantic_hash": ""
   },
   "Core/Src/can_gauges.c": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1784901343.6108162,
-    "ast_hash": "22e08bce3bc3e5f4890d73035fa8185c",
+    "mtime": 1791548258.4763012,
+    "ast_hash": "e9d11a67bf5de50dc9d035a4023b9d2f",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1787480254.0063672,
-    "ast_hash": "75c0f97a7686ad0f778301dc0d4df6a4",
+    "mtime": 1791548258.4782953,
+    "ast_hash": "88e913b1e5799f9d6f3b17e32eb920d3",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -130,9 +130,9 @@
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
-    "mtime": 1783689061.3582675,
-    "ast_hash": "b4381e5c54c9eba78d071a9493c4e5df",
-    "semantic_hash": "b4381e5c54c9eba78d071a9493c4e5df"
+    "mtime": 1791548258.479305,
+    "ast_hash": "6344c9c5f5a7e0e83c342e48511ee82b",
+    "semantic_hash": ""
   },
   "Core/Src/spi.c": {
     "mtime": 1783940492.9707737,
@@ -155,9 +155,9 @@
     "semantic_hash": "a84cde01aea013bbc75ebcc996daaecc"
   },
   "Core/Src/stm32h7xx_it.c": {
-    "mtime": 1783604754.634,
-    "ast_hash": "860c3db558f5ffb8d44f1d31517dfc1c",
-    "semantic_hash": "860c3db558f5ffb8d44f1d31517dfc1c"
+    "mtime": 1791548258.4803038,
+    "ast_hash": "b70a1dc0115cf68ab6f2268783683776",
+    "semantic_hash": ""
   },
   "Core/Src/tim.c": {
     "mtime": 1783685426.844,
@@ -175,8 +175,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1784554614.8609812,
-    "ast_hash": "247eefff9cee1b576d299f28ee042f7c",
+    "mtime": 1791548258.469297,
+    "ast_hash": "bc45d749e8cb29688d7c89e871f82c5c",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "docs/oil-pressure-test.md": {
-    "mtime": 1784901343.8962824,
-    "ast_hash": "ec2e55bf575374f644c19f10e25bc10d",
+    "mtime": 1791548258.4843047,
+    "ast_hash": "4d8da06181ae6e899a88e75530b28af9",
     "semantic_hash": ""
   },
   "design/Diesel_Cluster_v2_3.html": {
@@ -652,6 +652,41 @@
   "design/Photos/20260823/photo_9_2026-08-23_19-55-01.jpg": {
     "mtime": 1787478751.0,
     "ast_hash": "745e1fb7a189d51553cd171718f62d44",
+    "semantic_hash": ""
+  },
+  "Core/Inc/fault.h": {
+    "mtime": 1791548258.4722977,
+    "ast_hash": "d788b251352f9f7ef9ab166c1b29b503",
+    "semantic_hash": ""
+  },
+  "Core/Src/fault.c": {
+    "mtime": 1791548258.477297,
+    "ast_hash": "a2bb9f4edd41066406982aa8fa46e0f5",
+    "semantic_hash": ""
+  },
+  "tests/host/mock/stm32h7xx_hal.h": {
+    "mtime": 1791548258.486309,
+    "ast_hash": "87195b79c6e3652d711cf281866b1827",
+    "semantic_hash": ""
+  },
+  "tests/host/test_fdcan_obd.c": {
+    "mtime": 1791548258.4873035,
+    "ast_hash": "ea277e4e21018ed1a341c400b8d75d00",
+    "semantic_hash": ""
+  },
+  "tools/build.py": {
+    "mtime": 1791548258.4893036,
+    "ast_hash": "3d040ffd99946e8b91d50cb027556d3e",
+    "semantic_hash": ""
+  },
+  "tools/host_test.py": {
+    "mtime": 1791548258.4903035,
+    "ast_hash": "dd640b426f574e6d45854368158b6371",
+    "semantic_hash": ""
+  },
+  "docs/REVIEW.md": {
+    "mtime": 1791548258.4833055,
+    "ast_hash": "4e6acacb5b2630edf6371c14552985f0",
     "semantic_hash": ""
   }
 }
