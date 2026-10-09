@@ -75,10 +75,11 @@ HAL_StatusTypeDef HAL_FDCAN_GetProtocolStatus(FDCAN_HandleTypeDef *h, FDCAN_Prot
 { (void)h; memset(ps, 0, sizeof *ps); return HAL_OK; }
 
 /* ------------------------------------------- stubs for the rest of the app */
-static int updates;
+static int  updates;
+static bool sniff_on;
 void obd_on_update(void) { updates++; }
 void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len) { (void)id; (void)d; (void)len; }
-bool can_sniff_is_active(void) { return false; }
+bool can_sniff_is_active(void) { return sniff_on; }
 
 /* ------------------------------------------------------------- harness */
 static int checks, fails;
@@ -102,6 +103,9 @@ static FDCAN_HandleTypeDef hmock;
 static void reset(void)
 {
     rx_head = rx_tail = 0; tx_n = 0; tx_status = HAL_OK; updates = 0; now_ms = 1000;
+    sniff_on = false;
+    memset(&sched, 0, sizeof sched);              /* scheduler position */
+    await_sid = 0; await_key = 0;
     memset((void *)&g_obd, 0, sizeof g_obd);
     g_obd.speed = NAN; g_obd.rpm = NAN; g_obd.cool = NAN; g_obd.oil = NAN; g_obd.iat = NAN;
     g_obd.load = NAN; g_obd.boost = NAN; g_obd.rail = NAN; g_obd.egt = NAN; g_obd.battery = NAN;
@@ -378,6 +382,146 @@ static void t_oilp_candidate_not_decoded(void)                         /* R4 */
     CHECK(isnan(g_obd.oil_press));
 }
 
+/* --- Cases from the independent stage-A review (Dash_Stage_A_Adversarial_Tests.c),
+ * which were red before the one-transaction-at-a-time rework: a follow-up
+ * request must not replace, or be cleared by, a transaction still in flight. */
+static void t_interleaved_cf_clears_new_pending(void)
+{
+    static const uint8_t egt = 0x78;
+    req_mode01(&egt, 1);
+    PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, 0x01, 0x0B, 0xB8, 0x00);
+    obd_rx_poll();
+    CHECK(itp_active);
+    int tx_before = tx_n;
+    obd_poll_tick();  /* Should not issue another request to this busy ECM. */
+    int extra_ecm = 0;
+    for (int i = tx_before; i < tx_n; i++)
+        if (txlog[i].id == OBD_REQ_ECM && txlog[i].data[0] != 0x30) extra_ecm++;
+    CHECK(extra_ecm == 0);
+    bool replaced = (await_key != 0x78);
+    uint32_t new_id = await_resp_id;
+    uint16_t new_key = await_key;
+    PUSH(0x7E8, 8, 0x21, 0, 0, 0, 0, 0, 0, 0);
+    obd_rx_poll();
+    CHECK(near(g_obd.egt, 260.f));
+    /* Old CF must never close a different pending transaction. */
+    if (replaced) CHECK(await_resp_id == new_id && await_key == new_key);
+    else CHECK(await_resp_id == 0);
+}
+
+static void t_matching_short_frame_clears_pending(void)
+{
+    static const uint8_t rpm = 0x0C;
+    req_mode01(&rpm, 1);
+    CHECK(await_resp_id == 0x7E8);
+    PUSH(0x7E8, 8, 0x02, 0x41, 0x0C, 0, 0, 0, 0, 0);
+    obd_rx_poll();
+    CHECK(rx_bad_cnt == 1);
+    CHECK(isnan(g_obd.rpm));
+    /* expected: invalid SF must not satisfy an outstanding RPM request */
+    CHECK(await_resp_id == 0x7E8);
+}
+
+static void t_pending_replaced_before_timeout(void)
+{
+    req_mode22(OBD_REQ_TCM2, 0x1940);
+    CHECK(await_resp_id == OBD_RESP_TCM2 && await_key == 0x1940);
+    req_mode22(OBD_REQ_TCM2, 0x199A);
+    /* expected: either skip second request or retain first until resolved */
+    CHECK(await_resp_id == OBD_RESP_TCM2 && await_key == 0x1940);
+}
+
+static void t_response_pending_loses_delayed_ff(void)
+{
+    static const uint8_t egt = 0x78;
+    req_mode01(&egt, 1);
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x01, 0x78, 0, 0, 0, 0);
+    obd_rx_poll();
+    CHECK(await_resp_id == 0x7E8);
+    obd_poll_tick();  /* sends a fresh RPM/MAP request while ECU still busy */
+    int tx_before_ff = tx_n;
+    PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, 0x01, 0x0B, 0xB8, 0);
+    obd_rx_poll();
+    /* expected: FF for pending request triggers FC despite intervening tick */
+    CHECK(tx_n == tx_before_ff + 1);
+    CHECK(itp_active);
+}
+
+/* --- Transaction lifecycle ------------------------------------------------ */
+static void t_scheduler_waits_then_resumes(void)
+{
+    obd_poll_tick();                                    /* first request out */
+    CHECK(tx_n == 1 && await_resp_id != 0);
+    uint32_t tick0 = sched.tick;
+    obd_poll_tick();                                    /* unanswered: waits */
+    CHECK(tx_n == 1);
+    CHECK(sched.tick == tick0);                         /* band not advanced */
+    obd_poll_tick();                                    /* times out, next one goes */
+    CHECK(tx_n == 2);
+    CHECK(sched.tick == tick0 + 1);
+}
+
+static void t_nrc78_long_wait_is_bounded(void)
+{
+    static const uint8_t rpm = 0x0C;
+    req_mode01(&rpm, 1);
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x01, 0x78, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    for (unsigned i = 0; i < OBD_PENDING_TICKS - 1u; i++) obd_poll_tick();
+    CHECK(await_resp_id == 0x7E8);                      /* still waiting      */
+    CHECK(tx_n == 1);                                   /* nothing else sent  */
+    obd_poll_tick();
+    CHECK(tx_n == 2);                                   /* gave up, moved on  */
+}
+
+static void t_fc_tx_fail_aborts_transfer(void)          /* F8 */
+{
+    egt_request();
+    tx_status = HAL_ERROR;                              /* FC will be refused */
+    PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, 0x01, 0x0B, 0xB8, 0x00);
+    obd_rx_poll();
+    CHECK(!itp_active);
+    CHECK(await_resp_id == 0);
+    CHECK(tx_fail_cnt == 1);
+}
+
+static void t_mil_invalid_after_three_misses(void)      /* F7 */
+{
+    static const uint8_t mil = 0x01;
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x01, 0x00, 0x07, 0xE5, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(g_obd.mil_valid);
+    for (int miss = 1; miss <= 3; miss++) {
+        /* The tick that times a request out sends the next scheduled one;
+         * treat that one as answered so the MIL request can go out. */
+        await_resp_id = 0;
+        CHECK(req_mode01(&mil, 1));
+        for (unsigned i = 0; i < OBD_AWAIT_TICKS; i++) obd_poll_tick();   /* time out */
+        CHECK(await_resp_id == 0 || await_key != 0x01);
+        CHECK(g_obd.mil_valid == (miss < 3));           /* invalid on the 3rd */
+    }
+}
+
+static void t_mil_tx_refusal_counts_as_miss(void)        /* F7 */
+{
+    static const uint8_t mil = 0x01;
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x01, 0x00, 0x07, 0xE5, 0x00, 0x00);
+    obd_rx_poll();
+    tx_status = HAL_ERROR;
+    for (int i = 0; i < 3; i++) req_mode01(&mil, 1);
+    CHECK(!g_obd.mil_valid);
+}
+
+static void t_sniff_pauses_polling(void)
+{
+    sniff_on = true;
+    for (int i = 0; i < 10; i++) obd_poll_tick();
+    CHECK(tx_n == 0);
+    sniff_on = false;
+    obd_poll_tick();
+    CHECK(tx_n == 1);
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -407,6 +551,16 @@ int main(void)
         { "selector_dlc_checked",       t_selector_dlc_checked },
         { "dlc15_classic_frame",        t_dlc15_classic_frame },
         { "oilp_candidate_not_decoded", t_oilp_candidate_not_decoded },
+        { "rev_response_pending_lost_ff", t_response_pending_loses_delayed_ff },
+        { "rev_interleaved_cf_pending", t_interleaved_cf_clears_new_pending },
+        { "rev_short_sf_keeps_pending", t_matching_short_frame_clears_pending },
+        { "rev_pending_not_replaced",   t_pending_replaced_before_timeout },
+        { "scheduler_waits_resumes",    t_scheduler_waits_then_resumes },
+        { "nrc78_long_wait_bounded",    t_nrc78_long_wait_is_bounded },
+        { "fc_tx_fail_aborts",          t_fc_tx_fail_aborts_transfer },
+        { "mil_invalid_after_3_misses", t_mil_invalid_after_three_misses },
+        { "mil_tx_refusal_is_miss",     t_mil_tx_refusal_counts_as_miss },
+        { "sniff_pauses_polling",       t_sniff_pauses_polling },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;
