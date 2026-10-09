@@ -48,6 +48,14 @@ static uint8_t  itp_ttl;
 static volatile uint16_t rx_bad_cnt;
 static void rx_bad(void) { if (rx_bad_cnt < 0xFFFFu) rx_bad_cnt++; }
 
+/* PID 0x01 freshness: PID 0x01 requests sent since its last answer. Counted in
+ * requests, not milliseconds, so it stays right however slowly the loop runs
+ * (the request cadence slows with it). Broadcasts keep can_ok alive even when
+ * the ECM has stopped answering, so without this a once-seen "MIL OFF" would
+ * stay on DIAG indefinitely. */
+#define MIL_MAX_MISS 3u
+static uint8_t mil_miss;
+
 /* ---- outstanding-request gate -------------------------------------------
  * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
  * logger plugged in alongside this cluster. Those also poll, and their
@@ -222,7 +230,7 @@ static void decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x42: set_f(&g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
                        g_obd.dtc_count = v[0] & 0x7F;
-                       g_obd.mil_valid = true; obd_on_update();            break;
+                       g_obd.mil_valid = true; mil_miss = 0; obd_on_update(); break;
             default:                                                       break;
         }
     }
@@ -595,7 +603,14 @@ void obd_poll_tick(void) {
             case 1: req_mode22(OBD_REQ_TCM2, 0x1940);       break; /* ATF temp         */
             case 2: req_mode22(OBD_REQ_TCM2, 0x199A);       break; /* gear             */
             case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
-            case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
+            case 4:                                                 /* MIL/monitor      */
+                req_mode01(mil1, sizeof mil1);
+                if (mil_miss < 0xFFu) mil_miss++;
+                if (mil_miss > MIL_MAX_MISS && g_obd.mil_valid) {   /* 3 unanswered     */
+                    g_obd.mil_valid = false;
+                    obd_on_update();
+                }
+                break;
             case 5: req_mode03();                            break; /* DTC list         */
             case 6: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
             /* oil pressure is NOT polled: 0x115C DID returns NRC 22/31 on this
