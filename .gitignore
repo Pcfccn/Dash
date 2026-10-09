@@ -46,3 +46,6 @@ graphify-out/.graphify_chunk_*.json
 graphify-out/.graphify_python
 graphify-out/.graphify_root
 graphify-out/.needs_update
+
+# CLI build output (tools/build.py)
+/build/
