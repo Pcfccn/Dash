@@ -92,6 +92,16 @@ int main(void)
    * switches it to the run timeout. */
   fault_init();
   fault_wdg_start_boot();
+
+  /* Caches (CubeMX leaves both off in Dash.ioc; enabled here so regeneration
+   * keeps them). Code runs from flash and all data/bss/stack sit in AXI SRAM,
+   * so both matter for LVGL rendering. Coherency: the only DMA in the project
+   * is the display flush, which cleans its buffer before each transfer
+   * (lv_port_disp.c); the fault record is in DTCM, which is never cached, so
+   * it still survives a reset; FDCAN message RAM is device memory. Any new DMA
+   * must clean/invalidate its buffers or use a non-cacheable MPU region. */
+  SCB_EnableICache();
+  SCB_EnableDCache();
   /* USER CODE END Init */
 
   /* Configure the system clock */

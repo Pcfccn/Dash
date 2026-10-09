@@ -160,10 +160,31 @@ void AppMain_Init(void)
     fault_wdg_run_mode();
 }
 
+/* Longest superloop period (start to start, including the 5 ms osDelay) over
+ * the last full second, shown on DIAG. Wall-clock is right here: it measures
+ * how long the loop stalls, which is exactly what the display path costs. */
+static uint32_t s_loop_max_ms;
+
+uint32_t app_loop_max_ms(void) { return s_loop_max_ms; }
+
+static void loop_time_tick(uint32_t t)
+{
+    static uint32_t prev, win_start, win_max;
+    uint32_t dt = t - prev;
+    prev = t;
+    if (dt > win_max) win_max = dt;
+    if (t - win_start >= 1000u) {
+        s_loop_max_ms = win_max;
+        win_max = 0;
+        win_start = t;
+    }
+}
+
 void AppMain_Run(void)
 {
     /* PE3 shows the backlight level as a blink code (also the loop heartbeat) */
     uint32_t t = HAL_GetTick();
+    loop_time_tick(t);
     heartbeat_led_tick(t);
 
     /* KEY (PC13, active-high) gesture state machine:

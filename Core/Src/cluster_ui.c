@@ -20,9 +20,11 @@
 #include "fdcan_obd.h"
 #include "can_sniff.h"
 #include "fault.h"
+#include "app_main.h"         /* app_loop_max_ms() for the DIAG readout */
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
+#include <string.h>
 
 /* ---- palette (from the HTML :root) --------------------------------------- */
 /* Palette brightened for the ILI9488 SPI panel: dark background kept for
@@ -492,7 +494,7 @@ static void build_diag(void)
     }
 
     /* Workbench readout (two lines) in the gap above the pager, not part of
-     * the design: line 1 = last NRC; line 2 = RPM next to the raw oil-pressure
+     * the design: line 1 = last NRC, bus counters and LOOP time; line 2 = RPM next to the raw oil-pressure
      * candidate bytes. Filled in cluster_ui_refresh(). */
     ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
     lv_obj_set_pos(ui.did_dbg, 10, 388);
@@ -636,6 +638,40 @@ uint8_t cluster_ui_get_page(void)
     return s_page;
 }
 
+/* ------------------------------------------- change-only widget updates
+ * In LVGL 9.3 lv_label_set_text() and every lv_obj_set_style_*() invalidate the
+ * object even when the value is the same (lv_label.c, lv_obj_style.c), and
+ * cluster_ui_refresh() runs at 25 Hz. Each invalidated area costs an SPI
+ * transfer, so writing unchanged values repainted the visible page over and
+ * over. These wrappers compare first. lv_bar_set_value() and the hidden flag
+ * already skip no-op changes inside LVGL. A colour getter may return the
+ * inherited or theme value when no local style is set yet; if that already
+ * equals the wanted colour, the widget already looks right. */
+static void ui_text(lv_obj_t *o, const char *t)
+{
+    const char *cur = lv_label_get_text(o);
+    if (cur && strcmp(cur, t) == 0) return;
+    lv_label_set_text(o, t);
+}
+
+static void ui_text_color(lv_obj_t *o, lv_color_t c)
+{
+    if (lv_color_eq(lv_obj_get_style_text_color(o, LV_PART_MAIN), c)) return;
+    lv_obj_set_style_text_color(o, c, 0);
+}
+
+static void ui_bg_color(lv_obj_t *o, lv_color_t c, lv_style_selector_t part)
+{
+    if (lv_color_eq(lv_obj_get_style_bg_color(o, part), c)) return;
+    lv_obj_set_style_bg_color(o, c, part);
+}
+
+static void ui_border_color(lv_obj_t *o, lv_color_t c)
+{
+    if (lv_color_eq(lv_obj_get_style_border_color(o, LV_PART_MAIN), c)) return;
+    lv_obj_set_style_border_color(o, c, 0);
+}
+
 /* set one big value + optional bar + optional dot from a metric */
 static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
                        metric_key_t k, const obd_data_t *d, bool live)
@@ -643,18 +679,18 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     float v  = mval(d, k);
     bool  ok = live && has_value(v);
     if (!ok) {
-        lv_label_set_text(val, "--");
-        lv_obj_set_style_text_color(val, C_MUTED, 0);
-        if (dot) lv_obj_set_style_bg_color(dot, C_FAINT, 0);
+        ui_text(val, "--");
+        ui_text_color(val, C_MUTED);
+        if (dot) ui_bg_color(dot, C_FAINT, 0);
         if (bar) {
             lv_bar_set_value(bar, 0, LV_ANIM_OFF);
-            lv_obj_set_style_bg_color(bar, C_FAINT, LV_PART_INDICATOR);
+            ui_bg_color(bar, C_FAINT, LV_PART_INDICATOR);
         }
         return;
     }
     char b[16];
     fmt(b, sizeof b, v, metrics[k].decimals);
-    lv_label_set_text(val, b);
+    ui_text(val, b);
 
     metric_state_t s = metric_state(k, v);
     lv_color_t c = state_color(s);
@@ -663,11 +699,11 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     /* Vivid state colouring, matching the design reference: the value takes
      * its state colour (OK=green, INFO=blue, WARN=amber, CRIT=red). The
      * saturated colour is what carries contrast on this weak panel. */
-    lv_obj_set_style_text_color(val, c, 0);
-    if (dot) lv_obj_set_style_bg_color(dot, c, 0);
+    ui_text_color(val, c);
+    if (dot) ui_bg_color(dot, c, 0);
     if (bar) {
         lv_bar_set_value(bar, pct_of(k, v), LV_ANIM_OFF);
-        lv_obj_set_style_bg_color(bar, c, LV_PART_INDICATOR);
+        ui_bg_color(bar, c, LV_PART_INDICATOR);
     }
 }
 
@@ -705,19 +741,18 @@ void cluster_ui_refresh(void)
                  break;
         default: lv_snprintf(b, sizeof b, "--"); break;
     }
-    lv_label_set_text(ui.gear_val, b);
+    ui_text(ui.gear_val, b);
     /* Reverse: the whole "R" glows bright orange (a reversing cue). Other ranges
      * keep the white base; the D case still recolors its gear number green. */
-    lv_obj_set_style_text_color(ui.gear_val,
-                                (live && d.sel_range == 2) ? C_ORANGE : C_TEXT2, 0);
+    ui_text_color(ui.gear_val, (live && d.sel_range == 2) ? C_ORANGE : C_TEXT2);
 
-    if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); lv_label_set_text(ui.speed_val, b); }
-    else        lv_label_set_text(ui.speed_val, "--");
-    if (live && has_value(d.rpm)) { fmt(b, sizeof b, d.rpm, 0); lv_label_set_text(ui.rpm_val, b); }
-    else        lv_label_set_text(ui.rpm_val, "--");
+    if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); ui_text(ui.speed_val, b); }
+    else        ui_text(ui.speed_val, "--");
+    if (live && has_value(d.rpm)) { fmt(b, sizeof b, d.rpm, 0); ui_text(ui.rpm_val, b); }
+    else        ui_text(ui.rpm_val, "--");
     {   /* RPM stays white, but warns/reds near the redline */
         metric_state_t rs = (live && has_value(d.rpm)) ? metric_state(M_RPM, d.rpm) : ST_OK;
-        lv_obj_set_style_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2, 0);
+        ui_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2);
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.dm_val[i], ui.dm_bar[i], ui.dm_dot[i], DRIVE_M[i], &d, live);
@@ -731,41 +766,43 @@ void cluster_ui_refresh(void)
      * DTC count only (the mode-03 list is not decoded), hence the wording. */
     bool mil_ok = live && d.mil_valid;
     if (!mil_ok) {
-        lv_label_set_text(ui.mil_text, "--");
-        lv_obj_set_style_text_color(ui.mil_text, C_MUTED, 0);
+        ui_text(ui.mil_text, "--");
+        ui_text_color(ui.mil_text, C_MUTED);
     } else {
-        lv_label_set_text(ui.mil_text, d.mil ? "ON" : "OFF");
-        lv_obj_set_style_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2, 0);
+        ui_text(ui.mil_text, d.mil ? "ON" : "OFF");
+        ui_text_color(ui.mil_text, d.mil ? C_CRIT : C_TEXT2);
     }
     if (!mil_ok) {
-        lv_label_set_text(ui.dtc_msg, "NO DATA");
-        lv_obj_set_style_text_color(ui.dtc_msg, C_MUTED, 0);
-        lv_label_set_text(ui.dtc_ic, "-");
-        lv_obj_set_style_text_color(ui.dtc_ic, C_MUTED, 0);
-        lv_obj_set_style_border_color(ui.dtc_ring, C_FAINT, 0);
+        ui_text(ui.dtc_msg, "NO DATA");
+        ui_text_color(ui.dtc_msg, C_MUTED);
+        ui_text(ui.dtc_ic, "-");
+        ui_text_color(ui.dtc_ic, C_MUTED);
+        ui_border_color(ui.dtc_ring, C_FAINT);
     } else if (d.dtc_count > 0) {
         char mb[40];
         lv_snprintf(mb, sizeof mb, "%u EMISSION CODE%s",
                     (unsigned)d.dtc_count, d.dtc_count == 1 ? "" : "S");
-        lv_label_set_text(ui.dtc_msg, mb);
-        lv_obj_set_style_text_color(ui.dtc_msg, C_WARN, 0);
-        lv_label_set_text(ui.dtc_ic, "!");
-        lv_obj_set_style_text_color(ui.dtc_ic, C_WARN, 0);
-        lv_obj_set_style_border_color(ui.dtc_ring, C_WARN, 0);
+        ui_text(ui.dtc_msg, mb);
+        ui_text_color(ui.dtc_msg, C_WARN);
+        ui_text(ui.dtc_ic, "!");
+        ui_text_color(ui.dtc_ic, C_WARN);
+        ui_border_color(ui.dtc_ring, C_WARN);
     } else {
-        lv_label_set_text(ui.dtc_msg, "NO EMISSION CODES");
-        lv_obj_set_style_text_color(ui.dtc_msg, C_OK, 0);
-        lv_label_set_text(ui.dtc_ic, LV_SYMBOL_OK);
-        lv_obj_set_style_text_color(ui.dtc_ic, C_OK, 0);
-        lv_obj_set_style_border_color(ui.dtc_ring, C_OK, 0);
+        ui_text(ui.dtc_msg, "NO EMISSION CODES");
+        ui_text_color(ui.dtc_msg, C_OK);
+        ui_text(ui.dtc_ic, LV_SYMBOL_OK);
+        ui_text_color(ui.dtc_ic, C_OK);
+        ui_border_color(ui.dtc_ring, C_OK);
     }
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
     {   /* Workbench readout. Line 1: last negative response, RX FIFO overflow
-         *         events and frames dropped as malformed — whether the normal
-         *         DRIVE/DIAG traffic already overruns the 16-deep FIFO while a
-         *         flush blocks the loop is an open question worth a photo.
+         *         events, frames dropped as malformed, TX failures, and LOOP =
+         *         the longest superloop period over the last second in ms (how
+         *         long the display path stalls OBD) — whether the normal
+         *         DRIVE/DIAG traffic overruns the 16-deep FIFO during such a
+         *         stall is an open question worth a photo.
          * Line 2: live RPM next to the two raw oil-pressure candidate bytes, so
          *         ONE photo during a throttle blip shows which byte tracks
          *         engine speed (docs/oil-pressure-test.md). Both are UNVERIFIED:
@@ -779,14 +816,14 @@ void cluster_ui_refresh(void)
             lv_snprintf(nrc, sizeof nrc, "--");
         obd_health_t h;
         obd_can_health(&h);
-        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u\n",
+        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u LOOP %u\n",
                             nrc, (unsigned)h.rx_lost, (unsigned)h.rx_bad,
-                            (unsigned)h.tx_fail);
+                            (unsigned)h.tx_fail, (unsigned)app_loop_max_ms());
 
         int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
         lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
                     rpm, (unsigned)d.oilp_1ba_raw, (unsigned)d.oilp_0c9_raw);
-        lv_label_set_text(ui.did_dbg, db);
+        ui_text(ui.did_dbg, db);
     }
 
     /* ----- SNIFF -----
@@ -803,9 +840,9 @@ void cluster_ui_refresh(void)
                     (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
                     h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
                     (unsigned)h.rx_lost);
-        lv_label_set_text(ui.sn_stat, sb);
-        lv_obj_set_style_text_color(ui.sn_stat,
-                                    h.bus_off ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN), 0);
+        ui_text(ui.sn_stat, sb);
+        ui_text_color(ui.sn_stat,
+                      h.bus_off ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN));
 
         /* STATE: low-cardinality bytes with their distinct value set. The
          * selector is the row whose values are the detent codes, listed in
@@ -825,7 +862,7 @@ void cluster_ui_refresh(void)
             if (off >= (int)sizeof rows - 1) break;
         }
         if (nc == 0) lv_snprintf(rows, sizeof rows, "no state bytes yet");
-        lv_label_set_text(ui.sn_rows, rows);
+        ui_text(ui.sn_rows, rows);
 
         /* ANALOG: widest-span bytes. A temperature climbing on warm-up or a
          * pressure jumping on a throttle blip shows a large min>max here while
@@ -843,7 +880,7 @@ void cluster_ui_refresh(void)
             if (aoff >= (int)sizeof arows - 1) break;
         }
         if (nm == 0) lv_snprintf(arows, sizeof arows, "no analog bytes yet");
-        lv_label_set_text(ui.sn_ana, arows);
+        ui_text(ui.sn_ana, arows);
     }
 
     /* ----- alert strip -----
@@ -872,8 +909,8 @@ void cluster_ui_refresh(void)
         else if (ts[i] == ST_WARN) { tc = C_WARN; ulc = C_WARN; }
         else                       { tc  = indicator ? C_FAINT : C_MUTED;
                                      ulc = indicator ? C_LINE  : C_OK; }
-        lv_obj_set_style_text_color(ui.tag[i], tc, 0);
-        lv_obj_set_style_bg_color(ui.tag_ul[i], ulc, 0);
+        ui_text_color(ui.tag[i], tc);
+        ui_bg_color(ui.tag_ul[i], ulc, 0);
         if (ts[i] > worst) worst = ts[i];
         if (ts[i] >= ST_WARN) nalarm++;
     }
@@ -883,27 +920,27 @@ void cluster_ui_refresh(void)
     else if (worst == ST_CRIT) { txt = LV_SYMBOL_WARNING " CHECK";    col = C_CRIT; }
     else if (worst == ST_WARN) { txt = LV_SYMBOL_WARNING " WARN";     col = C_WARN; }
     else                       { txt = "NOMINAL";                    col = C_OK;   }
-    lv_label_set_text(ui.summary, txt);
-    lv_obj_set_style_text_color(ui.summary, col, 0);
+    ui_text(ui.summary, txt);
+    ui_text_color(ui.summary, col);
 
-    if (nalarm > 0) { lv_snprintf(b, sizeof b, "%d", nalarm); lv_label_set_text(ui.count, b); }
-    else            lv_label_set_text(ui.count, "");
+    if (nalarm > 0) { lv_snprintf(b, sizeof b, "%d", nalarm); ui_text(ui.count, b); }
+    else            ui_text(ui.count, "");
 
     /* strip background tint by worst state */
     lv_color_t sbg = C_ALERTBG, sbd = C_LINE;
     if (worst == ST_CRIT || !live) { sbg = lv_color_hex(0x1a0a0d); sbd = C_CRIT; }
     else if (worst == ST_WARN)     { sbg = lv_color_hex(0x1a1408); sbd = C_WARN; }
-    lv_obj_set_style_bg_color(ui.strip, sbg, 0);
-    lv_obj_set_style_border_color(ui.strip, sbd, 0);
+    ui_bg_color(ui.strip, sbg, 0);
+    ui_border_color(ui.strip, sbd);
 
     /* full-screen alert border: red on any critical parameter (high coolant,
      * MIL, CAN lost, ...), orange when reverse is engaged, off otherwise. Red
      * outranks reverse. */
     if (worst == ST_CRIT || !live) {
-        lv_obj_set_style_border_color(ui.border, C_CRIT, 0);
+        ui_border_color(ui.border, C_CRIT);
         lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
     } else if (live && d.sel_range == 2) {          /* R */
-        lv_obj_set_style_border_color(ui.border, C_ORANGE, 0);
+        ui_border_color(ui.border, C_ORANGE);
         lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(ui.border, LV_OBJ_FLAG_HIDDEN);

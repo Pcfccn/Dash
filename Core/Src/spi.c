@@ -64,7 +64,9 @@ void MX_SPI2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN SPI2_Init 2 */
-
+  /* lv_port_disp.c (spi2_dma_init) re-inits SPI2 at /8 = 18.75 MHz, raises the
+   * PB13-15 pin speed and attaches DMA1 Stream0 for the display flush. The
+   * prescaler above is only the CubeMX starting value. */
   /* USER CODE END SPI2_Init 2 */
 
 }
