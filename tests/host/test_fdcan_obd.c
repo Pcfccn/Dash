@@ -512,6 +512,46 @@ static void t_mil_tx_refusal_counts_as_miss(void)        /* F7 */
     CHECK(!g_obd.mil_valid);
 }
 
+/* R9: over a long run nothing this E98 never answers (PID 0x5C, PID 0x78,
+ * mode 03) is requested, and every signal we do use still is. Requests are
+ * left unanswered, so each one also exercises the timeout path. */
+static void t_schedule_contents(void)
+{
+    bool seen_rpm = false, seen_speed = false, seen_map = false, seen_mil = false;
+    bool seen_cool = false, seen_rail = false, seen_load = false;
+    bool seen_atf = false, seen_gear = false, seen_oil = false;
+    int  bad_req = 0;
+    for (int i = 0; i < 2000; i++) {
+        tx_n = 0;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[1] == 0x03) bad_req++;
+            if (q[1] == 0x01) {
+                for (int b = 2; b < 1 + q[0]; b++) {
+                    if (q[b] == 0x5C || q[b] == 0x78) bad_req++;
+                    if (q[b] == 0x0C) seen_rpm = true;
+                    if (q[b] == 0x0D) seen_speed = true;
+                    if (q[b] == 0x0B) seen_map = true;
+                    if (q[b] == 0x01) seen_mil = true;
+                    if (q[b] == 0x05) seen_cool = true;
+                    if (q[b] == 0x23) seen_rail = true;
+                    if (q[b] == 0x04) seen_load = true;
+                }
+            }
+            if (q[1] == 0x22) {
+                uint16_t did = (uint16_t)((q[2] << 8) | q[3]);
+                if (did == 0x1940 && txlog[k].id == OBD_REQ_TCM2) seen_atf = true;
+                if (did == 0x199A && txlog[k].id == OBD_REQ_TCM2) seen_gear = true;
+                if (did == 0x1154 && txlog[k].id == OBD_REQ_ECM)  seen_oil = true;
+            }
+        }
+    }
+    CHECK(bad_req == 0);
+    CHECK(seen_rpm && seen_speed && seen_map && seen_mil && seen_cool);
+    CHECK(seen_rail && seen_load && seen_atf && seen_gear && seen_oil);
+}
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -561,6 +601,7 @@ int main(void)
         { "mil_invalid_after_3_misses", t_mil_invalid_after_three_misses },
         { "mil_tx_refusal_is_miss",     t_mil_tx_refusal_counts_as_miss },
         { "sniff_pauses_polling",       t_sniff_pauses_polling },
+        { "schedule_contents",          t_schedule_contents },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

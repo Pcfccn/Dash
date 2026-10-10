@@ -2,9 +2,10 @@
  *  fdcan_obd.c  — read-only OBD-II poller over FDCAN1 (classic CAN, 500 kbps)
  *
  *  Requests go to the ECM (0x7E0) and the trans controller (0x7E2); responses
- *  arrive on 0x7E8 / 0x7EA. Multi-byte responses (mode 03 DTC list, EGT) use
- *  ISO-TP, so we answer our own First Frames with a Flow Control (30 00 00)
- *  and reassemble Consecutive Frames.
+ *  arrive on 0x7E8 / 0x7EA. Replies longer than 7 bytes use ISO-TP, so we
+ *  answer our own First Frames with a Flow Control (30 00 00) and reassemble
+ *  Consecutive Frames. No request in the current schedule needs that, but the
+ *  path stays (and is tested) for when one does.
  *
  *  Project note: the vehicle bus is RECEIVED BY POLLING (obd_rx_poll) from the
  *  main loop -- the project has no FDCAN NVIC handler. FDCAN bit timing is set
@@ -176,12 +177,6 @@ static bool req_mode01(const uint8_t *pids, uint8_t n) {
     return request(OBD_REQ_ECM, d, 0x01, pids[0]);
 }
 
-/* mode 03: request stored DTCs */
-static bool req_mode03(void) {
-    uint8_t d[8] = { 0x01, 0x03, 0,0,0,0,0,0 };
-    return request(OBD_REQ_ECM, d, 0x03, 0);
-}
-
 /* mode 22 (UDS ReadDataByIdentifier): request one 2-byte DID from a module.
  * Used for the GM-enhanced values (ATF temp, gear) the trans controller serves
  * on 0x7E2. Responses come back as [0x62][DID_hi][DID_lo][data...]. */
@@ -332,8 +327,7 @@ static bool dispatch(uint32_t resp_id, const uint8_t *p, uint16_t n) {
         }
         return true;
     }
-    if (p[0] == 0x43) return true;   /* DTC list: closes our mode-03 request, not decoded */
-    return false;
+    return false;                    /* incl. 0x43: mode 03 is not requested     */
 }
 
 /* ---- bus health (surfaced on the SNIFF page) -----------------------------
@@ -598,12 +592,17 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *         Speed was on MEDIUM before but lagged ~10 s worst-case behind the
  *         blocking flush (2026-08-23 run); on FAST it lands sub-second.
  *
- *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, temps, MIL, DTC, and
+ *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, coolant+IAT, MIL, and
  *         load+baro (fastB). Baro is ambient and barely moves.
  *
- *   SLOW  (every SLOW_DIV ticks): oil-temp DID (0x1154) + EGT PID (0x78), one
- *         per slow tick. (The DPF/soot/EGR probes were removed — this ECM never
- *         answered them.)
+ *   SLOW  (every SLOW_DIV ticks): the oil-temp DID (0x1154).
+ *
+ * Not polled, because this E98 never answers them or nothing uses the answer:
+ * PID 0x5C (oil temp: omitted from grouped replies; 0x1154 is the source),
+ * PID 0x78 (EGT: no reply), mode 03 (DTC list: never decoded — the count comes
+ * from PID 0x01), and the DPF/soot/EGR probes. An unanswered request now holds
+ * the one transaction slot for OBD_AWAIT_TICKS, so each of these cost real
+ * polling time. Their decoders stay: another tester's replies still feed us.
  *
  * One transaction at a time: while a request is outstanding a tick only ages
  * it (await_ttl, or itp_ttl while its multi-frame answer is arriving), and
@@ -616,33 +615,21 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  * multi-frame round trip. */
 static struct {                      /* file scope, not function statics, so   */
     uint32_t tick;                   /* the host tests can reset the position  */
-    uint8_t  med_idx, probe_idx, fast_tog;
+    uint8_t  med_idx, fast_tog;
 } sched;
 
 void obd_poll_tick(void) {
     static const uint8_t fastRM[] = { 0x0C, 0x0B };       /* rpm(2)+MAP(1)    = 6 payload */
     static const uint8_t fastRS[] = { 0x0C, 0x0D };       /* rpm(2)+speed(1)  = 6 payload */
     static const uint8_t fastB[] = { 0x04, 0x33 };        /* load+baro        = 5 payload */
-    static const uint8_t temps[] = { 0x05, 0x5C, 0x0F };  /* cool+oil+iat    <= 7 */
-    static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 6 */
+    static const uint8_t temps[] = { 0x05, 0x0F };        /* cool+iat         = 5 payload */
+    static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 7 payload */
     static const uint8_t mil1[]  = { 0x01 };
 
-    /* medium: 7 items, one per MED_DIV ticks */
-    #define N_MED    7u
+    /* medium: 6 items, one per MED_DIV ticks */
+    #define N_MED    6u
     #define MED_DIV  3u   /* fire medium item every 3 ticks */
-
-    /* slow probes: mode-22 engine DIDs then mode-01 diesel PIDs, one per SLOW_DIV ticks */
-    static const uint16_t probe_did[] = {
-        0x1154,  /* oil temperature (GM enhanced)    */
-        /* 0x115C removed: NRC 22/31 on this E98, oil press via 0x1BA broadcast */
-    };
-    static const uint8_t probe_pid[] = {
-        0x78,  /* EGT bank 1              */
-    };
-    #define N_PROBE_DID  (sizeof probe_did / sizeof probe_did[0])
-    #define N_PROBE_PID  (sizeof probe_pid)
-    #define N_PROBE      (N_PROBE_DID + N_PROBE_PID)
-    #define SLOW_DIV     16u  /* fire one probe every 16 ticks */
+    #define SLOW_DIV 16u  /* oil-temp DID every 16 ticks    */
 
     if (can_sniff_is_active()) return;
 
@@ -658,26 +645,17 @@ void obd_poll_tick(void) {
     ++sched.tick;
 
     if (sched.tick % SLOW_DIV == 0u) {
-        /* slow probe: rotate through enhanced DIDs then diesel mode-01 PIDs */
-        uint8_t p = sched.probe_idx % N_PROBE;
-        if (p < N_PROBE_DID) {
-            req_mode22(OBD_REQ_ECM, probe_did[p]);
-        } else {
-            uint8_t pid = probe_pid[p - N_PROBE_DID];
-            req_mode01(&pid, 1);
-        }
-        sched.probe_idx++;
+        /* engine oil temp (GM enhanced). Oil PRESSURE is not polled: DIDs
+         * 0x115C / 0x1470 return NRC 22/31 on this E98. */
+        req_mode22(OBD_REQ_ECM, 0x1154);
     } else if (sched.tick % MED_DIV == 0u) {
         switch (sched.med_idx % N_MED) {
             case 0: req_mode01(misc,  sizeof misc);          break; /* rail, batt       */
             case 1: req_mode22(OBD_REQ_TCM2, 0x1940);       break; /* ATF temp         */
             case 2: req_mode22(OBD_REQ_TCM2, 0x199A);       break; /* gear             */
-            case 3: req_mode01(temps, sizeof temps);         break; /* cool, oil, iat   */
-            case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL/monitor      */
-            case 5: req_mode03();                            break; /* DTC list         */
-            case 6: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
-            /* oil pressure is NOT polled: 0x115C DID returns NRC 22/31 on this
-             * E98; it arrives as a passive CAN broadcast (see obd_rx_poll). */
+            case 3: req_mode01(temps, sizeof temps);         break; /* coolant, IAT     */
+            case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL / DTC count  */
+            case 5: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
         }
         sched.med_idx++;
     } else {

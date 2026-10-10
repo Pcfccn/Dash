@@ -158,12 +158,12 @@ static const pid_map_t pid_map[] = {
   { M_SPEED,        SRC_ECM, OBD_MODE_CURRENT, 0x000D, "A  (km/h)" },
   { M_RPM,          SRC_ECM, OBD_MODE_CURRENT, 0x000C, "((A*256)+B)/4" },
   { M_COOL,         SRC_ECM, OBD_MODE_CURRENT, 0x0005, "A-40  (degC)" },
-  { M_OIL,          SRC_ECM, OBD_MODE_CURRENT, 0x005C, "A-40  (modelled)" },
+  { M_OIL,          SRC_ECM, OBD_MODE_CURRENT, 0x005C, "A-40  — NOT polled: omitted by this E98; oil temp comes from DID 0x1154" },
   { M_IAT,          SRC_ECM, OBD_MODE_CURRENT, 0x000F, "A-40  (degC)" },
   { M_LOAD,         SRC_ECM, OBD_MODE_CURRENT, 0x0004, "A*100/255  (%)" },
   { M_BOOST,        SRC_ECM, OBD_MODE_CURRENT, 0x000B, "MAP=A kPa; boost=MAP-baro(0x33)" },
   { M_RAIL,         SRC_ECM, OBD_MODE_CURRENT, 0x0023, "((A*256)+B)/10  (bar)" },
-  { M_EGT,          SRC_ECM, OBD_MODE_CURRENT, 0x0078, "sensor bank1; ((A*256+B)/10)-40, pick DPF-zone sensor" },
+  { M_EGT,          SRC_ECM, OBD_MODE_CURRENT, 0x0078, "sensor 1 ((B*256+C)/10)-40 — NOT polled: no reply from this E98" },
   { M_BATTERY,      SRC_ECM, OBD_MODE_CURRENT, 0x0042, "((A*256)+B)/1000  (V)" },
 
   /* ENHANCED / non-standard. DIDs from GM/Torque/EFILive community configs for
