@@ -9,7 +9,7 @@
  *
  *  Layout is absolute-positioned on a 320x480 panel:
  *      y 0..31    alert strip (always visible)
- *      y 32..479  the active page (DRIVE / DPF / DIAG), 320 x 448
+ *      y 32..479  the active page (DRIVE / DIAG / SNIFF), 320 x 448
  *
  *  Values come from g_obd (fdcan_obd.c). "no data" (bus quiet, or an enhanced
  *  DID not yet mapped) renders as "--" in grey — never a fake green reading.
