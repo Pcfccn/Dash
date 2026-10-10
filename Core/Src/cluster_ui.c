@@ -867,6 +867,9 @@ void cluster_ui_refresh(void)
         o += lv_snprintf(db + o, sizeof db - o, "OILP %s  22/%s 2C/%s AA/%s  RAW %s",
                          OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE],
                          n22, n2c, naa, raw);
+        /* CAP: transactions cut by the total limit (endless NRC 0x78). */
+        if (h.txn_capped && o < (int)sizeof db)
+            o += lv_snprintf(db + o, sizeof db - o, " CAP%u", (unsigned)h.txn_capped);
         /* Aborted display SPI transfers (main / status screen) and main-panel
          * re-inits: only shown when something went wrong, so the line stays
          * short normally. */

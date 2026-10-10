@@ -154,7 +154,7 @@ static void reset(void)
     hw_head = hw_tail = 0; tx_n = 0; tx_status = HAL_OK; updates = 0; now_ms = 1000;
     sniff_on = false; sniff_feeds = 0;
     memset(&sched, 0, sizeof sched);              /* scheduler position */
-    await_sid = 0; await_key = 0;
+    await_sid = 0; await_key = 0; await_start = 0; await_npids = 0; txn_cap_cnt = 0;
     memset((void *)&g_obd, 0, sizeof g_obd);
     g_obd.speed = NAN; g_obd.rpm = NAN; g_obd.cool = NAN; g_obd.oil = NAN; g_obd.iat = NAN;
     g_obd.load = NAN; g_obd.boost = NAN; g_obd.rail = NAN; g_obd.egt = NAN; g_obd.battery = NAN;
@@ -1168,6 +1168,126 @@ static void t_summary_needs_complete_data(void)
 }
 
 /* --- Stage C2 deep-audit addendum ------------------------------------------ */
+/* D02: a raw 0xFF (no-data) must clear the shown pressure at once, not leave
+ * the previous 4.00 bar fresh for 15 s. */
+static void t_d02_oilp_ff_clears_value(void)
+{
+    g_obd.can_ok = true;
+    PUSH(0x7E8, 8, 0x04, 0x62, 0xA2, 0x2C, 0x64, 0x00, 0x00, 0x00);   /* 100 = 4.00 bar */
+    obd_rx_poll();
+    CHECK(near(g_obd.oil_press, 4.0f));
+    now_ms += 1000u;
+    PUSH(0x7E8, 8, 0x04, 0x62, 0xA2, 0x2C, 0xFF, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(isnan(g_obd.oil_press));
+    CHECK(!policy_shown(&g_obd, M_OILP, now_ms));
+    CHECK(oilp.raw == 0xFF);
+}
+
+/* D03: repeated NRC 0x78 cannot hold the only transaction slot forever. */
+static void t_d03_nrc78_total_cap(void)
+{
+    uint32_t t0 = now_ms;
+    CHECK(req_mode22(OBD_REQ_ECM, 0x1154));
+    for (int i = 0; i < 5; i++) {
+        now_ms += 4900u;
+        PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x78, 0x00, 0x00, 0x00, 0x00);
+        obd_rx_poll();
+        obd_poll_tick();
+    }
+    CHECK(now_ms - t0 == 24500u);
+    /* released well before this, and ordinary polling resumed */
+    CHECK(!(await_resp_id == OBD_RESP_ECM && await_sid == 0x22 && await_key == 0x1154));
+    bool other = false;
+    for (int k = 1; k < tx_n; k++) if (txlog[k].data[1] == 0x01) other = true;
+    CHECK(other);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.txn_capped == 1);
+}
+
+/* D03: a pending sequence inside the cap still completes. */
+static void t_d03_nrc78_within_cap_completes(void)
+{
+    CHECK(req_mode22(OBD_REQ_ECM, 0x1154));
+    now_ms += 3000u;
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x78, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll(); obd_poll_tick();
+    now_ms += 4000u;                                    /* 7 s in, < 10 s cap */
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x11, 0x54, 0x82, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(await_resp_id == 0 && near(g_obd.oil, 90.0f));
+}
+
+/* D04: an RPM-only reply does not close a pending RPM+speed request; a full
+ * one does, in either order. Each valid PID is still decoded. */
+static void t_d04_grouped_reply_must_cover(void)
+{
+    static const uint8_t rs[] = { 0x0C, 0x0D };
+    CHECK(req_mode01(rs, 2));
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* RPM only */
+    obd_rx_poll();
+    CHECK(near(g_obd.rpm, 2000.0f));
+    CHECK(await_resp_id == OBD_RESP_ECM);                               /* still open */
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x0D, 0x43, 0x0C, 0x1F, 0x40, 0x00);   /* speed, rpm */
+    obd_rx_poll();
+    CHECK(await_resp_id == 0);
+    CHECK(near(g_obd.speed, 60.0f));
+}
+
+/* D05: a reply that ARRIVED after its deadline is not a timely answer, even
+ * if the loop only gets to it later; one that arrived in time is, however
+ * late it is processed. Arrival = ISR time, so this is the interrupt path. */
+static void t_d05_late_arrival_is_not_an_answer(void)
+{
+    irq_mode();
+    static const uint8_t rpm = 0x0C;
+    uint32_t t0 = now_ms;
+    CHECK(req_mode01(&rpm, 1));
+    now_ms = t0 + 250u;                                 /* deadline was t0+150 */
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    now_ms = t0 + 1500u;                                /* loop stalled */
+    obd_rx_poll();
+    CHECK(near(g_obd.rpm, 2000.0f));                    /* data kept, its own stamp */
+    CHECK(g_obd.upd_ms[M_RPM] == t0 + 250u);
+    CHECK(await_resp_id == OBD_RESP_ECM);               /* not closed as answered */
+    obd_poll_tick();                                    /* times out instead */
+    CHECK(!(await_resp_id == OBD_RESP_ECM && await_key == 0x0C && tx_n == 1));
+
+    await_resp_id = 0; tx_n = 0;                        /* in time, processed late */
+    t0 = now_ms;
+    CHECK(req_mode01(&rpm, 1));
+    now_ms = t0 + 100u;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x0F, 0xA0, 0x00, 0x00, 0x00);   /* 1000 rpm */
+    FDCAN1_IT0_IRQHandler();
+    now_ms = t0 + 1500u;
+    obd_rx_poll();
+    CHECK(await_resp_id == 0 && near(g_obd.rpm, 1000.0f));
+}
+
+static void t_d05_arrival_check_across_wrap(void)
+{
+    irq_mode();
+    static const uint8_t rpm = 0x0C;
+    now_ms = 0xFFFFFFC0u;                               /* deadline wraps past 0 */
+    uint32_t t0 = now_ms;
+    CHECK(req_mode01(&rpm, 1));
+    now_ms = t0 + 100u;                                 /* in time, after the wrap */
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    now_ms = t0 + 900u;
+    obd_rx_poll();
+    CHECK(await_resp_id == 0);
+    t0 = now_ms;
+    CHECK(req_mode01(&rpm, 1));
+    now_ms = t0 + 200u;                                 /* late */
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    obd_rx_poll();
+    CHECK(await_resp_id == OBD_RESP_ECM);
+}
+
 /* D01: with SNIFF on, every accepted frame reaches the sniffer — the selector,
  * OBD replies and UUDT too, not only unknown IDs. Off: nothing. */
 static void t_d01_sniff_sees_every_frame(void)
@@ -1289,6 +1409,12 @@ int main(void)
         { "tick_wraparound",            t_tick_wraparound },
         { "d01_sniff_sees_every_frame", t_d01_sniff_sees_every_frame },
         { "d06_sniff_gets_rx_time",     t_d06_sniff_gets_rx_time },
+        { "d02_oilp_ff_clears_value",   t_d02_oilp_ff_clears_value },
+        { "d03_nrc78_total_cap",        t_d03_nrc78_total_cap },
+        { "d03_nrc78_within_cap",       t_d03_nrc78_within_cap_completes },
+        { "d04_grouped_reply_must_cover",t_d04_grouped_reply_must_cover },
+        { "d05_late_arrival_not_answer",t_d05_late_arrival_is_not_an_answer },
+        { "d05_arrival_check_wrap",     t_d05_arrival_check_across_wrap },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

@@ -149,12 +149,24 @@ static struct {                 /* file scope: the host tests reset it          
  * with RX drained only from the loop behind a blocking full-screen flush, a
  * 50 ms deadline had always expired by the time obd_rx_poll() ran, silently
  * killing every multi-frame reply. */
+/* Ownership goes by the RECEIVE time of a reply (rx_ms_cur, ISR): it must
+ * have arrived after the request went out and before its deadline. A reply
+ * that arrived late but is only processed now is still decoded (with its own
+ * stamp), it just does not count as this transaction's answer. */
 #define OBD_AWAIT_MS    150u    /* normal answer (OBD P2 is 50 ms)              */
 #define OBD_PENDING_MS 5000u    /* after NRC 0x78: UDS P2* limit                */
+/* Whole transaction, NRC 0x78 extensions included: a responder that keeps
+ * sending "pending" (or another tester's matching 0x78s) must not hold the
+ * only slot forever. Counted as CAP on DIAG when it cuts one short. */
+#define OBD_TXN_MAX_MS 10000u
 static uint32_t await_resp_id;  /* 0 = idle, else the response ID we wait for   */
+static uint32_t await_start;    /* HAL tick the request went out                */
 static uint32_t await_deadline; /* HAL tick at which the transaction fails      */
 static uint8_t  await_sid;      /* service of the outstanding request           */
 static uint16_t await_key;      /* its first PID (mode 01) or DID (mode 22)     */
+static uint8_t  await_pids[6];  /* mode 01: every PID requested ...             */
+static uint8_t  await_npids;    /* ... and how many (0 for other services)      */
+static volatile uint16_t txn_cap_cnt;   /* transactions ended by OBD_TXN_MAX_MS  */
 
 static volatile uint16_t tx_fail_cnt;   /* frames the TX FIFO refused           */
 
@@ -213,12 +225,49 @@ static void txn_answered(const uint8_t *p) {
  * (mode 03 echoes nothing); a negative response must name our service. A
  * tester asking the very same thing still collides — unavoidable on a shared
  * bus without seeing the requests. */
-static bool reply_is_ours(uint32_t resp_id, const uint8_t *p, uint16_t n) {
+static int8_t mode01_len(uint8_t pid);
+
+/* Was this PID part of the outstanding mode-01 request? */
+static bool pid_requested(uint8_t pid) {
+    for (uint8_t k = 0; k < await_npids; k++) if (await_pids[k] == pid) return true;
+    return false;
+}
+
+/* Does a complete mode-01 reply carry EVERY PID we asked for (any order)? A
+ * grouped request (RPM + speed) answered with RPM alone — another tester's
+ * request, or a nonconforming ECU — must not close the slot with speed still
+ * missing. The PIDs it does carry are decoded either way. */
+static bool mode01_covers(const uint8_t *p, uint16_t n) {
+    bool seen[6] = { false };
+    for (uint16_t i = 1; i < n; ) {
+        for (uint8_t k = 0; k < await_npids; k++) if (p[i] == await_pids[k]) seen[k] = true;
+        int8_t len = mode01_len(p[i]);
+        if (len < 0) break;
+        i = (uint16_t)(i + 1u + (uint16_t)len);
+    }
+    for (uint8_t k = 0; k < await_npids; k++) if (!seen[k]) return false;
+    return true;
+}
+
+/* Did the frame being decoded arrive while the transaction was open, i.e.
+ * after the request and before `deadline`? Wrap-safe. In the polled fallback
+ * rx_ms_cur is the pump time, only an upper bound on the arrival: judging by
+ * it would fake a timeout after every stall, so there the old rule stays
+ * (anything processed before the deadline check counts). */
+static bool arrived_in_time(uint32_t deadline) {
+    if (!rx_irq) return true;
+    return (int32_t)(rx_ms_cur - await_start) >= 0 && (int32_t)(rx_ms_cur - deadline) < 0;
+}
+
+/* `complete`: p is a whole reply (SF, or a reassembled transfer). A First
+ * Frame shows only its first bytes, so there a mode-01 reply only has to start
+ * with a requested PID; the full check runs once the transfer is complete. */
+static bool reply_is_ours(uint32_t resp_id, const uint8_t *p, uint16_t n, bool complete) {
     if (await_resp_id == 0u || resp_id != await_resp_id || n < 1u) return false;
     if (p[0] == 0x7F) return n >= 2u && p[1] == await_sid;
     if (p[0] != (uint8_t)(await_sid + 0x40u)) return false;
     switch (await_sid) {
-        case 0x01: return n >= 2u && p[1] == (uint8_t)await_key;
+        case 0x01: return n >= 2u && (complete ? mode01_covers(p, n) : pid_requested(p[1]));
         case 0x22: return n >= 3u && ((((uint16_t)p[1]) << 8) | p[2]) == await_key;
         case 0x2C: return n >= 2u && p[1] == (uint8_t)await_key;   /* DPID echo */
         default:   return true;
@@ -255,10 +304,12 @@ static bool request(uint32_t req_id, const uint8_t *d, uint8_t sid, uint16_t key
         if (sid == 0x01 && key == 0x01) mil_attempt_failed();
         return false;
     }
-    await_resp_id = req_id + 8u;     /* 0x7E0->0x7E8, 0x7E2->0x7EA              */
-    await_deadline = HAL_GetTick() + OBD_AWAIT_MS;
-    await_sid     = sid;
-    await_key     = key;
+    await_resp_id  = req_id + 8u;    /* 0x7E0->0x7E8, 0x7E2->0x7EA              */
+    await_start    = HAL_GetTick();
+    await_deadline = await_start + OBD_AWAIT_MS;
+    await_sid      = sid;
+    await_key      = key;
+    await_npids    = 0u;
     return true;
 }
 
@@ -268,7 +319,10 @@ static bool req_mode01(const uint8_t *pids, uint8_t n) {
     d[0] = (uint8_t)(1 + n);         /* PCI length: SID + n PIDs               */
     d[1] = 0x01;                     /* service                                */
     for (uint8_t i = 0; i < n && i < 6; i++) d[2 + i] = pids[i];
-    return request(OBD_REQ_ECM, d, 0x01, pids[0]);
+    if (!request(OBD_REQ_ECM, d, 0x01, pids[0])) return false;
+    await_npids = (n > 6u) ? 6u : n;                 /* the reply must carry all */
+    memcpy(await_pids, pids, await_npids);
+    return true;
 }
 
 /* mode 22 (UDS ReadDataByIdentifier): request one 2-byte DID from a module.
@@ -351,8 +405,13 @@ bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
 static void oilp_value(uint8_t a) {
     oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0;
     /* 0xFF would be 10.2 bar, the top of the byte and far above any pump
-     * relief: a saturated / no-data code, not a reading. Raw stays on DIAG. */
-    if (a == 0xFFu) return;
+     * relief: a saturated / no-data code, not a reading. It also ends the
+     * previous reading at once — leaving it, a 4.0 bar from a second ago
+     * stayed "fresh" for 15 s. Raw stays on DIAG. */
+    if (a == 0xFFu) {
+        if (!isnan(g_obd.oil_press)) { g_obd.oil_press = NAN; obd_on_update(); }
+        return;
+    }
     set_m(M_OILP, &g_obd.oil_press, (float)a * 0.04f);   /* 4 kPa = 0.04 bar */
 }
 
@@ -564,6 +623,7 @@ void obd_can_health(obd_health_t *h) {
     uint32_t lost     = (uint32_t)rx_lost_cnt + rxq_drop;   /* FIFO + ring */
     h->rx_lost        = (uint16_t)(lost > 0xFFFFu ? 0xFFFFu : lost);
     h->rx_hwm         = rxq_hwm;
+    h->txn_capped     = txn_cap_cnt;
     h->rx_irq         = rx_irq;
     h->busoff_recover = busoff_cnt;
     h->rx_bad         = rx_bad_cnt;
@@ -680,7 +740,8 @@ void obd_rx_poll(void) {
             if (dlc < 2u) { rx_bad(); continue; }
             last_rx_ms = rx_ms_cur;
             g_obd.can_ok = true;
-            if (await_resp_id != 0u && await_sid == 0xAA && d[0] == (uint8_t)await_key) {
+            if (await_resp_id != 0u && await_sid == 0xAA && d[0] == (uint8_t)await_key &&
+                arrived_in_time(await_deadline)) {
                 oilp_value(d[1]);
                 txn_close();
             }
@@ -705,13 +766,20 @@ void obd_rx_poll(void) {
             uint8_t len = d[0] & 0x0F;
             if (len == 0u || len > 7u || len > dlc - 1u) { rx_bad(); continue; }
             const uint8_t *pl = &d[1];
-            bool ours  = reply_is_ours(rh.Identifier, pl, len);
+            bool ours  = reply_is_ours(rh.Identifier, pl, len, true) &&
+                         arrived_in_time(await_deadline);
             bool valid = dispatch(rh.Identifier, pl, len);  /* decode even if not ours */
             if (ours && valid) {
                 /* NRC 0x78 (response pending) promises the real answer later:
-                 * keep the transaction open for it, with a longer bound. */
-                if (pl[0] == 0x7F && pl[2] == 0x78) await_deadline = HAL_GetTick() + OBD_PENDING_MS;
-                else                                txn_answered(pl);
+                 * keep the transaction open for it, with a longer bound —
+                 * but never past OBD_TXN_MAX_MS from the request. */
+                if (pl[0] == 0x7F && pl[2] == 0x78) {
+                    uint32_t dl  = rx_ms_cur + OBD_PENDING_MS;
+                    uint32_t cap = await_start + OBD_TXN_MAX_MS;
+                    await_deadline = ((int32_t)(dl - cap) > 0) ? cap : dl;
+                } else {
+                    txn_answered(pl);
+                }
             }
             /* ours && !valid: a malformed answer leaves the transaction open
              * for a proper one until its timeout. */
@@ -720,7 +788,8 @@ void obd_rx_poll(void) {
             /* Only drive a multi-frame transfer we requested. Another tester's
              * First Frame must not get our Flow Control (see await_resp_id),
              * and must not clobber our reassembly buffer. */
-            if (!reply_is_ours(rh.Identifier, &d[2], 6u)) continue;
+            if (!reply_is_ours(rh.Identifier, &d[2], 6u, false) ||
+                !arrived_in_time(await_deadline)) continue;
             uint16_t len = (uint16_t)(((d[0] & 0x0Fu) << 8) | d[1]);
             /* FF_DL below 8 would have been a Single Frame; above the buffer the
              * transfer could never complete. Reject before sending Flow Control,
@@ -733,7 +802,7 @@ void obd_rx_poll(void) {
             itp_len  = len;
             itp_got  = 0; itp_next_seq = 1; itp_active = true;
             itp_src_id = rh.Identifier;
-            itp_deadline = HAL_GetTick() + ITP_TIMEOUT_MS;
+            itp_deadline = rx_ms_cur + ITP_TIMEOUT_MS;
             for (int i = 0; i < 6; i++) itp_buf[itp_got++] = d[2 + i];
             /* No FC on the wire means the ECU never streams the rest. */
             if (!send_flow_control(rh.Identifier)) txn_failed();
@@ -745,20 +814,23 @@ void obd_rx_poll(void) {
              * on the First Frame, so need bounds the copy. */
             uint16_t need = (uint16_t)(itp_len - itp_got);
             if (need > 7u) need = 7u;
-            if ((d[0] & 0x0F) != itp_next_seq || (uint16_t)(dlc - 1u) < need) {
+            if (!arrived_in_time(itp_deadline) ||            /* N_Cr exceeded */
+                (d[0] & 0x0F) != itp_next_seq || (uint16_t)(dlc - 1u) < need) {
                 rx_bad();
                 txn_failed();
                 continue;
             }
             itp_next_seq = (itp_next_seq + 1) & 0x0F;
             for (uint16_t i = 0; i < need; i++) itp_buf[itp_got++] = d[1 + i];
-            itp_deadline = HAL_GetTick() + ITP_TIMEOUT_MS;
+            itp_deadline = rx_ms_cur + ITP_TIMEOUT_MS;
             if (itp_got >= itp_len) {
                 /* The transfer belongs to the open transaction, so completing
-                 * it closes exactly that one — never a newer request. */
+                 * it closes exactly that one — never a newer request. A
+                 * mode-01 transfer must also carry every requested PID. */
                 itp_active = false;
-                if (dispatch(itp_src_id, itp_buf, itp_len)) txn_answered(itp_buf);
-                else                                        txn_failed();
+                if (dispatch(itp_src_id, itp_buf, itp_len) &&
+                    reply_is_ours(itp_src_id, itp_buf, itp_len, true)) txn_answered(itp_buf);
+                else                                                   txn_failed();
             }
         }
     }
@@ -906,8 +978,11 @@ void obd_poll_tick(void) {
     if (can_sniff_is_active()) return;
 
     if (await_resp_id != 0u) {
+        uint32_t now      = HAL_GetTick();
         uint32_t deadline = itp_active ? itp_deadline : await_deadline;
-        if ((int32_t)(HAL_GetTick() - deadline) >= 0) txn_failed();
+        bool     capped   = (int32_t)(now - (await_start + OBD_TXN_MAX_MS)) >= 0;
+        if (capped && txn_cap_cnt < 0xFFFFu) txn_cap_cnt++;
+        if (capped || (int32_t)(now - deadline) >= 0) txn_failed();
         if (await_resp_id != 0u) return;    /* still outstanding: send nothing   */
     }
 
