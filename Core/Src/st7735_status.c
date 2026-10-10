@@ -102,6 +102,21 @@ static void st_hw_init(void)
     }
 }
 
+/* Bounded like the main panel's (lv_port_disp.c): a stuck SPI4 aborts and
+ * counts instead of hanging the loop. 6400 bytes at ~7 MHz take ~7 ms. */
+#define ST_SPI_TIMEOUT_MS 50u
+static volatile uint16_t st_spi_err;
+
+uint16_t st7735_status_spi_errors(void) { return st_spi_err; }
+
+static void st_tx(const uint8_t *p, size_t len)
+{
+    if (HAL_SPI_Transmit(&hspi4_st, (uint8_t *)p, (uint16_t)len, ST_SPI_TIMEOUT_MS) != HAL_OK) {
+        HAL_SPI_Abort(&hspi4_st);
+        if (st_spi_err < 0xFFFFu) st_spi_err++;
+    }
+}
+
 /* LVGL calls this to send init/setup commands (DC low = command, DC high = params). */
 static void st_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
                         const uint8_t *param, size_t param_size)
@@ -109,10 +124,10 @@ static void st_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
     LV_UNUSED(disp);
     st_cs_low();
     st_dc_cmd();
-    HAL_SPI_Transmit(&hspi4_st, (uint8_t *)cmd, (uint16_t)cmd_size, HAL_MAX_DELAY);
+    st_tx(cmd, cmd_size);
     if (param && param_size) {
         st_dc_data();
-        HAL_SPI_Transmit(&hspi4_st, (uint8_t *)param, (uint16_t)param_size, HAL_MAX_DELAY);
+        st_tx(param, param_size);
     }
     st_cs_high();
 }
@@ -129,9 +144,9 @@ static void st_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_siz
     }
     st_cs_low();
     st_dc_cmd();
-    HAL_SPI_Transmit(&hspi4_st, (uint8_t *)cmd, (uint16_t)cmd_size, HAL_MAX_DELAY);
+    st_tx(cmd, cmd_size);
     st_dc_data();
-    HAL_SPI_Transmit(&hspi4_st, param, (uint16_t)param_size, HAL_MAX_DELAY);
+    st_tx(param, param_size);
     st_cs_high();
     lv_display_flush_ready(disp);
 }

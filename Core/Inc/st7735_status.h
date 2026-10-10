@@ -23,5 +23,6 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt);
  *   mode: 0 = pages mode (hide overlay), 1 = brightness mode (show "BL xx%")
  *   pct : current backlight duty in % */
 void st7735_status_backlight(uint8_t mode, uint8_t pct);
+uint16_t st7735_status_spi_errors(void);  /* aborted SPI4 transfers since boot */
 
 #endif /* ST7735_STATUS_H */

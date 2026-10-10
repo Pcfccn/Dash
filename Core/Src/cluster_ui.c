@@ -21,6 +21,8 @@
 #include "can_sniff.h"
 #include "fault.h"
 #include "app_main.h"         /* app_loop_max_ms() for the DIAG readout */
+#include "lv_port_disp.h"     /* SPI error counters for the DIAG readout */
+#include "st7735_status.h"
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -838,8 +840,13 @@ void cluster_ui_refresh(void)
                             (unsigned)h.tx_fail, (unsigned)app_loop_max_ms());
 
         int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
-        lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
-                    rpm, (unsigned)d.oilp_1ba_raw, (unsigned)d.oilp_0c9_raw);
+        o += lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
+                         rpm, (unsigned)d.oilp_1ba_raw, (unsigned)d.oilp_0c9_raw);
+        /* Aborted display SPI transfers (main / status screen): only shown
+         * when something went wrong, so the line stays short normally. */
+        uint16_t se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
+        if ((se || se4) && o < (int)sizeof db)
+            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u", (unsigned)se, (unsigned)se4);
         ui_text(ui.did_dbg, db);
     }
 

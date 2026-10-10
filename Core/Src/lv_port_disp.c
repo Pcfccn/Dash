@@ -64,11 +64,32 @@ static inline void cs_high(void) { HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GP
 static inline void dc_cmd(void)  { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_RESET); }
 static inline void dc_data(void) { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET); }
 
+/* SPI transfers that went wrong: a blocking send that timed out or failed,
+ * or a DMA transfer abandoned by dma_wait(). Shown on DIAG when non-zero.
+ * Bounded timeouts instead of HAL_MAX_DELAY: a stuck SPI used to hang the
+ * loop until the IWDG reset the board; now the transfer is aborted, counted,
+ * and the next repaint tries again. */
+#define LCD_CMD_TIMEOUT_MS   10u    /* commands / parameters: a few bytes          */
+#define LCD_BULK_TIMEOUT_MS 100u    /* a full area: ~17 ms at 18.75 MHz            */
+static volatile uint16_t s_spi_err;
+
+uint16_t lv_port_disp_spi_errors(void) { return s_spi_err; }
+
+static void spi_err(void) { if (s_spi_err < 0xFFFFu) s_spi_err++; }
+
+static void lcd_tx(const uint8_t *p, uint16_t len, uint32_t timeout_ms)
+{
+    if (HAL_SPI_Transmit(&hspi2, (uint8_t *)p, len, timeout_ms) != HAL_OK) {
+        HAL_SPI_Abort(&hspi2);
+        spi_err();
+    }
+}
+
 static void lcd_write_cmd(uint8_t cmd)
 {
     dc_cmd();
     cs_low();
-    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);
+    lcd_tx(&cmd, 1, LCD_CMD_TIMEOUT_MS);
     cs_high();
 }
 
@@ -76,7 +97,7 @@ static void lcd_write_data(const uint8_t *data, uint16_t len)
 {
     dc_data();
     cs_low();
-    HAL_SPI_Transmit(&hspi2, (uint8_t *)data, len, HAL_MAX_DELAY);
+    lcd_tx(data, len, LCD_CMD_TIMEOUT_MS);
     cs_high();
 }
 
@@ -171,6 +192,7 @@ static void dma_wait(void)
             HAL_SPI_Abort(&hspi2);
             cs_high();
             s_dma_busy = false;
+            spi_err();
             break;
         }
     }
@@ -234,7 +256,7 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     if (HAL_SPI_Transmit_DMA(&hspi2, tx_buf, (uint16_t)n) != HAL_OK) {
         /* Fall back to a blocking send so the frame is not lost. */
         s_dma_busy = false;
-        HAL_SPI_Transmit(&hspi2, tx_buf, (uint16_t)n, HAL_MAX_DELAY);
+        lcd_tx(tx_buf, (uint16_t)n, LCD_BULK_TIMEOUT_MS);
         cs_high();
     }
 
