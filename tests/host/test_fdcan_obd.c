@@ -705,6 +705,61 @@ static void t_health_check_masks_rx_irq(void)
     CHECK(nvic_on);                                 /* re-enabled afterwards */
 }
 
+/* --- Per-metric freshness (R3/F6) ------------------------------------------ */
+static void t_decode_stamps_fresh(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(g_obd.upd_ms[M_RPM] == now_ms);
+    CHECK(obd_is_fresh(&g_obd, M_RPM, now_ms + metric_stale_ms[M_RPM]));
+    CHECK(!obd_is_fresh(&g_obd, M_RPM, now_ms + metric_stale_ms[M_RPM] + 1u));
+}
+
+static void t_unchanged_value_restamps(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    now_ms += 1500;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* same 2000 rpm */
+    obd_rx_poll();
+    CHECK(g_obd.upd_ms[M_RPM] == now_ms);           /* a steady value is still fresh */
+}
+
+/* R3: the ECM stops answering, the selector broadcast keeps the link "live";
+ * the old RPM must go stale instead of staying on screen. */
+static void t_stale_while_broadcast_alive(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    for (int i = 0; i < 30; i++) {                  /* 3 s of broadcasts only */
+        now_ms += 100;
+        PUSH(0x1F5, 8, 0, 0, 0, 0x04, 0, 0, 0, 0);
+        obd_rx_poll();
+    }
+    CHECK(g_obd.can_ok);
+    CHECK(near(g_obd.rpm, 2000.0f));                /* last value kept ...  */
+    CHECK(!obd_is_fresh(&g_obd, M_RPM, now_ms));    /* ... but not shown    */
+    CHECK(obd_sel_fresh(&g_obd, now_ms));           /* selector itself fresh */
+}
+
+static void t_selector_freshness(void)
+{
+    PUSH(0x1F5, 8, 0, 0, 0, 0x01, 0, 0, 0, 0);
+    obd_rx_poll();
+    CHECK(obd_sel_fresh(&g_obd, now_ms + SEL_STALE_MS));
+    CHECK(!obd_sel_fresh(&g_obd, now_ms + SEL_STALE_MS + 1u));
+}
+
+static void t_gear_and_boost_stamped(void)
+{
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0x03, 0x00, 0x00, 0x00);   /* gear 3 */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x0B, 0x96, 0x00, 0x00, 0x00, 0x00);   /* MAP 150 kPa */
+    obd_rx_poll();
+    CHECK(g_obd.gear == 3 && g_obd.upd_ms[M_GEAR] == now_ms);
+    CHECK(near(g_obd.boost, 0.49f) && g_obd.upd_ms[M_BOOST] == now_ms);
+    CHECK(obd_is_fresh(&g_obd, M_OILP, now_ms + 1000000u));     /* limit 0: never */
+}
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -763,6 +818,11 @@ int main(void)
         { "irq_rx_path",                t_irq_rx_path },
         { "ring_overflow_counted",      t_ring_overflow_counted },
         { "health_check_masks_rx_irq",  t_health_check_masks_rx_irq },
+        { "decode_stamps_fresh",        t_decode_stamps_fresh },
+        { "unchanged_value_restamps",   t_unchanged_value_restamps },
+        { "stale_while_broadcast_alive",t_stale_while_broadcast_alive },
+        { "selector_freshness",         t_selector_freshness },
+        { "gear_and_boost_stamped",     t_gear_and_boost_stamped },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

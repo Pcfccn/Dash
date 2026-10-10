@@ -207,8 +207,20 @@ static bool send_flow_control(uint32_t resp_id) {
 }
 
 /* =============================== decode ================================== */
-static void set_f(volatile float *dst, float v) {
+/* Store a decoded value and stamp it fresh — also when it did not change, so a
+ * steady reading is not mistaken for a stale one. */
+static void set_m(metric_key_t k, volatile float *dst, float v) {
+    g_obd.upd_ms[k] = HAL_GetTick();
     if (*dst != v) { *dst = v; obd_on_update(); }
+}
+
+bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now) {
+    uint16_t lim = metric_stale_ms[k];
+    return lim == 0u || (now - d->upd_ms[k]) <= lim;
+}
+
+bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
+    return (now - d->sel_upd_ms) <= SEL_STALE_MS;
 }
 
 /* Boost is a GAUGE pressure but PID 0x0B reports ABSOLUTE manifold pressure, so
@@ -223,7 +235,7 @@ static void update_boost(void) {
     if (isnan(last_map_kpa)) return;
     float bar = (last_map_kpa - baro_kpa) / 100.0f;
     if (bar < 0.0f) bar = 0.0f;      /* vacuum: not meaningful on this gauge   */
-    set_f(&g_obd.boost, bar);
+    set_m(M_BOOST, &g_obd.boost, bar);
 }
 
 /* Data bytes after each mode-01 PID we decode (SAE J1979). Any other PID has
@@ -260,20 +272,20 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
         switch (p[i]) {
             /* PID 0x0D is A km/h raw, but this ECM reads ~12% optimistic vs GPS
              * (60 GPS = 67 on screen, 2026-08-23 run) — scale to match GPS.     */
-            case 0x0D: set_f(&g_obd.speed,   v[0] * (60.0f / 67.0f));          break;
-            case 0x0C: set_f(&g_obd.rpm,     ((v[0] * 256) + v[1]) / 4.0f);    break;
-            case 0x05: set_f(&g_obd.cool,    v[0] - 40);                       break;
-            case 0x5C: set_f(&g_obd.oil,     v[0] - 40);                       break;
-            case 0x0F: set_f(&g_obd.iat,     v[0] - 40);                       break;
-            case 0x04: set_f(&g_obd.load,    v[0] * 100.0f / 255.0f);          break;
+            case 0x0D: set_m(M_SPEED, &g_obd.speed,   v[0] * (60.0f / 67.0f));          break;
+            case 0x0C: set_m(M_RPM, &g_obd.rpm,     ((v[0] * 256) + v[1]) / 4.0f);    break;
+            case 0x05: set_m(M_COOL, &g_obd.cool,    v[0] - 40);                       break;
+            case 0x5C: set_m(M_OIL, &g_obd.oil,     v[0] - 40);                       break;
+            case 0x0F: set_m(M_IAT, &g_obd.iat,     v[0] - 40);                       break;
+            case 0x04: set_m(M_LOAD, &g_obd.load,    v[0] * 100.0f / 255.0f);          break;
             case 0x0B: last_map_kpa = (float)v[0]; update_boost();             break; /* absolute MAP, kPa */
             case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
-            case 0x23: set_f(&g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
+            case 0x23: set_m(M_RAIL, &g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
             /* Exhaust gas temperature, 9 data bytes: v[0] = supported-sensor bit
              * mask, then FOUR 2-byte sensors. Sensor 1 is v[1],v[2] as (x/10)-40.
              * Reading the mask as the high byte desynchronises everything. */
-            case 0x78: set_f(&g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
-            case 0x42: set_f(&g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
+            case 0x78: set_m(M_EGT, &g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
+            case 0x42: set_m(M_BATTERY, &g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
                        g_obd.dtc_count = v[0] & 0x7F;
                        g_obd.mil_valid = true; mil_miss = 0; obd_on_update(); break;
@@ -296,17 +308,18 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
     switch (did) {
         case 0x1940:                            /* trans fluid (ATF) temp        */
             if (resp_id != OBD_RESP_TCM2) break;
-            set_f(&g_obd.atf, (float)A - 40.0f);
+            set_m(M_ATF, &g_obd.atf, (float)A - 40.0f);
             break;
         case 0x1154:                            /* engine oil temp (GM enhanced) */
             if (resp_id != OBD_RESP_ECM) break;
-            set_f(&g_obd.oil, (float)A - 40.0f);
+            set_m(M_OIL, &g_obd.oil, (float)A - 40.0f);
             break;
         case 0x199A: {                          /* current gear (raw index in A) */
             if (resp_id != OBD_RESP_TCM2) break;
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
              * never moves while the selector does) can be told apart from a
              * wrong scaling (byte moves, gear label doesn't match). */
+            g_obd.upd_ms[M_GEAR] = HAL_GetTick();
             if (g_obd.gear_raw != A) { g_obd.gear_raw = A; obd_on_update(); }
             int8_t g = (int8_t)A;
             if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
@@ -485,6 +498,7 @@ void obd_rx_poll(void) {
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
             int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
+            g_obd.sel_upd_ms = HAL_GetTick();
             if (g_obd.sel_range != r) { g_obd.sel_range = r; obd_on_update(); }
             continue;
         }
@@ -816,6 +830,9 @@ void obd_demo_tick(void) {
         g_obd.speed = 110;   g_obd.rpm = 2600;
         g_obd.cool = (float)(88 + (int)(t * 20u / 140u));  /* 88 -> 108, crosses 93/97 */
     }
+    uint32_t now = HAL_GetTick();          /* synthetic values are always fresh */
+    for (int k = 0; k < M_COUNT; k++) g_obd.upd_ms[k] = now;
+    g_obd.sel_upd_ms = now;
     obd_on_update();
 }
 #endif

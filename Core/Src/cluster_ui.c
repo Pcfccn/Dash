@@ -672,12 +672,22 @@ static void ui_border_color(lv_obj_t *o, lv_color_t c)
     lv_obj_set_style_border_color(o, c, 0);
 }
 
+/* HAL tick of the refresh in progress, for the freshness checks. */
+static uint32_t s_now;
+
+/* Worth showing: link alive, a value ever decoded, and recent enough
+ * (metric_stale_ms in cluster_config.h). Otherwise the UI shows "--". */
+static bool shown(const obd_data_t *d, metric_key_t k, bool live)
+{
+    return live && has_value(mval(d, k)) && obd_is_fresh(d, k, s_now);
+}
+
 /* set one big value + optional bar + optional dot from a metric */
 static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
                        metric_key_t k, const obd_data_t *d, bool live)
 {
     float v  = mval(d, k);
-    bool  ok = live && has_value(v);
+    bool  ok = shown(d, k, live);
     if (!ok) {
         ui_text(val, "--");
         ui_text_color(val, C_MUTED);
@@ -721,7 +731,13 @@ void cluster_ui_refresh(void)
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
     d.oilp_1ba_raw = g_obd.oilp_1ba_raw; d.oilp_0c9_raw = g_obd.oilp_0c9_raw;
+    for (int k = 0; k < M_COUNT; k++) d.upd_ms[k] = g_obd.upd_ms[k];
+    d.sel_upd_ms = g_obd.sel_upd_ms;
     bool live = d.can_ok;
+    s_now = HAL_GetTick();
+    /* The selector broadcast has its own freshness; a stale one is "--",
+     * and so is the gear number in D. */
+    bool sel_ok = live && obd_sel_fresh(&d, s_now);
 
     char b[16];
 
@@ -730,13 +746,14 @@ void cluster_ui_refresh(void)
      * the SNIFF page -- 1 P / 2 R / 3 N / 4 D (docs/sniff-selector.md). The
      * design shows the drive gear in nominal green; P/R/N stay white. The old
      * 0x199A DID was the engaged gear RATIO and could not express P/R/N. */
-    switch (live ? d.sel_range : -1) {
+    switch (sel_ok ? d.sel_range : -1) {
         case 1:  lv_snprintf(b, sizeof b, "P"); break;
         case 2:  lv_snprintf(b, sizeof b, "R"); break;
         case 3:  lv_snprintf(b, sizeof b, "N"); break;
         case 4:  /* D + engaged gear (0x199A) as the design's white letter +
                   * green number; bare "D" until the gear number arrives */
-                 if (d.gear >= 1) lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
+                 if (d.gear >= 1 && obd_is_fresh(&d, M_GEAR, s_now))
+                     lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
                  else             lv_snprintf(b, sizeof b, "D");
                  break;
         default: lv_snprintf(b, sizeof b, "--"); break;
@@ -744,14 +761,14 @@ void cluster_ui_refresh(void)
     ui_text(ui.gear_val, b);
     /* Reverse: the whole "R" glows bright orange (a reversing cue). Other ranges
      * keep the white base; the D case still recolors its gear number green. */
-    ui_text_color(ui.gear_val, (live && d.sel_range == 2) ? C_ORANGE : C_TEXT2);
+    ui_text_color(ui.gear_val, (sel_ok && d.sel_range == 2) ? C_ORANGE : C_TEXT2);
 
-    if (live && has_value(d.speed)) { fmt(b, sizeof b, d.speed, 0); ui_text(ui.speed_val, b); }
+    if (shown(&d, M_SPEED, live)) { fmt(b, sizeof b, d.speed, 0); ui_text(ui.speed_val, b); }
     else        ui_text(ui.speed_val, "--");
-    if (live && has_value(d.rpm)) { fmt(b, sizeof b, d.rpm, 0); ui_text(ui.rpm_val, b); }
+    if (shown(&d, M_RPM, live)) { fmt(b, sizeof b, d.rpm, 0); ui_text(ui.rpm_val, b); }
     else        ui_text(ui.rpm_val, "--");
     {   /* RPM stays white, but warns/reds near the redline */
-        metric_state_t rs = (live && has_value(d.rpm)) ? metric_state(M_RPM, d.rpm) : ST_OK;
+        metric_state_t rs = shown(&d, M_RPM, live) ? metric_state(M_RPM, d.rpm) : ST_OK;
         ui_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2);
     }
     for (int i = 0; i < 4; i++)
@@ -890,20 +907,21 @@ void cluster_ui_refresh(void)
     }
 
     /* ----- alert strip -----
-     * A tag only judges a value we actually have: metric_state() on NaN would
-     * fall through every comparison and report a confident ST_OK, and a PID
-     * that reads 0 because it is unsupported must not raise CHECK either. */
+     * A tag only judges a value we actually have and that is recent:
+     * metric_state() on NaN would fall through every comparison and report a
+     * confident ST_OK, and a PID that reads 0 because it is unsupported must
+     * not raise CHECK either. A tag with nothing to judge is drawn neutral,
+     * not as a green "healthy". */
+    static const metric_key_t TAG_M[8] = { 0, M_COOL, M_OIL, M_ATF, M_EGT, M_BATTERY, 0, 0 };
     metric_state_t ts[8];
-    #define TAG_ST(k, v) ((live && has_value(v)) ? metric_state((k), (v)) : ST_OK)
-    ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
-    ts[1] = TAG_ST(M_COOL, d.cool);                         /* CLT */
-    ts[2] = TAG_ST(M_OIL, d.oil);                           /* OIL */
-    ts[3] = TAG_ST(M_ATF, d.atf);                           /* ATF */
-    ts[4] = TAG_ST(M_EGT, d.egt);                           /* EGT */
-    ts[5] = TAG_ST(M_BATTERY, d.battery);                   /* BAT */
-    ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
-    ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
-    #undef TAG_ST
+    bool known[8];
+    for (int i = 1; i <= 5; i++) {
+        known[i] = shown(&d, TAG_M[i], live);
+        ts[i]    = known[i] ? metric_state(TAG_M[i], mval(&d, TAG_M[i])) : ST_OK;
+    }
+    known[0] = mil_ok; ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
+    known[6] = mil_ok; ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
+    known[7] = true;   ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
 
     int worst = ST_OK, nalarm = 0;
     for (int i = 0; i < 8; i++) {
@@ -913,6 +931,7 @@ void cluster_ui_refresh(void)
         lv_color_t tc, ulc;
         if      (ts[i] == ST_CRIT) { tc = C_CRIT; ulc = C_CRIT; }
         else if (ts[i] == ST_WARN) { tc = C_WARN; ulc = C_WARN; }
+        else if (!known[i])        { tc = C_FAINT; ulc = C_LINE; }
         else                       { tc  = indicator ? C_FAINT : C_MUTED;
                                      ulc = indicator ? C_LINE  : C_OK; }
         ui_text_color(ui.tag[i], tc);
@@ -945,7 +964,7 @@ void cluster_ui_refresh(void)
     if (worst == ST_CRIT || !live) {
         ui_border_color(ui.border, C_CRIT);
         lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
-    } else if (live && d.sel_range == 2) {          /* R */
+    } else if (sel_ok && d.sel_range == 2) {        /* R */
         ui_border_color(ui.border, C_ORANGE);
         lv_obj_clear_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
     } else {

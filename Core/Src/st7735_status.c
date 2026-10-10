@@ -240,8 +240,11 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm)
         return;
     }
     lv_lock();
-    lv_label_set_text_fmt(lbl_speed, "%d", (int)speed_kmh);
-    lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
+    /* negative = unknown: the caller has no fresh value */
+    if (speed_kmh >= 0) lv_label_set_text_fmt(lbl_speed, "%d", (int)speed_kmh);
+    else                lv_label_set_text(lbl_speed, "--");
+    if (rpm >= 0)       lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
+    else                lv_label_set_text(lbl_rpm, "RPM --");
     lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
     lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
     lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37d67a : 0xff2d2d), 0);

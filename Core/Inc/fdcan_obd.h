@@ -13,6 +13,7 @@
 #include "stm32h7xx_hal.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "cluster_config.h"          /* metric_key_t, M_COUNT */
 
 /* Live values decoded from the bus. UI reads this.
  *
@@ -47,6 +48,12 @@ typedef struct {
      * (if either) tracks engine speed. See CAN_ID_OILP_BCAST / _CAND2. */
     uint8_t oilp_1ba_raw;    /* 0x1BA byte 3 (candidate #1, rejected)          */
     uint8_t oilp_0c9_raw;    /* 0x0C9 byte 2 (candidate #2, unverified)        */
+
+    /* ---- freshness: HAL tick of the last valid decode, per metric. Stamped
+     * on every decode, also when the value did not change. See
+     * obd_is_fresh() and metric_stale_ms[] in cluster_config.h. */
+    uint32_t upd_ms[M_COUNT];
+    uint32_t sel_upd_ms;     /* selector broadcast                             */
 } obd_data_t;
 
 extern volatile obd_data_t g_obd;
@@ -56,6 +63,11 @@ void obd_rx_poll(void);                       /* drain RX FIFO0 (call often)    
 void obd_poll_tick(void);                     /* round-robin requests           */
 void obd_watchdog_tick_1hz(void);             /* flips can_ok if bus went quiet */
 void obd_demo_tick(void);                     /* OBD_DEMO: inject test values    */
+
+/* Is metric k (or the selector) recent enough to show? Works on g_obd or on a
+ * snapshot of it. A NaN value is "no data" regardless of this. */
+bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now);
+bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now);
 
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);

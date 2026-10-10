@@ -12,7 +12,7 @@ void st7735_status_init(void);
 
 /* Refresh the status readout. Safe to call from the LVGL task; throttle the
  * caller (a few Hz is plenty). */
-void st7735_status_set(int32_t speed_kmh, int32_t rpm);
+void st7735_status_set(int32_t speed_kmh, int32_t rpm);   /* < 0 = unknown, shown as "--" */
 
 /* Diagnostic line: current cluster page, live KEY(PC13) level, press count.
  * Lets us see whether the page button is wired/seen. */

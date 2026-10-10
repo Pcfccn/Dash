@@ -119,6 +119,25 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
 
+/* ---- Freshness ------------------------------------------------------------
+ * How long a decoded value stays valid without a new reading, ms (0 = never
+ * goes stale). Past its limit a value renders as "--" and stops driving the
+ * alert strip, even while broadcasts keep the CAN link "live" — before, a
+ * frozen ECM left the last RPM/speed/coolant on screen indefinitely.
+ * Generous on purpose until DIAG's LOOP has been measured in the car: one
+ * request goes out per loop iteration (an unanswered one holds the slot
+ * 150 ms), RPM roughly every 1.5 iterations, MAP and speed every ~3, the
+ * medium band (coolant, IAT, rail, battery, load, ATF, gear) every ~18, the
+ * oil-temp DID every 16. Tighten once real update intervals are known. */
+static const uint16_t metric_stale_ms[M_COUNT] = {
+    [M_SPEED]   = 2000,  [M_RPM]  = 2000,  [M_BOOST] = 2000,
+    [M_COOL]    = 15000, [M_OIL]  = 15000, [M_ATF]   = 15000, [M_EGT] = 15000,
+    [M_BATTERY] = 15000, [M_IAT]  = 15000, [M_LOAD]  = 15000, [M_RAIL] = 15000,
+    [M_GEAR]    = 15000,
+    [M_OILP]    = 0,     /* no source: stays NaN anyway */
+};
+#define SEL_STALE_MS 2000u   /* selector broadcast 0x1F5 */
+
 /* Generic state resolver */
 static inline metric_state_t metric_state(metric_key_t k, float v) {
     const metric_cfg_t *m = &metrics[k];

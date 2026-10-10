@@ -247,8 +247,13 @@ void AppMain_Run(void)
     if (now - last_status_ms >= 250u) {
         last_status_ms = now;
         /* NaN means the PID has never answered; casting that to int32_t is UB */
-        st7735_status_set(isnan(g_obd.speed) ? 0 : (int32_t)g_obd.speed,
-                          isnan(g_obd.rpm)   ? 0 : (int32_t)g_obd.rpm);
+        /* -1 = nothing to show ("--"): never decoded (NaN), stale, or the
+         * link is down. 0 would be a believable reading. */
+        uint32_t tn = HAL_GetTick();
+        bool live = g_obd.can_ok;
+        float sp = g_obd.speed, rp = g_obd.rpm;
+        st7735_status_set((live && !isnan(sp) && obd_is_fresh(&g_obd, M_SPEED, tn)) ? (int32_t)sp : -1,
+                          (live && !isnan(rp) && obd_is_fresh(&g_obd, M_RPM, tn))   ? (int32_t)rp : -1);
         /* KEY diagnostic: page index, live PC13 level, accepted-press count */
         st7735_status_key_dbg(cluster_ui_get_page(), key_now, s_key_cnt);
         /* in brightness mode: overlay the current backlight level on the small screen */
