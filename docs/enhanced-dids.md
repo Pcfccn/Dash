@@ -30,9 +30,14 @@ Both known GM mode-22 DIDs have been probed with engine running and rejected:
 | `0x1470` | ❌ NRC 22/31 (requestOutOfRange) — not in this ECM's table |
 | `0x115C` | ❌ NRC 22/31 (requestOutOfRange) with engine running, confirmed 2026-07-23 |
 
-The gasoline Colorado V6 uses a different ECM where `0x1470` works; it does not carry over to the diesel E98. No other mode-22 DID for LWN oil pressure has been found in any public source.
+The gasoline Colorado V6 uses a different ECM where `0x1470` works; it does not carry over to the diesel E98.
 
-### Oil pressure via passive CAN broadcast
+> **Update 2026-10-10:** the LWN's oil pressure is GM PID **`0xA22C`** (`A × 4 kPa`),
+> read GMLAN-style with `$2C`/`$AA` per ScanGauge's LWN 2.8 list — now in the
+> firmware, see [oil-pressure-test.md](oil-pressure-test.md). The broadcast hunt
+> below is history: `0x1BA[3]` was rejected and `0x0C9[2]` is the RPM low byte.
+
+### Oil pressure via passive CAN broadcast (superseded)
 
 The OEM cluster reads oil pressure from a periodic broadcast frame the ECM transmits unconditionally (same approach as the selector via `0x1F5`).
 

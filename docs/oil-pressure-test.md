@@ -1,70 +1,90 @@
-# Oil-pressure source test (throttle-blip correlation)
+# Oil pressure: where it comes from, and how to check it
 
-## Why
+## The source
 
-Oil pressure has **no confirmed source** on this E98. The mode-22 DIDs (`0x115C`,
-`0x1470`) return NRC 22/31, so it must be a passive broadcast. Two candidate
-bytes have been seen on the SNIFF page:
+Oil pressure is read from the **ECM's own sensor value**, GM parameter
+**PID `0xA22C`**: one byte, **A × 4 kPa** (= A × 0.04 bar, 0…10.2 bar).
 
-| Candidate | Frame | Byte | Range seen | Provisional formula |
-|-----------|-------|------|-----------|---------------------|
-| #1 | `0x1BA` | byte 3 | `0x06..0xF6` | `/100` → bar |
-| #2 | `0x0C9` | byte 2 | `0x27..0xFF` | `A/36` → bar (guess) |
+Where that comes from: ScanGauge's X-Gauge list for the **LWN Duramax 2.8**
+(Colorado/Canyon, E98 ECM) has *Engine Oil Pressure (PSI)* as
+`TXD 07E02CFEA22C  RXF D2E803FE0000  RXD 1808  MTH 001D00320000`, and the Cruze
+diesel uses the same entry
+([scangauge.com, GM X-Gauge commands](https://www.scangauge.com/support/x-gauge-commands/gm/)).
+Decoded:
 
-The 2026-07-24 run showed candidate #1 (`0x1BA.3`) does **not** rise with RPM
-(1.5 bar at 2550 rpm — impossible), so neither is trusted yet. This test decides
-which byte (if either) is really oil pressure.
+| Field | Meaning |
+|---|---|
+| `07E0` | request to the ECM |
+| `2C FE A22C` | GMLAN `$2C` DynamicallyDefineMessage: data packet (DPID) `0xFE` = PID `0xA22C` |
+| `RXF D2E8 03FE` | answer on `…E8` with byte 0 = `FE`: the UUDT packet on `0x5E8` |
+| `RXD 1808` | the value is the 8 bits after the DPID byte |
+| `MTH 29/50` | × 0.58 psi = **4 kPa per count** |
 
-## The principle
+The petrol-GM DIDs tried before (`0x115C`, `0x1470`) are a different
+parameter set; this E98 refuses them with NRC 31.
 
-Real oil pressure **rises with RPM and decays slowly** (1-2 s lag on the way
-down). A byte that is just an RPM-derived echo tracks engine speed **instantly
-in both directions**. So: blip the throttle and watch which candidate byte
-follows RPM up *and lags on the way down*.
+## How the firmware asks (`fdcan_obd.c`, "oil pressure")
 
-## What the firmware now shows (DIAG page)
+One step per medium-band slot (about every 21 loop iterations), always one
+transaction at a time:
 
-Both candidates are captured passively and printed at the bottom of the **DIAG**
-page, next to live RPM, so a single photo captures the correlation:
+1. **`$22 A22C`** first, a plain read like the other GM DIDs (`0x1154` oil temp
+   works this way). Answer `62 A2 2C A` → value.
+2. If the ECM **refuses** it (any NRC except busy `21` / conditions `22`), or
+   ignores it three times: **`$2C FE A2 2C`** defines packet `0xFE` → answer
+   `6C FE`.
+3. Then **`$AA 01 FE`** (send the packet once) every slot → a UUDT frame on
+   **`0x5E8`**: `FE A …` (no ISO-TP, no SID) → value. A missing or refused
+   packet (ECM reset) goes back to step 2.
+4. If `$2C` is refused too, the search ends: **`NONE`** on DIAG, the slot goes
+   back to fast polling, and OIL P stays `--`. That calibration then has no such
+   parameter (e.g. an engine with only an oil-pressure *switch*).
+
+`$2C` is the only service here that is not a pure read. It tells the ECM which
+parameter to put into a diagnostic packet; the definition lives in ECM RAM and
+is gone at its next reset. No calibration, memory or actuator is touched, and
+nothing is cleared — GM scan tools do the same for every live-data screen. A
+`0x5E8` packet is decoded only while our own `$AA` read is open, because another
+tester on the port may define the same DPID number with something else.
+
+## What the old candidates were
+
+- `0x1BA` byte 3: does not track RPM (0.2 bar at 1599 rpm, 2026-08-23). Not it.
+- `0x0C9` byte 2: `0x0C9` is GM's **ECMEngineStatus**, bytes 1–2 = RPM × 4
+  (opendbc `gm_global_a_powertrain`; `0x1F5` = ECMPRDNL2 from the same file is
+  exactly the selector frame we found, so this bus uses the GM Global A layout).
+  On 2026-07-24 at idle `0C9.1` was `0E/0F` and `0C9.2` swept `27..FF`:
+  `(0x0F27)/4 ≈ 970 rpm`. Byte 2 was the **RPM low byte**.
+
+Both are gone from the firmware (filters and DIAG fields); filter 2 now takes
+`0x5E8`.
+
+## DIAG line 2
 
 ```
-NRC --
-RPM 2550  1BA.3=96  0C9.2=A0
+OILP AA  22/31 2C/-- AA/--  RAW 4B
 ```
 
-- `1BA.3` and `0C9.2` are the **raw hex bytes** of the two candidate frames.
-- Neither is decoded: the DRIVE **OIL P** tile shows `--` until a source is
-  confirmed against an independent gauge. `0x1BA[3]` was rejected on
-  2026-08-23; `0x0C9[2]` is still unverified.
-- `RPM` is live (OBD keeps polling on DIAG, unlike SNIFF which pauses it).
+- `OILP 22 | 2C | AA | NONE` — the current step: reading with `$22`, about to
+  define with `$2C`, reading the packet with `$AA`, or no source.
+- `22/31 2C/-- AA/--` — last NRC per service (`--` = none seen). `22/31` with a
+  working `AA` is the expected picture if `$22` is refused.
+- `RAW 4B` — last raw byte (hex). `4B` = 75 × 4 kPa = 3.0 bar.
 
-## Procedure
+The **OIL P** tile on DRIVE shows the value in bar. Its colour is only judged
+with the engine running (RPM ≥ 400); key on / engine off shows the reading in
+blue, not as a red alarm.
 
-1. Start the engine, let it **warm up** (oil pressure behaviour is clearest warm;
-   cold idle pressure is high and flat).
-2. Switch to the **DIAG** page (short-press to cycle: DRIVE → DIAG → SNIFF).
-3. Photograph three states, holding each ~2 s so the numbers settle:
-   - **Idle** (steady ~800 rpm)
-   - **Blip peak** — rev to ~2500-3000 and photograph at the top
-   - **Settling** — photograph 1 s *after* releasing the throttle, while RPM is
-     dropping back to idle
-4. Repeat the blip 2-3 times so the pattern is unambiguous.
+## Check on the car
 
-## Reading the photos
+1. Key on, engine off, DIAG: within a few seconds `RAW` should show a byte near
+   `00` (on path `22` or `AA`), or the path ends at `NONE`. Note what it says.
+2. Start, warm up, DIAG + DRIVE photos at:
+   - **warm idle** (~800 rpm) — expected roughly 0.8–2 bar;
+   - **~2500 rpm held** — should be clearly higher (3–5 bar);
+   - **1 s after releasing** — falls back with RPM.
+3. Photo of DIAG if the line says `NONE`, with the three NRCs.
 
-For each candidate byte, compare its hex value across idle → peak → settling:
-
-- **Tracks RPM up, lags/decays on the way down** → this is oil pressure. Note the
-  raw values at known RPMs so the scaling (counts → bar) can be fitted.
-- **Mirrors RPM exactly (instant up *and* down)** → it is an RPM echo, not
-  pressure. Reject it.
-- **Barely moves** → not pressure (could be a temperature or a status byte).
-
-## After the test
-
-Once the real source is known, in `fdcan_obd.c` / `cluster_config.h`:
-
-- Point the `oil_press` decode at the winning frame/byte with the fitted formula.
-- Delete the loser's RX branch **and** its acceptance filter in `obd_init`, then
-  drop `StdFiltersNbr` back to 3 in `fdcan.c`. The `0x0C9` filter is only added
-  for this test (it is a fast frame and loads the shared RX FIFO).
+Pass: zero with the engine off, rises with RPM, plausible warm idle. Then tune
+the OIL P low thresholds in `cluster_config.h` (now 0.8 warn / 0.4 crit, a
+guess) against the real warm-idle value.

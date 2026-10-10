@@ -137,6 +137,7 @@ static void reset(void)
     await_resp_id = 0; await_deadline = 0; itp_active = false; itp_deadline = 0;
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
     last_map_kpa = NAN; baro_kpa = NAN; map_upd_ms = 0;
+    memset(&oilp, 0, sizeof oilp);                /* back to OILP_VIA22 */
     filter_status = HAL_OK; start_status = HAL_OK;
     notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
     nvic_on = false;
@@ -412,12 +413,139 @@ static void t_dlc15_classic_frame(void)                                /* HAL co
     CHECK(g_obd.sel_range == 2);
 }
 
-static void t_oilp_candidate_not_decoded(void)                         /* R4 */
+/* --- Oil pressure, PID 0xA22C: $22 first, else $2C/$AA ------------------- */
+static bool last_tx_is(uint32_t id, int n, const uint8_t *b)
 {
-    PUSH(0x0C9, 8, 0x00, 0x00, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00);
+    return tx_n > 0 && txlog[tx_n - 1].id == id && memcmp(txlog[tx_n - 1].data, b, (size_t)n) == 0;
+}
+
+static void t_oilp_via22(void)
+{
+    CHECK(req_oilp());
+    static const uint8_t q[] = { 0x03, 0x22, 0xA2, 0x2C };
+    CHECK(last_tx_is(OBD_REQ_ECM, 4, q));
+    PUSH(0x7E8, 8, 0x04, 0x62, 0xA2, 0x2C, 0x4B, 0x00, 0x00, 0x00);  /* 75 x 4 kPa */
     obd_rx_poll();
-    CHECK(g_obd.oilp_0c9_raw == 0x90);
+    CHECK(near(g_obd.oil_press, 3.0f));
+    CHECK(g_obd.upd_ms[M_OILP] == now_ms);
+    CHECK(await_resp_id == 0);
+    CHECK(oilp.mode == OILP_VIA22);
+    CHECK(obd_is_fresh(&g_obd, M_OILP, now_ms + metric_stale_ms[M_OILP]));
+    CHECK(!obd_is_fresh(&g_obd, M_OILP, now_ms + metric_stale_ms[M_OILP] + 1u));
+}
+
+static void t_oilp_22_refused_then_dpid(void)
+{
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_DEFINE && oilp.nrc22 == 0x31);
+    CHECK(await_resp_id == 0);
+
+    CHECK(req_oilp());
+    static const uint8_t def[] = { 0x04, 0x2C, 0xFE, 0xA2, 0x2C };
+    CHECK(last_tx_is(OBD_REQ_ECM, 5, def));
+    PUSH(0x7E8, 8, 0x02, 0x6C, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_READ);
+    CHECK(await_resp_id == 0);
+
+    CHECK(req_oilp());
+    static const uint8_t rd[] = { 0x03, 0xAA, 0x01, 0xFE };
+    CHECK(last_tx_is(OBD_REQ_ECM, 4, rd));
+    PUSH(0x5E8, 8, 0xFE, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);  /* UUDT, no PCI */
+    obd_rx_poll();
+    CHECK(near(g_obd.oil_press, 3.0f));
+    CHECK(await_resp_id == 0);
+    CHECK(oilp.mode == OILP_READ);                      /* keeps reading */
+    CHECK(rx_bad_cnt == 0);
+}
+
+/* A UUDT packet nobody of ours asked for — another tester's logging — is not
+ * decoded, and one with a different DPID does not close our read. */
+static void t_oilp_foreign_uudt_ignored(void)
+{
+    PUSH(0x5E8, 8, 0xFE, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
     CHECK(isnan(g_obd.oil_press));
+    oilp.mode = OILP_READ;
+    CHECK(req_oilp());
+    PUSH(0x5E8, 8, 0xFD, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(isnan(g_obd.oil_press));
+    CHECK(await_resp_id == 0x7E8 && await_sid == 0xAA);  /* still waiting */
+    PUSH(0x5E8, 1, 0xFE);                                /* truncated */
+    obd_rx_poll();
+    CHECK(rx_bad_cnt == 1);
+    CHECK(isnan(g_obd.oil_press));
+}
+
+/* Another tester's $2C answer must not move our path along. */
+static void t_oilp_foreign_define_ignored(void)
+{
+    oilp.mode = OILP_DEFINE;
+    PUSH(0x7E8, 8, 0x02, 0x6C, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_DEFINE);
+}
+
+static void t_oilp_2c_refused_ends_search(void)
+{
+    oilp.mode = OILP_DEFINE;
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x2C, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_NONE && oilp.nrc2c == 0x31);
+    CHECK(!req_oilp());
+    int asked = 0;                                      /* and the slot is reused */
+    for (int i = 0; i < 200; i++) {
+        tx_n = 0;
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[1] == 0x2C || q[1] == 0xAA || (q[1] == 0x22 && q[2] == 0xA2)) asked++;
+        }
+    }
+    CHECK(asked == 0);
+}
+
+static void t_oilp_busy_nrc_retried(void)
+{
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x21, 0x00, 0x00, 0x00, 0x00);  /* busy, repeat */
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_VIA22);
+    CHECK(await_resp_id == 0);
+}
+
+static void t_oilp_22_silent_falls_back(void)
+{
+    for (unsigned i = 0; i < OILP_MISS22_MAX; i++) {
+        CHECK(oilp.mode == OILP_VIA22);
+        CHECK(req_oilp());
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();                                /* times out (and sends the next) */
+        await_resp_id = 0;
+    }
+    CHECK(oilp.mode == OILP_DEFINE);
+}
+
+/* No packet after $AA (or an NRC for it): the ECM may have lost the
+ * definition, so the next step defines it again. */
+static void t_oilp_lost_read_redefines(void)
+{
+    oilp.mode = OILP_READ;
+    CHECK(req_oilp());
+    now_ms += OBD_AWAIT_MS;
+    obd_poll_tick();
+    CHECK(oilp.mode == OILP_DEFINE);
+    await_resp_id = 0;
+    oilp.mode = OILP_READ;
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0xAA, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_DEFINE && oilp.nrcaa == 0x31);
 }
 
 /* --- Cases from the independent stage-A review (Dash_Stage_A_Adversarial_Tests.c),
@@ -577,7 +705,7 @@ static void t_schedule_contents(void)
 {
     bool seen_rpm = false, seen_speed = false, seen_map = false, seen_mil = false;
     bool seen_cool = false, seen_rail = false, seen_load = false;
-    bool seen_atf = false, seen_gear = false, seen_oil = false;
+    bool seen_atf = false, seen_gear = false, seen_oil = false, seen_oilp = false;
     int  bad_req = 0;
     for (int i = 0; i < 2000; i++) {
         tx_n = 0;
@@ -603,12 +731,13 @@ static void t_schedule_contents(void)
                 if (did == 0x1940 && txlog[k].id == OBD_REQ_TCM2) seen_atf = true;
                 if (did == 0x199A && txlog[k].id == OBD_REQ_TCM2) seen_gear = true;
                 if (did == 0x1154 && txlog[k].id == OBD_REQ_ECM)  seen_oil = true;
+                if (did == 0xA22C && txlog[k].id == OBD_REQ_ECM)  seen_oilp = true;
             }
         }
     }
     CHECK(bad_req == 0);
     CHECK(seen_rpm && seen_speed && seen_map && seen_mil && seen_cool);
-    CHECK(seen_rail && seen_load && seen_atf && seen_gear && seen_oil);
+    CHECK(seen_rail && seen_load && seen_atf && seen_gear && seen_oil && seen_oilp);
 }
 
 /* R1: a CubeMX regen that drops the RX FIFO / filter counts must not leave
@@ -621,7 +750,7 @@ static void t_layout_reasserted(void)
     init_calls = 0;
     obd_init(&hmock);
     CHECK(init_calls == 1);
-    CHECK(hmock.Init.StdFiltersNbr == 4 && hmock.Init.RxFifo0ElmtsNbr == 16);
+    CHECK(hmock.Init.StdFiltersNbr == 3 && hmock.Init.RxFifo0ElmtsNbr == 16);
     CHECK(hmock.State == HAL_FDCAN_STATE_BUSY);     /* started */
     CHECK(error_calls == 0);
 }
@@ -760,7 +889,6 @@ static void t_gear_and_boost_stamped(void)
     obd_rx_poll();
     CHECK(g_obd.gear == 3 && g_obd.upd_ms[M_GEAR] == now_ms);
     CHECK(near(g_obd.boost, 0.49f) && g_obd.upd_ms[M_BOOST] == now_ms);
-    CHECK(obd_is_fresh(&g_obd, M_OILP, now_ms + 1000000u));     /* limit 0: never */
 }
 
 /* C01: boost needs a real baro, and its freshness is MAP's. */
@@ -840,7 +968,14 @@ int main(void)
         { "extended_id_dropped",        t_extended_id_dropped },
         { "selector_dlc_checked",       t_selector_dlc_checked },
         { "dlc15_classic_frame",        t_dlc15_classic_frame },
-        { "oilp_candidate_not_decoded", t_oilp_candidate_not_decoded },
+        { "oilp_via22",                 t_oilp_via22 },
+        { "oilp_22_refused_then_dpid",  t_oilp_22_refused_then_dpid },
+        { "oilp_foreign_uudt_ignored",  t_oilp_foreign_uudt_ignored },
+        { "oilp_foreign_define_ignored",t_oilp_foreign_define_ignored },
+        { "oilp_2c_refused_ends_search",t_oilp_2c_refused_ends_search },
+        { "oilp_busy_nrc_retried",      t_oilp_busy_nrc_retried },
+        { "oilp_22_silent_falls_back",  t_oilp_22_silent_falls_back },
+        { "oilp_lost_read_redefines",   t_oilp_lost_read_redefines },
         { "rev_response_pending_lost_ff", t_response_pending_loses_delayed_ff },
         { "rev_interleaved_cf_pending", t_interleaved_cf_clears_new_pending },
         { "rev_short_sf_keeps_pending", t_matching_short_frame_clears_pending },

@@ -44,16 +44,17 @@
  * byte 2 carries the manual/commanded gear. See docs/sniff-selector.md. */
 #define CAN_ID_SELECTOR        0x1F5u
 
-/* Oil-pressure candidate #1 (byte 3), found with SNIFF ANALOG 2026-07-23 and
- * REJECTED on 2026-08-23: it does not track RPM. Raw byte kept on DIAG only. */
-#define CAN_ID_OILP_BCAST      0x1BAu
-
-/* Oil-pressure candidate #2 (byte 2, range 0x27..0xFF on SNIFF ANALOG), still
- * UNVERIFIED. Both candidates are captured raw and shown next to live RPM on
- * DIAG; neither feeds the OIL P tile. TEST SCAFFOLD — once the real source is
- * known, drop the loser (its filter in obd_init + RX branch) so the frame stops
- * loading the shared RX FIFO. */
-#define CAN_ID_OILP_CAND2      0x0C9u
+/* Oil pressure: the ECM's own sensor value, GM PID 0xA22C (one byte, A x 4 kPa),
+ * as ScanGauge reads it on the LWN 2.8 Duramax. Requested with $22 first; if
+ * the ECM refuses that, GMLAN-style: $2C defines data packet OILP_DPID as that
+ * PID, $AA reads the packet, and it arrives as a UUDT frame on 0x5E8 (no ISO-TP:
+ * byte 0 = DPID, then the data). See the oil-pressure note in fdcan_obd.c.
+ * The broadcast candidates hunted before are not it: 0x1BA[3] does not track
+ * RPM (2026-08-23), and 0x0C9 is GM's ECMEngineStatus, whose bytes 1-2 are
+ * RPM x 4 — 0x0C9[2] was the RPM low byte (0x0E/0x0F:xx at idle, 2026-07-24). */
+#define OILP_PID               0xA22Cu
+#define OILP_DPID              0xFEu    /* data packet number ScanGauge uses   */
+#define OBD_UUDT_ECM           0x5E8u   /* ECM's UUDT diagnostic packets       */
 
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
@@ -114,7 +115,7 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
   { "RAIL",        THR_INFO,       0,   2000,     0,     0,     0,     0,   0 }, /* bar            */
-  { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,   8.0f,  9.0f,  1 }, /* bar; low = danger, high never trips within 0-7 */
+  { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,   8.0f,  9.0f,  1 }, /* bar; low = danger, high never trips within 0-7. Judged only with the engine running (cluster_ui.c). Lows are a guess: check against warm idle */
   { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
 
@@ -126,14 +127,14 @@ static const metric_cfg_t metrics[M_COUNT] = {
  * Generous on purpose until DIAG's LOOP has been measured in the car: one
  * request goes out per loop iteration (an unanswered one holds the slot
  * 150 ms), RPM roughly every 1.5 iterations, MAP and speed every ~3, the
- * medium band (coolant, IAT, rail, battery, load, ATF, gear) every ~18, the
- * oil-temp DID every 16. Tighten once real update intervals are known. */
+ * medium band (coolant, IAT, rail, battery, load, ATF, gear, oil pressure)
+ * every ~21, the oil-temp DID every 16. Tighten once real update intervals are
+ * known. */
 static const uint16_t metric_stale_ms[M_COUNT] = {
     [M_SPEED]   = 2000,  [M_RPM]  = 2000,  [M_BOOST] = 2000,
     [M_COOL]    = 15000, [M_OIL]  = 15000, [M_ATF]   = 15000, [M_EGT] = 15000,
     [M_BATTERY] = 15000, [M_IAT]  = 15000, [M_LOAD]  = 15000, [M_RAIL] = 15000,
-    [M_GEAR]    = 15000,
-    [M_OILP]    = 0,     /* no source: stays NaN anyway */
+    [M_GEAR]    = 15000, [M_OILP] = 15000,
 };
 #define SEL_STALE_MS 2000u   /* selector broadcast 0x1F5 */
 

@@ -5,11 +5,12 @@
  *  arrive on 0x7E8 / 0x7EA. Replies longer than 7 bytes use ISO-TP, so we
  *  answer our own First Frames with a Flow Control (30 00 00) and reassemble
  *  Consecutive Frames. No request in the current schedule needs that, but the
- *  path stays (and is tested) for when one does.
+ *  path stays (and is tested) for when one does. Oil pressure may come as a
+ *  GMLAN data packet on 0x5E8 instead (see "oil pressure" below).
  *
- *  Project note: the vehicle bus is RECEIVED BY POLLING (obd_rx_poll) from the
- *  main loop -- the project has no FDCAN NVIC handler. FDCAN bit timing is set
- *  by MX_FDCAN1_Init (HSE 25 MHz kernel -> 500 kbps), not here.
+ *  RX: the FDCAN interrupt moves frames into a ring and obd_rx_poll() decodes
+ *  them from the main loop (see "RX" below). FDCAN bit timing is set by
+ *  MX_FDCAN1_Init (HSE 25 MHz kernel -> 500 kbps), not here.
  * ========================================================================== */
 #include "fdcan_obd.h"
 #include "main.h"                /* Error_Handler */
@@ -79,6 +80,30 @@ static void mil_attempt_failed(void) {
     }
 }
 
+/* ---- oil pressure: GM PID 0xA22C ------------------------------------------
+ * J1979 has no oil-pressure PID, and this E98 refuses the petrol-GM DIDs
+ * 0x115C / 0x1470 (NRC 31). The diesel ECM's own sensor value is PID 0xA22C,
+ * one byte, A x 4 kPa: ScanGauge's X-Gauge for the LWN 2.8 Duramax (and the
+ * Cruze diesel) reads it as "07E0 2C FE A22C", MTH 29/50 psi = 4 kPa/count.
+ * That is the GMLAN way, not $22: $2C (DynamicallyDefineMessage) makes data
+ * packet 0xFE carry PID 0xA22C, $AA 01 FE (ReadDataByPacketIdentifier, send
+ * once) asks for the packet, and it arrives as a UUDT frame on 0x5E8:
+ * [FE][A]... — no ISO-TP PCI, no SID. NRCs still come on 0x7E8.
+ * Plain $22 A22C is tried first (this ECM answers $22 for other GM PIDs, e.g.
+ * 0x1154); only a refusal switches to $2C/$AA.
+ * $2C is the one service here that is not a pure read: it tells the ECM which
+ * parameter to pack into a diagnostic packet. The definition lives in ECM RAM
+ * and is gone at its next reset; no calibration, memory or actuator is touched,
+ * and it is what GM scan tools do for live data. Nothing is ever cleared. */
+#define OILP_MISS22_MAX 3u      /* unanswered $22 A22C before trying $2C/$AA   */
+static struct {                 /* file scope: the host tests reset it          */
+    uint8_t mode;               /* obd_oilp_mode_t                              */
+    uint8_t miss22;
+    uint8_t nrc22, nrc2c, nrcaa;
+    bool    have_raw;
+    uint8_t raw;
+} oilp;
+
 /* ---- the outstanding diagnostic transaction ------------------------------
  * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
  * logger plugged in alongside this cluster. Those also poll, and their
@@ -120,10 +145,46 @@ static void txn_close(void) {
     itp_active    = false;
 }
 
+/* Oil-pressure path, after an NRC for the open transaction. Busy (0x21) and
+ * conditions-not-correct (0x22) are retried; any other refusal of $22 moves
+ * on to $2C/$AA, and a refusal of $2C ends the search. A refused $AA means the
+ * packet is gone (ECM reset) — define it again. */
+static void oilp_refused(uint8_t nrc) {
+    bool retry = (nrc == 0x21u || nrc == 0x22u);
+    switch (await_sid) {
+        case 0x22:
+            if (await_key != OILP_PID) break;
+            oilp.nrc22 = nrc;
+            if (!retry) oilp.mode = OILP_DEFINE;
+            break;
+        case 0x2C: oilp.nrc2c = nrc; if (!retry) oilp.mode = OILP_NONE; break;
+        case 0xAA: oilp.nrcaa = nrc; oilp.mode = OILP_DEFINE;          break;
+        default: break;
+    }
+}
+
+/* ... and after no answer at all. An ECM that ignores $22 A22C three times is
+ * treated like one that refuses it; a lost $AA answer re-defines the packet. */
+static void oilp_failed(void) {
+    if (await_sid == 0x22 && await_key == OILP_PID) {
+        if (++oilp.miss22 >= OILP_MISS22_MAX) oilp.mode = OILP_DEFINE;
+    } else if (await_sid == 0xAA) {
+        oilp.mode = OILP_DEFINE;
+    }
+}
+
 /* The transaction ended without an answer (timeout, refused Flow Control,
  * malformed or unusable reply). */
 static void txn_failed(void) {
     if (await_sid == 0x01 && await_key == 0x01) mil_attempt_failed();
+    oilp_failed();
+    txn_close();
+}
+
+/* The open transaction got its answer: p is the validated reply payload. */
+static void txn_answered(const uint8_t *p) {
+    if (p[0] == 0x7F)          oilp_refused(p[2]);
+    else if (await_sid == 0x2C) oilp.mode = OILP_READ;   /* packet defined     */
     txn_close();
 }
 
@@ -141,6 +202,7 @@ static bool reply_is_ours(uint32_t resp_id, const uint8_t *p, uint16_t n) {
     switch (await_sid) {
         case 0x01: return n >= 2u && p[1] == (uint8_t)await_key;
         case 0x22: return n >= 3u && ((((uint16_t)p[1]) << 8) | p[2]) == await_key;
+        case 0x2C: return n >= 2u && p[1] == (uint8_t)await_key;   /* DPID echo */
         default:   return true;
     }
 }
@@ -203,6 +265,27 @@ static bool req_mode22(uint32_t req_id, uint16_t did) {
     return request(req_id, d, 0x22, did);
 }
 
+/* Oil pressure, one step of whichever path is current (see "oil pressure"
+ * above). $2C: [2C][DPID][PID hi][PID lo] -> [6C][DPID]. $AA: [AA][01 = send
+ * once][DPID] -> UUDT [DPID][A] on 0x5E8. Returns false when there is nothing
+ * to ask (no source). */
+static bool req_oilp(void) {
+    uint8_t d[8] = {0};
+    switch (oilp.mode) {
+        case OILP_VIA22:
+            return req_mode22(OBD_REQ_ECM, OILP_PID);
+        case OILP_DEFINE:
+            d[0] = 0x04; d[1] = 0x2C; d[2] = OILP_DPID;
+            d[3] = (uint8_t)(OILP_PID >> 8); d[4] = (uint8_t)(OILP_PID & 0xFFu);
+            return request(OBD_REQ_ECM, d, 0x2C, OILP_DPID);
+        case OILP_READ:
+            d[0] = 0x03; d[1] = 0xAA; d[2] = 0x01; d[3] = OILP_DPID;
+            return request(OBD_REQ_ECM, d, 0xAA, OILP_DPID);
+        default:
+            return false;
+    }
+}
+
 /* Flow Control: clear-to-send, no block, no separation */
 static bool send_flow_control(uint32_t resp_id) {
     uint8_t d[8] = { 0x30, 0x00, 0x00, 0,0,0,0,0 };
@@ -224,6 +307,17 @@ bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now) {
 
 bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
     return (now - d->sel_upd_ms) <= SEL_STALE_MS;
+}
+
+static void oilp_value(uint8_t a) {
+    oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0;
+    set_m(M_OILP, &g_obd.oil_press, (float)a * 0.04f);   /* 4 kPa = 0.04 bar */
+}
+
+void obd_oilp_probe(obd_oilp_probe_t *p) {
+    p->mode  = oilp.mode;
+    p->nrc22 = oilp.nrc22; p->nrc2c = oilp.nrc2c; p->nrcaa = oilp.nrcaa;
+    p->have_raw = oilp.have_raw; p->raw = oilp.raw;
 }
 
 /* Boost is a GAUGE pressure but PID 0x0B reports ABSOLUTE manifold pressure, so
@@ -323,6 +417,10 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
             if (resp_id != OBD_RESP_ECM) break;
             set_m(M_OIL, &g_obd.oil, (float)A - 40.0f);
             break;
+        case OILP_PID:                          /* engine oil pressure, A x 4 kPa */
+            if (resp_id != OBD_RESP_ECM) break;
+            oilp_value(A);
+            break;
         case 0x199A: {                          /* current gear (raw index in A) */
             if (resp_id != OBD_RESP_TCM2) break;
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
@@ -348,6 +446,10 @@ static bool dispatch(uint32_t resp_id, const uint8_t *p, uint16_t n) {
     if (n == 0) return false;
     if (p[0] == 0x41) return resp_id == OBD_RESP_ECM && decode_mode01(p, n);
     if (p[0] == 0x62) return decode_mode22(resp_id, p, n);
+    if (p[0] == 0x6C) {                  /* $2C: packet defined, nothing to decode */
+        if (n < 2) { rx_bad(); return false; }
+        return true;
+    }
     if (p[0] == 0x7F) {
         if (n < 3) { rx_bad(); return false; }
         /* Negative response. Silently dropping these is what makes an unknown
@@ -512,30 +614,18 @@ void obd_rx_poll(void) {
             continue;
         }
 
-        /* 0x1BA oil-pressure broadcast candidate #1 — REJECTED (2026-08-23 run).
-         * Byte 3 (/100 → bar) does NOT track RPM: it stayed 0.1-0.4 bar at warm
-         * idle and 0.2 bar at 1599 rpm / 71 km/h under way, where real oil pressure
-         * would be 3-5 bar. No longer fed to oil_press; raw byte still captured for
-         * the DIAG side-by-side until candidate #2 is confirmed and this is removed. */
-        if (rh.Identifier == CAN_ID_OILP_BCAST) {
-            if (dlc < 4u) { rx_bad(); continue; }
+        /* GMLAN UUDT packet from the ECM: [DPID][data...], a plain frame (no
+         * ISO-TP PCI, no SID). Only the answer to our own $AA read is decoded:
+         * another tester may have defined the same DPID number with different
+         * contents. */
+        if (rh.Identifier == OBD_UUDT_ECM) {
+            if (dlc < 2u) { rx_bad(); continue; }
             last_rx_ms = HAL_GetTick();
             g_obd.can_ok = true;
-            g_obd.oilp_1ba_raw = d[3];
-            continue;
-        }
-
-        /* 0x0C9 oil-pressure broadcast candidate #2 — UNVERIFIED. Byte 2 spanned
-         * 0x27..0xFF on SNIFF and A/36 was only a guess, never calibrated. It is
-         * captured raw for the DIAG side-by-side and deliberately does NOT feed
-         * oil_press: a guessed pressure with a red low-pressure state is worse
-         * than "--". Wire a decode back only after it is checked against an
-         * independent gauge (docs/oil-pressure-test.md). */
-        if (rh.Identifier == CAN_ID_OILP_CAND2) {
-            if (dlc < 3u) { rx_bad(); continue; }
-            last_rx_ms = HAL_GetTick();
-            g_obd.can_ok = true;
-            g_obd.oilp_0c9_raw = d[2];
+            if (await_resp_id != 0u && await_sid == 0xAA && d[0] == (uint8_t)await_key) {
+                oilp_value(d[1]);
+                txn_close();
+            }
             continue;
         }
 
@@ -563,7 +653,7 @@ void obd_rx_poll(void) {
                 /* NRC 0x78 (response pending) promises the real answer later:
                  * keep the transaction open for it, with a longer bound. */
                 if (pl[0] == 0x7F && pl[2] == 0x78) await_deadline = HAL_GetTick() + OBD_PENDING_MS;
-                else                                txn_close();
+                else                                txn_answered(pl);
             }
             /* ours && !valid: a malformed answer leaves the transaction open
              * for a proper one until its timeout. */
@@ -609,7 +699,7 @@ void obd_rx_poll(void) {
                 /* The transfer belongs to the open transaction, so completing
                  * it closes exactly that one — never a newer request. */
                 itp_active = false;
-                if (dispatch(itp_src_id, itp_buf, itp_len)) txn_close();
+                if (dispatch(itp_src_id, itp_buf, itp_len)) txn_answered(itp_buf);
                 else                                        txn_failed();
             }
         }
@@ -617,14 +707,15 @@ void obd_rx_poll(void) {
 }
 
 /* =============================== init/poll =============================== */
-/* Message-RAM layout this module needs: 4 standard filters (set below) and a
- * 16-deep RX FIFO0 of 8-byte elements. fdcan.c and Dash.ioc carry the same
- * values; asserting them here keeps reception working even if a CubeMX
+/* Message-RAM layout this module needs: 3 standard filters (set below) and a
+ * 16-deep RX FIFO0 of 8-byte elements. fdcan.c and Dash.ioc carry at least
+ * these values (4 filters: one spare, left disabled by HAL_FDCAN_Init's RAM
+ * clear); asserting them here keeps reception working even if a CubeMX
  * regeneration drops them again. That has bitten before: RxFifo0ElmtsNbr = 0
  * meant nothing could be received at all, and with too few filter elements
  * HAL_FDCAN_ConfigFilter does NOT fail (the index check is an assert_param,
  * compiled out) — it silently writes the filter over the next RAM section. */
-#define OBD_STD_FILTERS   4u
+#define OBD_STD_FILTERS   3u
 #define OBD_RX_FIFO0_LEN 16u
 
 /* A config call that fails at init is fatal: there is no CAN without it, and
@@ -672,35 +763,17 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fs.FilterID2    = 0x7FFu;                 /* full mask = exact match         */
     if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fs))) return;
 
-    /* Filter 2: 0x1BA — oil-pressure candidate #1. Mode-22 DIDs 0x115C and
-     * 0x1470 return NRC 22/31 on this E98, so oil pressure must be a broadcast
-     * the OEM cluster reads passively. Byte 3 was REJECTED on 2026-08-23 (it
-     * does not track RPM); the raw byte is still captured for the DIAG
-     * side-by-side. TEST SCAFFOLD — remove together with filter 3 once a real
-     * source is confirmed. */
-    FDCAN_FilterTypeDef fo = {0};
-    fo.IdType       = FDCAN_STANDARD_ID;
-    fo.FilterIndex  = 2;
-    fo.FilterType   = FDCAN_FILTER_MASK;
-    fo.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    fo.FilterID1    = CAN_ID_OILP_BCAST;
-    fo.FilterID2    = 0x7FFu;                   /* exact match                     */
-    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fo))) return;
-
-    /* Filter 3: 0x0C9 — second oil-pressure candidate under test (2026-07-24).
-     * Same rationale as filter 2: capture the frame passively so its byte 2 can
-     * be compared against RPM on the DIAG page. TEST SCAFFOLD — remove this
-     * filter (and drop StdFiltersNbr back to 3 in fdcan.c) once the real
-     * oil-pressure source is settled. 0x0C9 is a fast engine frame, so it adds
-     * RX-FIFO pressure; acceptable for a short warm-up/blip test. */
-    FDCAN_FilterTypeDef fc = {0};
-    fc.IdType       = FDCAN_STANDARD_ID;
-    fc.FilterIndex  = 3;
-    fc.FilterType   = FDCAN_FILTER_MASK;
-    fc.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    fc.FilterID1    = CAN_ID_OILP_CAND2;
-    fc.FilterID2    = 0x7FFu;                   /* exact match                     */
-    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fc))) return;
+    /* Filter 2: the ECM's UUDT diagnostic packets (0x5E8), where the answer
+     * to the $AA oil-pressure read arrives. Silent unless something asks:
+     * the ECM sends these only on request. */
+    FDCAN_FilterTypeDef fu = {0};
+    fu.IdType       = FDCAN_STANDARD_ID;
+    fu.FilterIndex  = 2;
+    fu.FilterType   = FDCAN_FILTER_MASK;
+    fu.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    fu.FilterID1    = OBD_UUDT_ECM;
+    fu.FilterID2    = 0x7FFu;                   /* exact match                     */
+    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fu))) return;
 
     if (!cfg_ok(HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
                                              FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE)))
@@ -731,8 +804,10 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *         Speed was on MEDIUM before but lagged ~10 s worst-case behind the
  *         blocking flush (2026-08-23 run); on FAST it lands sub-second.
  *
- *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, coolant+IAT, MIL, and
- *         load+baro (fastB). Baro is ambient and barely moves.
+ *   MEDIUM (every MED_DIV ticks): rail+batt, ATF, gear, coolant+IAT, MIL,
+ *         load+baro (fastB), and oil pressure (one step of its $22 or $2C/$AA
+ *         path; a fast request instead once it has no source). Baro is
+ *         ambient and barely moves.
  *
  *   SLOW  (every SLOW_DIV ticks): the oil-temp DID (0x1154).
  *
@@ -765,8 +840,8 @@ void obd_poll_tick(void) {
     static const uint8_t misc[]  = { 0x23, 0x42 };        /* rail(3)+batt(3)  = 7 payload */
     static const uint8_t mil1[]  = { 0x01 };
 
-    /* medium: 6 items, one per MED_DIV ticks */
-    #define N_MED    6u
+    /* medium: 7 items, one per MED_DIV ticks */
+    #define N_MED    7u
     #define MED_DIV  3u   /* fire medium item every 3 ticks */
     #define SLOW_DIV 16u  /* oil-temp DID every 16 ticks    */
 
@@ -780,10 +855,9 @@ void obd_poll_tick(void) {
 
     ++sched.tick;
 
+    bool fast = false;
     if (sched.tick % SLOW_DIV == 0u) {
-        /* engine oil temp (GM enhanced). Oil PRESSURE is not polled: DIDs
-         * 0x115C / 0x1470 return NRC 22/31 on this E98. */
-        req_mode22(OBD_REQ_ECM, 0x1154);
+        req_mode22(OBD_REQ_ECM, 0x1154);                    /* engine oil temp      */
     } else if (sched.tick % MED_DIV == 0u) {
         switch (sched.med_idx % N_MED) {
             case 0: req_mode01(misc,  sizeof misc);          break; /* rail, batt       */
@@ -792,9 +866,13 @@ void obd_poll_tick(void) {
             case 3: req_mode01(temps, sizeof temps);         break; /* coolant, IAT     */
             case 4: req_mode01(mil1,  sizeof mil1);          break; /* MIL / DTC count  */
             case 5: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
+            case 6: fast = !req_oilp();                     break; /* oil pressure     */
         }
         sched.med_idx++;
     } else {
+        fast = true;
+    }
+    if (fast) {
         /* fast band: RPM every tick, with MAP and SPEED alternating as the 2nd
          * PID so both stay sub-second even when the display flush stalls the loop.
          * Each request is a single ISO-TP frame (rpm + one PID = 6 payload). */

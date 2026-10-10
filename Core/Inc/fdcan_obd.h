@@ -3,9 +3,9 @@
  *  Read-only OBD-II over FDCAN1 (classic CAN 2.0, 500 kbps) on STM32H743.
  *  NOTE: H7 uses the FDCAN peripheral, NOT bxCAN. OBD = classic frames.
  *
- *  Adapted for this project: RX is POLLED (obd_rx_poll) from the main loop
- *  instead of using the FDCAN interrupt, since the project has no FDCAN NVIC
- *  handler wired.
+ *  RX: the FDCAN interrupt copies frames into a ring, obd_rx_poll() checks
+ *  and decodes them from the main loop (polled fallback if the interrupt
+ *  cannot be enabled).
  * ========================================================================== */
 #ifndef FDCAN_OBD_H
 #define FDCAN_OBD_H
@@ -25,7 +25,7 @@
 typedef struct {
     float   speed, rpm, cool, oil, iat, load, boost, rail, egt, battery;
     float   atf;
-    float   oil_press;       /* no confirmed source yet: stays NaN on the car  */
+    float   oil_press;       /* bar, ECM PID 0xA22C (see obd_oilp_probe)       */
     int8_t  gear;            /* TCM current gear: -1 = unknown, 0 = N, 1..8 = D */
     int8_t  sel_range;       /* selector 0x1F5.b3: -1 unknown, 1 P 2 R 3 N 4 D  */
     bool    mil;
@@ -41,13 +41,6 @@ typedef struct {
     uint8_t gear_raw;        /* last raw byte from the gear DID                */
     uint8_t last_nrc_sid;    /* service that was rejected (0 = none seen)      */
     uint8_t last_nrc;        /* its negative-response code                     */
-
-    /* ---- oil-pressure candidate capture (DIAG page, TEST SCAFFOLD) ------
-     * Oil pressure has no confirmed source. Two broadcast bytes are captured
-     * raw and shown next to live RPM on DIAG so a throttle blip reveals which
-     * (if either) tracks engine speed. See CAN_ID_OILP_BCAST / _CAND2. */
-    uint8_t oilp_1ba_raw;    /* 0x1BA byte 3 (candidate #1, rejected)          */
-    uint8_t oilp_0c9_raw;    /* 0x0C9 byte 2 (candidate #2, unverified)        */
 
     /* ---- freshness: HAL tick of the last valid decode, per metric. Stamped
      * on every decode, also when the value did not change. See
@@ -84,5 +77,22 @@ typedef struct {
     uint16_t start_fail;        /* controller restarts refused (retried)         */
 } obd_health_t;
 void obd_can_health(obd_health_t *h);
+
+/* Oil-pressure source, for DIAG: which way PID 0xA22C is being read, the last
+ * refusal of each service tried, and the last raw byte. A refusal of $2C ends
+ * the search (OILP_NONE): this calibration has no such parameter. */
+typedef enum {
+    OILP_VIA22 = 0,             /* $22 A22C (tried first)                       */
+    OILP_DEFINE,                /* $22 refused: define the packet with $2C next */
+    OILP_READ,                  /* packet defined: read it with $AA             */
+    OILP_NONE                   /* $2C refused too: not polled any more         */
+} obd_oilp_mode_t;
+typedef struct {
+    uint8_t mode;               /* obd_oilp_mode_t                              */
+    uint8_t nrc22, nrc2c, nrcaa;/* last NRC per service, 0 = none seen          */
+    bool    have_raw;
+    uint8_t raw;                /* last raw byte, A x 4 kPa                     */
+} obd_oilp_probe_t;
+void obd_oilp_probe(obd_oilp_probe_t *p);
 
 #endif /* FDCAN_OBD_H */

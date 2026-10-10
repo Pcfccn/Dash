@@ -52,7 +52,7 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.DataTimeSeg1 = 1;
   hfdcan1.Init.DataTimeSeg2 = 1;
   hfdcan1.Init.MessageRAMOffset = 0;
-  hfdcan1.Init.StdFiltersNbr = 4;   /* [0]=OBD response range, [1]=0x1F5 PRNDL, [2]=0x1BA oil-press cand#1, [3]=0x0C9 oil-press cand#2 (TEST) — all set in obd_init */
+  hfdcan1.Init.StdFiltersNbr = 4;   /* [0]=OBD response range, [1]=0x1F5 PRNDL, [2]=0x5E8 UUDT (oil pressure), [3] spare — set in obd_init */
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.RxFifo0ElmtsNbr = 16;   /* was 0 -> nothing could be received */
   hfdcan1.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;

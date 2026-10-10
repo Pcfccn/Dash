@@ -498,8 +498,8 @@ static void build_diag(void)
     }
 
     /* Workbench readout (two lines) in the gap above the pager, not part of
-     * the design: line 1 = last NRC, bus counters and LOOP time; line 2 = RPM next to the raw oil-pressure
-     * candidate bytes. Filled in cluster_ui_refresh(). */
+     * the design: line 1 = last NRC, bus counters and LOOP time; line 2 = the
+     * oil-pressure source probe. Filled in cluster_ui_refresh(). */
     ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
     lv_obj_set_pos(ui.did_dbg, 10, 388);
     lv_obj_set_style_text_line_space(ui.did_dbg, 4, 0);
@@ -726,6 +726,9 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     ui_text(val, b);
 
     metric_state_t s = metric_state(k, v);
+    /* Oil pressure is ~0 with the key on and the engine stopped, and builds
+     * while cranking: judge it only with the engine running. */
+    if (k == M_OILP && !(shown(d, M_RPM, live) && d->rpm >= 400.0f)) s = ST_INFO;
     lv_color_t c = state_color(s);
     /* Cold temperature (engine warming up): light blue instead of green. */
     if (s == ST_OK && is_temp(k) && v < 50.0f) c = C_COLD;
@@ -753,7 +756,6 @@ void cluster_ui_refresh(void)
     d.mil_valid = g_obd.mil_valid;
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
-    d.oilp_1ba_raw = g_obd.oilp_1ba_raw; d.oilp_0c9_raw = g_obd.oilp_0c9_raw;
     for (int k = 0; k < M_COUNT; k++) d.upd_ms[k] = g_obd.upd_ms[k];
     d.sel_upd_ms = g_obd.sel_upd_ms;
     bool live = d.can_ok;
@@ -845,10 +847,10 @@ void cluster_ui_refresh(void)
          *         long the display path stalls OBD) — whether the normal
          *         DRIVE/DIAG traffic overruns the 16-deep FIFO during such a
          *         stall is an open question worth a photo.
-         * Line 2: live RPM next to the two raw oil-pressure candidate bytes, so
-         *         ONE photo during a throttle blip shows which byte tracks
-         *         engine speed (docs/oil-pressure-test.md). Both are UNVERIFIED:
-         *         shown raw only, never decoded into the OIL P tile or an alarm. */
+         * Line 2: how oil pressure (PID 0xA22C) is being read — path 22 or
+         *         2C/AA, NONE once the ECM refused both — the last NRC of each
+         *         service, and the last raw byte (A x 4 kPa)
+         *         (docs/oil-pressure-test.md). */
         char db[96];
         char nrc[16];
         if (d.last_nrc_sid)
@@ -862,9 +864,17 @@ void cluster_ui_refresh(void)
                             nrc, (unsigned)h.rx_lost, (unsigned)h.rx_bad,
                             (unsigned)h.tx_fail, (unsigned)app_loop_max_ms());
 
-        int rpm = has_value(d.rpm) ? (int)d.rpm : 0;
-        o += lv_snprintf(db + o, sizeof db - o, "RPM %d  1BA.3=%02X  0C9.2=%02X",
-                         rpm, (unsigned)d.oilp_1ba_raw, (unsigned)d.oilp_0c9_raw);
+        static const char *const OILP_PATH[] = { "22", "2C", "AA", "NONE" };
+        obd_oilp_probe_t op;
+        obd_oilp_probe(&op);
+        char n22[4] = "--", n2c[4] = "--", naa[4] = "--", raw[4] = "--";
+        if (op.nrc22) lv_snprintf(n22, sizeof n22, "%02X", (unsigned)op.nrc22);
+        if (op.nrc2c) lv_snprintf(n2c, sizeof n2c, "%02X", (unsigned)op.nrc2c);
+        if (op.nrcaa) lv_snprintf(naa, sizeof naa, "%02X", (unsigned)op.nrcaa);
+        if (op.have_raw) lv_snprintf(raw, sizeof raw, "%02X", (unsigned)op.raw);
+        o += lv_snprintf(db + o, sizeof db - o, "OILP %s  22/%s 2C/%s AA/%s  RAW %s",
+                         OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE],
+                         n22, n2c, naa, raw);
         /* Aborted display SPI transfers (main / status screen): only shown
          * when something went wrong, so the line stays short normally. */
         uint16_t se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
