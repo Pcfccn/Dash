@@ -95,8 +95,13 @@ static volatile bool     s_need_repaint;   /* something did not reach the panel 
 static uint16_t          s_recover_cnt;
 static lv_display_t     *s_disp;
 
+/* DMA starts the HAL refused, where the blocking fallback then delivered the
+ * area: an anomaly worth seeing, but nothing was lost, so no repair. */
+static volatile uint16_t s_dma_fallback;
+
 uint16_t lv_port_disp_spi_errors(void) { return s_spi_err; }
 uint16_t lv_port_disp_recoveries(void) { return s_recover_cnt; }
+uint16_t lv_port_disp_dma_fallbacks(void) { return s_dma_fallback; }
 
 static void spi_err(void)
 {
@@ -105,12 +110,14 @@ static void spi_err(void)
     s_need_repaint = true;
 }
 
-static void lcd_tx(const uint8_t *p, uint16_t len, uint32_t timeout_ms)
+static bool lcd_tx(const uint8_t *p, uint16_t len, uint32_t timeout_ms)
 {
     if (HAL_SPI_Transmit(&hspi2, (uint8_t *)p, len, timeout_ms) != HAL_OK) {
         HAL_SPI_Abort(&hspi2);
         spi_err();
+        return false;
     }
+    return true;
 }
 
 static void lcd_write_cmd(uint8_t cmd)
@@ -293,11 +300,12 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     cs_low();
     s_dma_busy = true;
     if (HAL_SPI_Transmit_DMA(&hspi2, tx_buf, (uint16_t)n) != HAL_OK) {
-        /* Fall back to a blocking send so the frame is not lost; the refused
-         * DMA start is counted either way. */
+        /* Fall back to a blocking send so the frame is not lost. If that
+         * delivers the area it is not an error (no repair, and the link
+         * evidently works); only a failed send counts as a lost area. */
         s_dma_busy = false;
-        spi_err();
-        lcd_tx(tx_buf, (uint16_t)n, LCD_BULK_TIMEOUT_MS);
+        if (s_dma_fallback < 0xFFFFu) s_dma_fallback++;
+        if (lcd_tx(tx_buf, (uint16_t)n, LCD_BULK_TIMEOUT_MS)) s_err_streak = 0;
         cs_high();
     }
 
@@ -372,8 +380,10 @@ void lv_port_disp_init(void)
     lv_display_set_flush_cb(disp, disp_flush_cb);
     lv_display_set_buffers(disp, buf1, buf2, sizeof(buf1), LV_DISPLAY_RENDER_MODE_PARTIAL);
     s_disp = disp;
-    s_err_streak = 0;               /* init-time errors are covered by the */
-                                    /* first full paint                    */
+    /* An init sequence with SPI errors may have left the panel unconfigured:
+     * have the first service call re-init it (then retried every
+     * LCD_RECOVER_GAP_MS while it keeps failing), not only repaint. */
+    s_err_streak = (s_spi_err != 0u) ? LCD_RECOVER_STREAK : 0u;
 }
 
 #if FAULT_TEST == 3
@@ -393,6 +403,7 @@ void lv_port_disp_service(void)
     if (now - t_repaint < LCD_REPAINT_GAP_MS) return;
     t_repaint = now;
 
+    bool reinit_failed = false;
     if (s_err_streak >= LCD_RECOVER_STREAK &&
         (!recovered_once || now - t_recover >= LCD_RECOVER_GAP_MS)) {
         recovered_once = true;
@@ -400,10 +411,14 @@ void lv_port_disp_service(void)
         dma_wait();                  /* nothing of ours left on the wire     */
         HAL_SPI_Abort(&hspi2);
         cs_high();
-        ili9488_init_sequence();     /* errors in here count as usual        */
+        uint16_t e0 = s_spi_err;
+        ili9488_init_sequence();
         if (s_recover_cnt < 0xFFFFu) s_recover_cnt++;
-        s_err_streak = 0;
+        /* A re-init that itself hit errors did not take: keep the streak so
+         * it is tried again after the gap, and keep repairing meanwhile. */
+        reinit_failed  = (s_spi_err != e0);
+        s_err_streak   = reinit_failed ? LCD_RECOVER_STREAK : 0u;
     }
-    s_need_repaint = false;
+    s_need_repaint = reinit_failed;
     lv_obj_invalidate(lv_display_get_screen_active(s_disp));
 }

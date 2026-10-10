@@ -31,6 +31,7 @@ typedef struct {
     bool    mil;
     uint8_t dtc_count;       /* emission-related DTC count from PID 0x01      */
     bool    mil_valid;       /* PID 0x01 answered one of its last 3 requests  */
+    uint32_t mil_upd_ms;     /* receive time of the last PID 0x01 answer      */
     bool    can_ok;          /* set false if no valid frame within timeout     */
 
     /* ---- DID discovery aids (DIAG page) --------------------------------
@@ -61,6 +62,10 @@ void obd_demo_tick(void);                     /* OBD_DEMO: inject test values   
  * snapshot of it. A NaN value is "no data" regardless of this. */
 bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now);
 bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now);
+/* MIL / DTC count usable: PID 0x01 answered one of its last 3 attempts AND
+ * within MIL_STALE_MS. The attempt count alone never expires while nothing
+ * is asked (SNIFF pauses polling, a stalled scheduler). */
+bool obd_mil_fresh(const volatile obd_data_t *d, uint32_t now);
 
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);

@@ -1157,7 +1157,7 @@ static void t_summary_needs_complete_data(void)
     put(M_COOL, &g_obd.cool, 85.0f); put(M_OIL, &g_obd.oil, 90.0f);
     put(M_ATF, &g_obd.atf, 70.0f);   put(M_BATTERY, &g_obd.battery, 14.1f);
     CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* MIL unknown */
-    g_obd.mil_valid = true;
+    g_obd.mil_valid = true; g_obd.mil_upd_ms = now_ms;
     CHECK(policy_summary(&g_obd, now_ms, false) == SUM_NOMINAL);
     CHECK(isnan(g_obd.egt) && isnan(g_obd.oil_press));            /* not required */
     now_ms += metric_stale_ms[M_BATTERY] + 1u;                     /* all go stale */
@@ -1168,6 +1168,21 @@ static void t_summary_needs_complete_data(void)
 }
 
 /* --- Stage C2 deep-audit addendum ------------------------------------------ */
+/* MIL / DTC count expire by time too: with polling paused (SNIFF) no attempt
+ * fails, so the attempt counter alone kept a "MIL OFF" valid forever. */
+static void t_mil_expires_by_time(void)
+{
+    g_obd.can_ok = true;
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x01, 0x00, 0x07, 0xE5, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(g_obd.mil_valid && obd_mil_fresh(&g_obd, now_ms));
+    CHECK(g_obd.mil_upd_ms == now_ms);
+    sniff_on = true;                                    /* nothing is asked */
+    for (int i = 0; i < 20; i++) { now_ms += 1000u; obd_poll_tick(); }
+    CHECK(g_obd.mil_valid);                             /* no attempt failed ... */
+    CHECK(!obd_mil_fresh(&g_obd, now_ms));              /* ... but 20 s old */
+}
+
 /* D02: a raw 0xFF (no-data) must clear the shown pressure at once, not leave
  * the previous 4.00 bar fresh for 15 s. */
 static void t_d02_oilp_ff_clears_value(void)
@@ -1409,6 +1424,7 @@ int main(void)
         { "tick_wraparound",            t_tick_wraparound },
         { "d01_sniff_sees_every_frame", t_d01_sniff_sees_every_frame },
         { "d06_sniff_gets_rx_time",     t_d06_sniff_gets_rx_time },
+        { "mil_expires_by_time",        t_mil_expires_by_time },
         { "d02_oilp_ff_clears_value",   t_d02_oilp_ff_clears_value },
         { "d03_nrc78_total_cap",        t_d03_nrc78_total_cap },
         { "d03_nrc78_within_cap",       t_d03_nrc78_within_cap_completes },

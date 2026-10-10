@@ -402,6 +402,10 @@ bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
     return (now - d->sel_upd_ms) <= SEL_STALE_MS;
 }
 
+bool obd_mil_fresh(const volatile obd_data_t *d, uint32_t now) {
+    return d->mil_valid && (now - d->mil_upd_ms) <= MIL_STALE_MS;
+}
+
 static void oilp_value(uint8_t a) {
     oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0;
     /* 0xFF would be 10.2 bar, the top of the byte and far above any pump
@@ -496,7 +500,8 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x42: set_m(M_BATTERY, &g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
                        g_obd.dtc_count = v[0] & 0x7F;
-                       g_obd.mil_valid = true; mil_miss = 0; obd_on_update(); break;
+                       g_obd.mil_valid = true; g_obd.mil_upd_ms = rx_ms_cur;
+                       mil_miss = 0; obd_on_update(); break;
             default:                                                       break;
         }
     }
@@ -1033,6 +1038,7 @@ void obd_demo_tick(void) {
     g_obd.iat = 45;     g_obd.load = 67;   g_obd.rail = 580;  g_obd.battery = 14.1f;
     g_obd.atf = 82;     g_obd.oil_press = 3.6f;
     g_obd.mil = false;  g_obd.dtc_count = 0;  g_obd.mil_valid = true;
+    g_obd.mil_upd_ms = HAL_GetTick();
     g_obd.can_ok = true;
 
     if (s < 120u) {                 /* 0-12 s: DRIVE cruise, all nominal green   */

@@ -11,6 +11,7 @@
 void lv_port_disp_init(void);
 uint16_t lv_port_disp_spi_errors(void);   /* aborted SPI2 transfers since boot */
 uint16_t lv_port_disp_recoveries(void);   /* panel re-inits after error runs   */
+uint16_t lv_port_disp_dma_fallbacks(void);/* refused DMA starts, sent blocking  */
 
 /* Repair after SPI errors: repaint the screen, or re-init the panel after a
  * run of errors. Call from the loop, outside lv_timer_handler(). */

@@ -745,7 +745,7 @@ void cluster_ui_refresh(void)
     d.battery = g_obd.battery; d.atf = g_obd.atf;
     d.gear = g_obd.gear; d.sel_range = g_obd.sel_range;
     d.mil = g_obd.mil; d.dtc_count = g_obd.dtc_count; d.can_ok = g_obd.can_ok;
-    d.mil_valid = g_obd.mil_valid;
+    d.mil_valid = g_obd.mil_valid; d.mil_upd_ms = g_obd.mil_upd_ms;
     d.gear_raw = g_obd.gear_raw; d.oil_press = g_obd.oil_press;
     d.last_nrc_sid = g_obd.last_nrc_sid; d.last_nrc = g_obd.last_nrc;
     for (int k = 0; k < M_COUNT; k++) d.upd_ms[k] = g_obd.upd_ms[k];
@@ -800,7 +800,7 @@ void cluster_ui_refresh(void)
      * mil=false / dtc_count=0 are just initial values, so show "--" / NO DATA
      * rather than a reassuring OFF / no-codes. The count is the emission-related
      * DTC count only (the mode-03 list is not decoded), hence the wording. */
-    bool mil_ok = live && d.mil_valid;
+    bool mil_ok = live && obd_mil_fresh(&d, s_now);
     if (!mil_ok) {
         ui_text(ui.mil_text, "--");
         ui_text_color(ui.mil_text, C_MUTED);
@@ -874,9 +874,10 @@ void cluster_ui_refresh(void)
          * re-inits: only shown when something went wrong, so the line stays
          * short normally. */
         uint16_t se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
-        if ((se || se4) && o < (int)sizeof db)
-            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u R%u", (unsigned)se, (unsigned)se4,
-                        (unsigned)lv_port_disp_recoveries());
+        uint16_t fb = lv_port_disp_dma_fallbacks();
+        if ((se || se4 || fb) && o < (int)sizeof db)
+            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u R%u F%u", (unsigned)se, (unsigned)se4,
+                        (unsigned)lv_port_disp_recoveries(), (unsigned)fb);
         ui_text(ui.did_dbg, db);
     }
 

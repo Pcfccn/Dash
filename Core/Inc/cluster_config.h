@@ -161,6 +161,7 @@ static const uint16_t metric_stale_ms[M_COUNT] = {
     [M_GEAR]    = 15000, [M_OILP] = 15000,
 };
 #define SEL_STALE_MS 2000u   /* selector broadcast 0x1F5 */
+#define MIL_STALE_MS 15000u  /* PID 0x01 (MIL + DTC count), medium band */
 
 /* Generic state resolver */
 static inline metric_state_t metric_state(metric_key_t k, float v) {

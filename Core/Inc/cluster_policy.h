@@ -61,7 +61,7 @@ static inline bool policy_complete(const volatile obd_data_t *d, uint32_t now)
     static const metric_key_t need[] = { M_RPM, M_COOL, M_OIL, M_ATF, M_BATTERY };
     for (unsigned i = 0; i < sizeof need / sizeof need[0]; i++)
         if (!policy_shown(d, need[i], now)) return false;
-    return d->mil_valid;
+    return obd_mil_fresh(d, now);
 }
 
 /* SNIFF pauses OBD polling, so it opens (and stays open) only while the
