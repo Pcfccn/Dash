@@ -68,7 +68,7 @@ What this truck actually answers, verified in-vehicle (don't re-derive it by gue
 
 Note a grouped mode-01 request drops unsupported PIDs from the reply instead of returning a negative response, so a missing value there is not an error and produces no NRC.
 
-**`fdcan_obd.c`/`.h`** implements the actual OBD-II protocol over FDCAN1 (H743 uses FDCAN, not bxCAN, but this project speaks classic CAN 2.0 frames at 500kbps, not CAN-FD). RX is **interrupt-driven**: `FDCAN1_IT0_IRQHandler` (defined in `fdcan_obd.c`, not `stm32h7xx_it.c` — enabling the FDCAN interrupt in CubeMX would duplicate it) copies every frame from the 16-deep hardware FIFO into a 64-entry ring; `obd_rx_poll()` does all validation and decoding from that ring in the loop. If the notification cannot be enabled, `obd_rx_poll()` drains the FIFO itself (SNIFF shows `POLL`). Ring drops count into `LOST` on DIAG. Live decoded values land in the global `g_obd` (`obd_data_t`), which both displays read from.
+**`fdcan_obd.c`/`.h`** implements the actual OBD-II protocol over FDCAN1 (H743 uses FDCAN, not bxCAN, but this project speaks classic CAN 2.0 frames at 500kbps, not CAN-FD). RX is **interrupt-driven**: `FDCAN1_IT0_IRQHandler` (defined in `fdcan_obd.c`, not `stm32h7xx_it.c` — enabling the FDCAN interrupt in CubeMX would duplicate it) copies every frame from the 16-deep hardware FIFO into a 256-entry ring (6 KB); `obd_rx_poll()` does all validation and decoding from that ring in the loop. If the notification cannot be enabled, `obd_rx_poll()` drains the FIFO itself (SNIFF shows `POLL`). Ring drops count into `LOST` on DIAG. Live decoded values land in the global `g_obd` (`obd_data_t`), which both displays read from.
 
 These conventions in the OBD path matter and are easy to break:
 

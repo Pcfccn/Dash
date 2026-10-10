@@ -685,14 +685,16 @@ static void t_irq_rx_path(void)
 static void t_ring_overflow_counted(void)
 {
     irq_mode();
-    for (int i = 0; i < 64; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x04, 0, 0, 0, 0);
-    FDCAN1_IT0_IRQHandler();                        /* ring now full (64) */
+    for (unsigned b = 0; b < RXQ_LEN / 64u; b++) {  /* mock FIFO holds 64 */
+        for (int i = 0; i < 64; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x04, 0, 0, 0, 0);
+        FDCAN1_IT0_IRQHandler();
+    }                                               /* ring now full */
     for (int i = 0; i < 6; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x02, 0, 0, 0, 0);
     FDCAN1_IT0_IRQHandler();                        /* 6 more: no room */
     obd_health_t h;
     obd_can_health(&h);
     CHECK(h.rx_lost == 6);
-    obd_rx_poll();                                  /* drains the 64 kept */
+    obd_rx_poll();                                  /* drains what was kept */
     CHECK(g_obd.sel_range == 4);
     CHECK(rxq_head == rxq_tail);
 }

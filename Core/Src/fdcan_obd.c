@@ -33,7 +33,10 @@ static FDCAN_HandleTypeDef *hfd;
 static volatile uint32_t    last_rx_ms;
 
 /* ---- RX ring between the FDCAN interrupt and the loop (see "RX" below) --- */
-#define RXQ_LEN 64u                          /* power of two                    */
+/* 256 x 24 B = 6 KB. A 200 ms render stall with a busy bus (e.g. SNIFF's wide
+ * filter at ~1000 frames/s) is ~200 frames: 64 would overflow, 256 holds it
+ * plus the 16-deep hardware FIFO. Overflow is still counted (LOST on DIAG). */
+#define RXQ_LEN 256u                         /* power of two                    */
 typedef struct {
     uint32_t id, idtype, ftype, dlc;         /* raw header fields               */
     uint8_t  data[8];
