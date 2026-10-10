@@ -227,15 +227,20 @@ bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
  * the reading has to be referenced to ambient (PID 0x33). Without that, a
  * stationary engine shows ~1.0 bar of "boost". Either PID can arrive first, so
  * both feed this and the gauge is recomputed whenever one of them lands.
- * baro defaults to sea level: a plausible reference beats no reading at all. */
-static float last_map_kpa = NAN;
-static float baro_kpa     = 101.0f;
+ * No gauge until a real baro has been read: an assumed sea-level 101 kPa
+ * would be off by ~0.1 bar per 900 m of altitude, silently. Freshness follows
+ * MAP only — baro barely moves, and a fresh baro must not make a stale MAP
+ * look current. */
+static float    last_map_kpa = NAN;
+static float    baro_kpa     = NAN;
+static uint32_t map_upd_ms;
 
 static void update_boost(void) {
-    if (isnan(last_map_kpa)) return;
+    if (isnan(last_map_kpa) || isnan(baro_kpa)) return;
     float bar = (last_map_kpa - baro_kpa) / 100.0f;
     if (bar < 0.0f) bar = 0.0f;      /* vacuum: not meaningful on this gauge   */
-    set_m(M_BOOST, &g_obd.boost, bar);
+    if (g_obd.boost != bar) { g_obd.boost = bar; obd_on_update(); }
+    g_obd.upd_ms[M_BOOST] = map_upd_ms;
 }
 
 /* Data bytes after each mode-01 PID we decode (SAE J1979). Any other PID has
@@ -278,7 +283,8 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x5C: set_m(M_OIL, &g_obd.oil,     v[0] - 40);                       break;
             case 0x0F: set_m(M_IAT, &g_obd.iat,     v[0] - 40);                       break;
             case 0x04: set_m(M_LOAD, &g_obd.load,    v[0] * 100.0f / 255.0f);          break;
-            case 0x0B: last_map_kpa = (float)v[0]; update_boost();             break; /* absolute MAP, kPa */
+            case 0x0B: last_map_kpa = (float)v[0]; map_upd_ms = HAL_GetTick();
+                       update_boost();                                     break; /* absolute MAP, kPa */
             case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
             case 0x23: set_m(M_RAIL, &g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
             /* Exhaust gas temperature, 9 data bytes: v[0] = supported-sensor bit

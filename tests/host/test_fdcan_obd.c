@@ -136,7 +136,7 @@ static void reset(void)
     g_obd.atf = NAN; g_obd.oil_press = NAN; g_obd.gear = -1; g_obd.sel_range = -1;
     await_resp_id = 0; await_deadline = 0; itp_active = false; itp_deadline = 0;
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
-    last_map_kpa = NAN; baro_kpa = 101.0f;
+    last_map_kpa = NAN; baro_kpa = NAN; map_upd_ms = 0;
     filter_status = HAL_OK; start_status = HAL_OK;
     notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
     nvic_on = false;
@@ -753,11 +753,51 @@ static void t_selector_freshness(void)
 static void t_gear_and_boost_stamped(void)
 {
     PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0x03, 0x00, 0x00, 0x00);   /* gear 3 */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x33, 0x65, 0x00, 0x00, 0x00, 0x00);   /* baro 101 kPa */
     PUSH(0x7E8, 8, 0x03, 0x41, 0x0B, 0x96, 0x00, 0x00, 0x00, 0x00);   /* MAP 150 kPa */
     obd_rx_poll();
     CHECK(g_obd.gear == 3 && g_obd.upd_ms[M_GEAR] == now_ms);
     CHECK(near(g_obd.boost, 0.49f) && g_obd.upd_ms[M_BOOST] == now_ms);
     CHECK(obd_is_fresh(&g_obd, M_OILP, now_ms + 1000000u));     /* limit 0: never */
+}
+
+/* C01: boost needs a real baro, and its freshness is MAP's. */
+static void t_boost_needs_baro_and_follows_map(void)
+{
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x0B, 0x96, 0x00, 0x00, 0x00, 0x00);   /* MAP, no baro yet */
+    obd_rx_poll();
+    CHECK(isnan(g_obd.boost));                      /* no assumed 101 kPa */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x33, 0x64, 0x00, 0x00, 0x00, 0x00);   /* baro 100 kPa */
+    obd_rx_poll();
+    CHECK(near(g_obd.boost, 0.50f));
+    uint32_t t_map = now_ms;
+    now_ms += 3000u;                                /* MAP goes quiet ... */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x33, 0x64, 0x00, 0x00, 0x00, 0x00);   /* ... baro still answers */
+    obd_rx_poll();
+    CHECK(g_obd.upd_ms[M_BOOST] == t_map);          /* baro did not refresh it */
+    CHECK(!obd_is_fresh(&g_obd, M_BOOST, now_ms));
+}
+
+/* HAL tick wrap (~49.7 days): freshness and deadlines use unsigned / signed
+ * differences, so they survive the wrap. */
+static void t_tick_wraparound(void)
+{
+    now_ms = 0xFFFFFF00u;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    now_ms += 0x200u;                               /* wrapped past 0 */
+    CHECK(obd_is_fresh(&g_obd, M_RPM, now_ms));     /* 512 ms old: fresh */
+    static const uint8_t rpm = 0x0C;
+    now_ms = 0xFFFFFFF0u;
+    await_resp_id = 0;
+    CHECK(req_mode01(&rpm, 1));                     /* deadline wraps */
+    int sent = tx_n;
+    now_ms += 100u;
+    obd_poll_tick();
+    CHECK(tx_n == sent);                            /* still waiting */
+    now_ms += OBD_AWAIT_MS;
+    obd_poll_tick();
+    CHECK(tx_n == sent + 1);                        /* timed out across the wrap, next sent */
 }
 
 static void t_sniff_pauses_polling(void)
@@ -823,6 +863,8 @@ int main(void)
         { "stale_while_broadcast_alive",t_stale_while_broadcast_alive },
         { "selector_freshness",         t_selector_freshness },
         { "gear_and_boost_stamped",     t_gear_and_boost_stamped },
+        { "boost_needs_baro_follows_map",t_boost_needs_baro_and_follows_map },
+        { "tick_wraparound",            t_tick_wraparound },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;
