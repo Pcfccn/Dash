@@ -74,7 +74,7 @@ Generic red **"4.0'' TFT SPI 480X320 V1.0"** module (silkscreen confirmed on the
 
 > **Why a P-channel MOSFET (not the IRF520 originally tried):** an **IRF520 is N-channel**, i.e. a **low-side** switch — it makes/breaks the *ground* side of its load. This backlight has **no separate return**: the backlight's minus is tied to the **common ground**, so there is nothing to interrupt on the low side. The switch therefore has to be **high-side**, on the *plus* rail, which needs a **P-channel** MOSFET — hence the Si4599 (its P-channel device) replaced the IRF520. The IRF520 was bought first and did not work for this reason.
 >
-> **Polarity implication:** a high-side P-FET turns **ON when its gate is pulled LOW**. So PWM/duty sense is inverted vs. a low-side N-FET — PA8 LOW ≈ backlight ON. This matches the standing `BACKLIGHT_DUTY_PCT 0u` diagnostic comment in `app_main.c` (0% duty holds PA8 LOW). Confirm the exact gate drive against the Si4599 board wiring, and once verified, update the `app_main.c` comment that still names "IRF520".
+> **Polarity implication:** a high-side P-FET turns **ON when its gate is pulled LOW**. So PWM/duty sense is inverted vs. a low-side N-FET — PA8 LOW ≈ backlight ON. `app_main.c` compensates with `BACKLIGHT_ACTIVE_LOW 1`, so `backlight_set(100)` = full brightness = PA8 held LOW. Still unverified: whether a 3.3 V gate swing fully turns the FET off with its source on 5 V (Vgs ≈ −1.7 V when "off"); measure Vgs at 0/50/100 %, and if it does not close, add an NPN/N-FET gate driver and set `BACKLIGHT_ACTIVE_LOW 0`.
 
 ### CAN transceiver module
 

@@ -177,13 +177,14 @@ validate before driving.
   Gretio / Torque GM set) and add them. Everything on standard J1979 (speed, RPM,
   coolant, modelled oil, IAT, load, MAP/boost, rail, EGT sensor, battery) works
   as-is.
-- **Main-display backlight polarity.** `BACKLIGHT_DUTY_PCT` in `app_main.c` is
-  `0` for hardware diagnosis. With the Si4599 **P-channel** (high-side) MOSFET the
-  gate is **active-low**, so 0 % duty holds PA8 LOW = backlight **ON**. Confirm on
-  the bench that the 4" backlight is actually at full brightness before the car;
-  the PWM duty sense is inverted vs a low-side N-FET and may need the compare
-  polarity flipped for correct dimming. Don't blindly set it to `100` — for this
-  P-FET that could turn the backlight *off*.
+- **Main-display backlight polarity.** The Si4599 **P-channel** (high-side)
+  MOSFET conducts while PA8 is LOW. `app_main.c` handles that with
+  `BACKLIGHT_ACTIVE_LOW 1`: `backlight_set()` takes **brightness** (100 = full,
+  PA8 held LOW at boot as before), and brightness mode steps really brighten.
+  Still to measure on the bench: gate–source voltage at 0/50/100 %. From a 3.3 V
+  pin with the FET source on 5 V, "off" is only Vgs ≈ −1.7 V and may not fully
+  close the FET, so dimming can be weak; the fix is a small NPN/N-FET stage
+  pulling the gate (then set `BACKLIGHT_ACTIVE_LOW 0`).
 - **Mounting:** secure the board and modules, insulate exposed pins (no shorts to
   chassis), and keep the LCDs out of direct sun-baked dash heat where possible.
 
@@ -252,5 +253,6 @@ Notes:
   its regulator makes 3.3 V for the panel VCC, transceiver, MCU and ST7735.
 - The backlight's 5 V draw passes through the board's `5V`/USB net (not the 1 A
   3V3 DC-DC), so the onboard regulator only carries the 3.3 V loads.
-- Backlight PWM sense is inverted (P-FET): `BACKLIGHT_DUTY_PCT 0` in `app_main.c`
-  holds PA8 LOW = backlight ON. Confirm on the bench before wiring in the car.
+- Backlight PWM sense is inverted (P-FET, PA8 LOW = ON); `BACKLIGHT_ACTIVE_LOW`
+  in `app_main.c` compensates, so brightness 100 % holds PA8 LOW. Confirm on the
+  bench before wiring in the car.

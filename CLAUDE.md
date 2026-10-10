@@ -15,7 +15,7 @@ This is a STM32CubeIDE-managed project (Eclipse `.project`/`.cproject`), not a C
 
 After completing a logical change (a feature, fix, or other coherent unit of work — not after every single line edit), commit it with a descriptive message and push to `origin main` immediately, without asking for confirmation first. There's no CI, but a **CLI compile check is now available** via STM32CubeCLT (see Build section) — when you've touched compiled code, build it before pushing and only push if it links clean. Behavioural/visual correctness still only shows up when the user flashes hardware. Push directly to `main` — this is a solo repo, no PR workflow.
 
-Still surface anything a reasonable collaborator would flag before pushing (e.g. a diagnostic/placeholder value left in place, like `BACKLIGHT_DUTY_PCT` being temporarily 0 for hardware debugging) in the commit message or a short note, so it's visible in the history — but do not block the push on it.
+Still surface anything a reasonable collaborator would flag before pushing (e.g. a diagnostic/placeholder value left in place, like `OBD_DEMO` or `FAULT_TEST` left non-zero) in the commit message or a short note, so it's visible in the history — but do not block the push on it.
 
 ## Build / flash / debug
 

@@ -11,7 +11,16 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define BACKLIGHT_DUTY_PCT 0u     /* DIAGNOSTIC: 0% at boot -> PA8 held LOW. If backlight still full-on, the MOSFET is not in the backlight current path (wiring). Revert to 100u. */
+/* Backlight: TIM1_CH1 / PA8 drives the gate of the Si4599's P-channel FET,
+ * a high-side switch that conducts while PA8 is LOW (docs/wiring.md). So the
+ * PWM is inverted: brightness % = share of the period PA8 is LOW. backlight_set()
+ * takes BRIGHTNESS (100 = full), whatever the polarity. Set ACTIVE_LOW to 0 if
+ * the gate is ever driven through an inverting stage (an NPN / N-FET pulling
+ * the P-FET gate up to 5 V — worth doing: from a 3.3 V pin, with the FET's
+ * source on 5 V, "off" is only Vgs = -1.7 V and may not fully close it; to be
+ * measured). */
+#define BACKLIGHT_ACTIVE_LOW 1
+#define BACKLIGHT_BOOT_PCT   100u    /* full brightness at boot (PA8 held LOW, as before) */
 
 /* KEY (PC13) gestures: short press = page/step, 3 s hold = toggle backlight mode. */
 #define KEY_HOLD_MS     3000u
@@ -20,17 +29,20 @@
 #define BL_MIN_PCT    10u
 #define BL_MAX_PCT    100u
 
-static uint8_t s_bl_pct  = BACKLIGHT_DUTY_PCT;  /* current backlight duty %        */
+static uint8_t s_bl_pct  = BACKLIGHT_BOOT_PCT;  /* current brightness %             */
 static uint8_t s_bl_mode = 0;                   /* 0 = pages, 1 = backlight control */
 static uint32_t s_key_cnt = 0;                  /* accepted taps (status screen)   */
 
-/* Set TIM1_CH1 (PA8 -> IRF520 gate) duty; clamps to 0..100 %. */
+/* Set the backlight BRIGHTNESS, 0..100 %. PWM1 output is high while CNT < CCR,
+ * so CCR = (ARR+1) * high% / 100 gives an exact 0 % and 100 % (the old
+ * ARR * pct / 100 never reached a steady level at 100 %). */
 static void backlight_set(uint8_t pct)
 {
     if (pct > 100u) pct = 100u;
     s_bl_pct = pct;
+    uint32_t high_pct = BACKLIGHT_ACTIVE_LOW ? (100u - pct) : pct;
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,
-                          (htim1.Init.Period * pct) / 100u);
+                          ((htim1.Init.Period + 1u) * high_pct) / 100u);
 }
 
 /* Short tap: next page, or +10% backlight (wrapping) in backlight mode. */
@@ -151,9 +163,9 @@ void AppMain_Init(void)
     cluster_app_init(&hfdcan1);   /* build the 3 pages on the 4" + start OBD-II  */
     st7735_status_init();         /* small status screen on SPI4 (2nd display)   */
 
-    /* backlight: TIM1_CH1 / PA8 -> IRF520 gate, per docs/wiring.md */
+    /* backlight: TIM1_CH1 / PA8 -> Si4599 P-FET gate, per docs/wiring.md */
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-    backlight_set(BACKLIGHT_DUTY_PCT);
+    backlight_set(BACKLIGHT_BOOT_PCT);
 
     /* Init is done: from here the watchdog must be fed every iteration
      * (started with the long boot timeout in main.c). */
