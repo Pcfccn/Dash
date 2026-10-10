@@ -141,7 +141,7 @@ static void reset(void)
     filter_status = HAL_OK; start_status = HAL_OK;
     notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
     nvic_on = false;
-    rxq_head = rxq_tail = 0; rxq_drop = 0; rx_irq = false;
+    rxq_head = rxq_tail = 0; rxq_drop = 0; rxq_hwm = 0; rx_irq = false; rx_ms_cur = 0;
     init_calls = 0; error_calls = 0; start_calls = 0; start_fail_cnt = 0;
     hmock.Init.StdFiltersNbr   = 4;                 /* as MX_FDCAN1_Init sets it */
     hmock.Init.RxFifo0ElmtsNbr = 16;
@@ -823,9 +823,66 @@ static void t_ring_overflow_counted(void)
     obd_health_t h;
     obd_can_health(&h);
     CHECK(h.rx_lost == 6);
+    CHECK(h.rx_hwm == RXQ_LEN);
     obd_rx_poll();                                  /* drains what was kept */
     CHECK(g_obd.sel_range == 4);
     CHECK(rxq_head == rxq_tail);
+}
+
+/* Audit A02: freshness is the time a frame was RECEIVED (ISR), not decoded. A
+ * reply that waited 2.4 s in the ring behind a stall is 2.4 s old. */
+static void t_delayed_frame_keeps_rx_time(void)
+{
+    irq_mode();
+    uint32_t t0 = now_ms;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* RPM 2000  */
+    PUSH(0x1F5, 8, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00);   /* selector D */
+    FDCAN1_IT0_IRQHandler();                        /* received at t0           */
+    now_ms += 2400u;                                /* loop stalled 2.4 s       */
+    obd_rx_poll();
+    CHECK(near(g_obd.rpm, 2000.0f));                /* decoded ...              */
+    CHECK(g_obd.upd_ms[M_RPM] == t0);               /* ... stamped when received */
+    CHECK(!obd_is_fresh(&g_obd, M_RPM, now_ms));    /* 2400 > 2000: stale       */
+    CHECK(g_obd.sel_upd_ms == t0 && !obd_sel_fresh(&g_obd, now_ms));
+
+    uint32_t t1 = now_ms;                           /* a short wait stays fresh */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x05, 0x82, 0x00, 0x00, 0x00, 0x00);   /* coolant 90 */
+    FDCAN1_IT0_IRQHandler();
+    now_ms += 150u;
+    obd_rx_poll();
+    CHECK(g_obd.upd_ms[M_COOL] == t1 && obd_is_fresh(&g_obd, M_COOL, now_ms));
+    now_ms = t1 + metric_stale_ms[M_COOL] + 1u;
+    CHECK(!obd_is_fresh(&g_obd, M_COOL, now_ms));
+}
+
+static void t_delayed_frame_across_wrap(void)
+{
+    irq_mode();
+    now_ms = 0xFFFFFF00u;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    now_ms += 0x300u;                               /* 768 ms later, past the wrap */
+    obd_rx_poll();
+    CHECK(g_obd.upd_ms[M_RPM] == 0xFFFFFF00u);
+    CHECK(obd_is_fresh(&g_obd, M_RPM, now_ms));
+    now_ms = 0xFFFFFF00u + metric_stale_ms[M_RPM] + 1u;
+    CHECK(!obd_is_fresh(&g_obd, M_RPM, now_ms));
+}
+
+/* SC-10: the deepest the ring has been is kept for DIAG. */
+static void t_ring_high_water_mark(void)
+{
+    irq_mode();
+    for (int i = 0; i < 10; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x01, 0, 0, 0, 0);
+    FDCAN1_IT0_IRQHandler();
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.rx_hwm == 10);
+    obd_rx_poll();                                  /* drained */
+    for (int i = 0; i < 3; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x01, 0, 0, 0, 0);
+    FDCAN1_IT0_IRQHandler();
+    obd_can_health(&h);
+    CHECK(h.rx_hwm == 10);                          /* a maximum, not a level */
 }
 
 static void t_health_check_masks_rx_irq(void)
@@ -995,6 +1052,9 @@ int main(void)
         { "irq_rx_path",                t_irq_rx_path },
         { "ring_overflow_counted",      t_ring_overflow_counted },
         { "health_check_masks_rx_irq",  t_health_check_masks_rx_irq },
+        { "delayed_frame_keeps_rx_time",t_delayed_frame_keeps_rx_time },
+        { "delayed_frame_across_wrap",  t_delayed_frame_across_wrap },
+        { "ring_high_water_mark",       t_ring_high_water_mark },
         { "decode_stamps_fresh",        t_decode_stamps_fresh },
         { "unchanged_value_restamps",   t_unchanged_value_restamps },
         { "stale_while_broadcast_alive",t_stale_while_broadcast_alive },

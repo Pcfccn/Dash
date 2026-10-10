@@ -70,6 +70,7 @@ typedef struct {
     bool     bus_off;           /* current fault state                          */
     bool     err_passive;
     uint16_t rx_lost;           /* RX FIFO0 overflow events + RX ring drops      */
+    uint16_t rx_hwm;            /* most frames ever waiting in the RX ring       */
     bool     rx_irq;            /* true: interrupt RX; false: polled fallback    */
     uint16_t busoff_recover;    /* bus-off recovery attempts                     */
     uint16_t rx_bad;            /* received frames dropped as truncated/malformed */

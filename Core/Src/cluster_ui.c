@@ -844,9 +844,8 @@ void cluster_ui_refresh(void)
     {   /* Workbench readout. Line 1: last negative response, RX FIFO overflow
          *         events, frames dropped as malformed, TX failures, and LOOP =
          *         the longest superloop period over the last second in ms (how
-         *         long the display path stalls OBD) — whether the normal
-         *         DRIVE/DIAG traffic overruns the 16-deep FIFO during such a
-         *         stall is an open question worth a photo.
+         *         long the display path stalls OBD), Q = the most frames ever
+         *         waiting in the 256-deep RX ring (the measured margin).
          * Line 2: how oil pressure (PID 0xA22C) is being read — path 22 or
          *         2C/AA, NONE once the ECM refused both — the last NRC of each
          *         service, and the last raw byte (A x 4 kPa)
@@ -860,9 +859,10 @@ void cluster_ui_refresh(void)
             lv_snprintf(nrc, sizeof nrc, "--");
         obd_health_t h;
         obd_can_health(&h);
-        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u LOOP %u\n",
+        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u LOOP %u Q%u\n",
                             nrc, (unsigned)h.rx_lost, (unsigned)h.rx_bad,
-                            (unsigned)h.tx_fail, (unsigned)app_loop_max_ms());
+                            (unsigned)h.tx_fail, (unsigned)app_loop_max_ms(),
+                            (unsigned)h.rx_hwm);
 
         static const char *const OILP_PATH[] = { "22", "2C", "AA", "NONE" };
         obd_oilp_probe_t op;

@@ -34,18 +34,27 @@ static FDCAN_HandleTypeDef *hfd;
 static volatile uint32_t    last_rx_ms;
 
 /* ---- RX ring between the FDCAN interrupt and the loop (see "RX" below) --- */
-/* 256 x 24 B = 6 KB. A 200 ms render stall with a busy bus (e.g. SNIFF's wide
+/* 256 x 28 B = 7 KB. A 200 ms render stall with a busy bus (e.g. SNIFF's wide
  * filter at ~1000 frames/s) is ~200 frames: 64 would overflow, 256 holds it
- * plus the 16-deep hardware FIFO. Overflow is still counted (LOST on DIAG). */
+ * plus the 16-deep hardware FIFO. Overflow is still counted (LOST on DIAG),
+ * and the deepest the ring has been is kept (Q on DIAG) so the margin is
+ * measured rather than guessed. */
 #define RXQ_LEN 256u                         /* power of two                    */
 typedef struct {
     uint32_t id, idtype, ftype, dlc;         /* raw header fields               */
+    uint32_t rx_ms;                          /* HAL tick when it was received   */
     uint8_t  data[8];
 } rxq_t;
 static rxq_t             rxq[RXQ_LEN];
 static volatile uint32_t rxq_head, rxq_tail;
 static volatile uint16_t rxq_drop;           /* ring full: frame dropped        */
+static volatile uint16_t rxq_hwm;            /* most entries ever waiting       */
 static bool              rx_irq;             /* RX interrupt active             */
+
+/* Receive time of the frame being decoded. Freshness stamps use this, not the
+ * time it is decoded: a frame that waited in the ring through a 2 s render
+ * stall is 2 s old, and stamping it "now" made a stale RPM look fresh. */
+static uint32_t rx_ms_cur;
 
 /* ---- ISO-TP reassembly (single flow at a time; OBD is request/response) --- */
 static uint8_t  itp_buf[64];
@@ -296,7 +305,7 @@ static bool send_flow_control(uint32_t resp_id) {
 /* Store a decoded value and stamp it fresh — also when it did not change, so a
  * steady reading is not mistaken for a stale one. */
 static void set_m(metric_key_t k, volatile float *dst, float v) {
-    g_obd.upd_ms[k] = HAL_GetTick();
+    g_obd.upd_ms[k] = rx_ms_cur;
     if (*dst != v) { *dst = v; obd_on_update(); }
 }
 
@@ -380,7 +389,7 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x5C: set_m(M_OIL, &g_obd.oil,     v[0] - 40);                       break;
             case 0x0F: set_m(M_IAT, &g_obd.iat,     v[0] - 40);                       break;
             case 0x04: set_m(M_LOAD, &g_obd.load,    v[0] * 100.0f / 255.0f);          break;
-            case 0x0B: last_map_kpa = (float)v[0]; map_upd_ms = HAL_GetTick();
+            case 0x0B: last_map_kpa = (float)v[0]; map_upd_ms = rx_ms_cur;
                        update_boost();                                     break; /* absolute MAP, kPa */
             case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
             case 0x23: set_m(M_RAIL, &g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
@@ -426,7 +435,7 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
              * never moves while the selector does) can be told apart from a
              * wrong scaling (byte moves, gear label doesn't match). */
-            g_obd.upd_ms[M_GEAR] = HAL_GetTick();
+            g_obd.upd_ms[M_GEAR] = rx_ms_cur;
             if (g_obd.gear_raw != A) { g_obd.gear_raw = A; obd_on_update(); }
             int8_t g = (int8_t)A;
             if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
@@ -517,6 +526,7 @@ void obd_can_health(obd_health_t *h) {
     h->err_passive    = errpass_now;
     uint32_t lost     = (uint32_t)rx_lost_cnt + rxq_drop;   /* FIFO + ring */
     h->rx_lost        = (uint16_t)(lost > 0xFFFFu ? 0xFFFFu : lost);
+    h->rx_hwm         = rxq_hwm;
     h->rx_irq         = rx_irq;
     h->busoff_recover = busoff_cnt;
     h->rx_bad         = rx_bad_cnt;
@@ -552,9 +562,12 @@ static void rx_pump(void) {
         rxq_t *e = &rxq[head & (RXQ_LEN - 1u)];
         e->id = rh.Identifier; e->idtype = rh.IdType;
         e->ftype = rh.RxFrameType; e->dlc = rh.DataLength;
+        e->rx_ms = HAL_GetTick();            /* ISR time (polled: pump time)   */
         memcpy(e->data, d, sizeof e->data);
         __DMB();                             /* entry before the new head       */
         rxq_head = head + 1u;
+        uint32_t occ = head + 1u - rxq_tail;
+        if (occ > rxq_hwm) rxq_hwm = (uint16_t)occ;
     }
 }
 
@@ -591,6 +604,7 @@ void obd_rx_poll(void) {
         rh.RxFrameType = e.ftype;
         rh.DataLength  = e.dlc;
         const uint8_t *d = e.data;
+        rx_ms_cur = e.rx_ms;
 
         /* In this HAL DataLength is the DLC code, equal to the byte count for
          * 0..8 (FDCAN_DLC_BYTES_8 == 8); classic DLC 9..15 means 8 bytes. Every
@@ -606,10 +620,10 @@ void obd_rx_poll(void) {
          * ahead of the OBD-range gate, and it also keeps can_ok alive. */
         if (rh.Identifier == CAN_ID_SELECTOR) {
             if (dlc < 4u) { rx_bad(); continue; }
-            last_rx_ms = HAL_GetTick();
+            last_rx_ms = rx_ms_cur;
             g_obd.can_ok = true;
             int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
-            g_obd.sel_upd_ms = HAL_GetTick();
+            g_obd.sel_upd_ms = rx_ms_cur;
             if (g_obd.sel_range != r) { g_obd.sel_range = r; obd_on_update(); }
             continue;
         }
@@ -620,7 +634,7 @@ void obd_rx_poll(void) {
          * contents. */
         if (rh.Identifier == OBD_UUDT_ECM) {
             if (dlc < 2u) { rx_bad(); continue; }
-            last_rx_ms = HAL_GetTick();
+            last_rx_ms = rx_ms_cur;
             g_obd.can_ok = true;
             if (await_resp_id != 0u && await_sid == 0xAA && d[0] == (uint8_t)await_key) {
                 oilp_value(d[1]);
@@ -637,7 +651,7 @@ void obd_rx_poll(void) {
             continue;
         }
         if (dlc < 1u) { rx_bad(); continue; }
-        last_rx_ms = HAL_GetTick();
+        last_rx_ms = rx_ms_cur;
         g_obd.can_ok = true;
 
         uint8_t pci = d[0] >> 4;
