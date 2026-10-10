@@ -4,14 +4,13 @@
  *  Target: STM32 + SN65HVD230, HS-CAN 500 kbps, 320x480, READ-ONLY
  *
  *  Single source of truth for:
- *    1) colour thresholds  (mirror of METRICS in the HTML reference)
- *    2) CAN / OBD PID map   (how each value is polled)
+ *    1) metric keys, gauge ranges and colour thresholds (from the HTML mockup;
+ *       the thresholds are not from an engine calibration — tune them)
+ *    2) per-metric freshness limits
+ *    3) the CAN IDs and OBD addresses we use
  *
- *  Only the engine (ECM 0x7E0) and transmission (TCM 0x7E1) modules are
- *  present on the bus we read. No BCM/IPC -> no ambient/outside temp.
- *  Enhanced (mode 22) DIDs marked 0x0000 MUST be filled from an E98/TCM
- *  definition (EFILive / HP Tuners) for the specific RG calibration.
- *  mode 04 (clear codes) is intentionally NOT used.
+ *  Modules polled: the ECM (0x7E0 -> 0x7E8) and the trans controller
+ *  (0x7E2 -> 0x7EA). mode 04 (clear codes) is intentionally NOT used.
  * ========================================================================== */
 
 #ifndef CLUSTER_CONFIG_H
@@ -155,58 +154,10 @@ static inline metric_state_t metric_state(metric_key_t k, float v) {
     }
 }
 
-/* ---- PID / source map ---------------------------------------------------- */
-typedef enum { SRC_ECM = 0, SRC_TCM = 1 } ecu_src_t;
-
-typedef struct {
-    metric_key_t key;
-    ecu_src_t    src;
-    uint8_t      mode;    /* 0x01 standard, 0x22 enhanced                     */
-    uint16_t     pid;     /* mode 01: low byte is the PID; mode 22: full DID  */
-    const char  *decode;  /* SAE J1979 decode for the standard ones           */
-} pid_map_t;
-
-/*
- * STANDARD entries are SAE J1979 and reliable as-is.
- * ENHANCED entries (mode 0x22, pid=0x0000) are PLACEHOLDERS:
- *   read the real DID from an E98/TCM definition before use.
- * BOOST is derived: boost_bar = (MAP_kPa - BARO_kPa) / 100.
- */
-static const pid_map_t pid_map[] = {
-  /* key            src      mode              pid      decode (A,B = data bytes) */
-  { M_SPEED,        SRC_ECM, OBD_MODE_CURRENT, 0x000D, "A  (km/h)" },
-  { M_RPM,          SRC_ECM, OBD_MODE_CURRENT, 0x000C, "((A*256)+B)/4" },
-  { M_COOL,         SRC_ECM, OBD_MODE_CURRENT, 0x0005, "A-40  (degC)" },
-  { M_OIL,          SRC_ECM, OBD_MODE_CURRENT, 0x005C, "A-40  — NOT polled: omitted by this E98; oil temp comes from DID 0x1154" },
-  { M_IAT,          SRC_ECM, OBD_MODE_CURRENT, 0x000F, "A-40  (degC)" },
-  { M_LOAD,         SRC_ECM, OBD_MODE_CURRENT, 0x0004, "A*100/255  (%)" },
-  { M_BOOST,        SRC_ECM, OBD_MODE_CURRENT, 0x000B, "MAP=A kPa; boost=MAP-baro(0x33)" },
-  { M_RAIL,         SRC_ECM, OBD_MODE_CURRENT, 0x0023, "((A*256)+B)/10  (bar)" },
-  { M_EGT,          SRC_ECM, OBD_MODE_CURRENT, 0x0078, "sensor 1 ((B*256+C)/10)-40 — NOT polled: no reply from this E98" },
-  { M_BATTERY,      SRC_ECM, OBD_MODE_CURRENT, 0x0042, "((A*256)+B)/1000  (V)" },
-
-  /* ENHANCED / non-standard. DIDs from GM/Torque/EFILive community configs for
-   * the 2.8 LWN + E98 — NOT yet verified on this car. Confidence: [H]/[M]/[L].
-   * This table is documentation; the actual requests are hardcoded in
-   * fdcan_obd.c's obd_poll_tick()/decoders. ATF and GEAR are polled; oil
-   * pressure arrives as a passive CAN broadcast (see CAN_ID_OILP_BCAST), not a
-   * request — the 0x115C DID returns NRC 22/31 on this E98. The DPF/soot/EGR
-   * signals were dropped: this ECM never answered any of their DIDs/PIDs. */
-  { M_ATF,          SRC_TCM, OBD_MODE_ENHANCED, 0x1940, "[H] TCM@7E2 A-40 degC — trans fluid temp (Torque 221940) — POLLED" },
-  { M_GEAR,         SRC_TCM, OBD_MODE_ENHANCED, 0x199A, "[M] TCM@7E2 current gear = A — verify scaling on car — POLLED" },
-};
-
-/*
- * Extra signals not in metrics[] (status, not gauges):
- *   MIL + DTC count : mode 0x01 PID 0x01   (byte A bit7 = MIL, A&0x7F = count)
- *   Stored DTCs     : mode 0x03            (ISO-TP multi-frame; send FC 30 00 00)
- *   Pending DTCs    : mode 0x07
- *   Gear / TCC lock : TCM 0x7E1 enhanced   (DID TBD)
- *   Regen state     : ECM 0x7E0 enhanced   (DID TBD; IDLE/ACTIVE)
- *
- * Polling hint: group the standard mode-01 PIDs into multi-PID requests
- * (GM accepts up to 6 PIDs per frame) to cut latency; poll enhanced DIDs
- * individually; poll DTCs at ~1 Hz. Responses > 7 bytes are ISO-TP.
- */
+/* ---- Where each metric comes from ------------------------------------------
+ * Not a table here any more: the old pid_map[] was documentation nobody read
+ * by code and had drifted from the poller. The requests live in
+ * obd_poll_tick() and the decoders in fdcan_obd.c; what this truck actually
+ * answers (and how it was verified) is the signal table in CLAUDE.md. */
 
 #endif /* CLUSTER_CONFIG_H */

@@ -102,17 +102,22 @@ The RG's **HS-CAN** (ISO 15765-4, 500 kbps — what this firmware speaks) is on 
 ### Sharing the OBD port with another device
 
 Running this cluster alongside a scan tool / insurance dongle / logger (Y-splitter
-or a second tap on pins 6 + 14) is fine — CAN is multi-drop and this firmware is
-read-only. Two rules:
+or a second tap on pins 6 + 14) works on a best-effort basis — CAN is multi-drop
+and this firmware never writes or clears anything, but it is an active tester
+too. **Never run it during ECU programming or a dealer tool session**: unplug it
+(or keep it on the SNIFF page, which pauses its polling). Two wiring rules:
 
 - **Do not add a termination resistor.** The vehicle already has 2 x 120 Ω (60 Ω
   total). Many SN65HVD230 breakout boards ship with a 120 Ω resistor populated —
   remove/disable it, or the bus impedance drops far enough to cause errors.
 - **Keep each stub short** (< ~30 cm); long branches reflect at 500 kbps.
 
-Protocol-wise the firmware tolerates a second tester: it only answers a
-multi-frame **First Frame** with Flow Control when it is the one that sent the
-matching request (`await_resp_id` in `fdcan_obd.c`). Without that gate both
+Protocol-wise the firmware tries to stay out of a second tester's way: one
+request at a time, and it only answers a multi-frame **First Frame** with Flow
+Control when the reply matches its own outstanding request by module, service
+and PID/DID (`reply_is_ours()` in `fdcan_obd.c`). A tester asking the very same
+thing at the same moment is indistinguishable — test the combination before
+relying on it. Without that gate both
 readers would send Flow Control for the same transfer and corrupt each other's
 multi-frame reads (mode 22 DIDs, mode 03 DTC lists). Single-frame replies are
 decoded regardless of who asked, and `decode_mode01()` keys off the echoed PID —
