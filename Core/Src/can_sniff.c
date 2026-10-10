@@ -47,7 +47,9 @@ static uint32_t   fps_t0;
  * so frames WILL be lost while sniffing. That is fine for this job: a selector
  * position is broadcast continuously and held for seconds, so a dropped frame
  * costs nothing. It is not fine as a permanent mode, hence the switch. */
-static bool filter_err;          /* a filter switch was refused (shown on SNIFF) */
+/* State of the last switch, not a history: a later successful switch clears
+ * it, so "FILTER ERR" on SNIFF means the filter in force now is the wrong one. */
+static bool filter_err;
 
 static bool apply_filter(bool promiscuous)
 {
@@ -59,9 +61,8 @@ static bool apply_filter(bool promiscuous)
     f.FilterID1    = promiscuous ? 0x000u : OBD_RESP_ECM;
     f.FilterID2    = promiscuous ? 0x7FFu : OBD_RESP_TCM2;
     /* Legal while running (READY|BUSY); refused only in RESET/ERROR state. */
-    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &f) == HAL_OK) return true;
-    filter_err = true;
-    return false;
+    filter_err = (HAL_FDCAN_ConfigFilter(&hfdcan1, &f) != HAL_OK);
+    return !filter_err;
 }
 
 void can_sniff_reset(void)
@@ -108,7 +109,7 @@ bool can_sniff_filter_error(void) { return filter_err; }
 uint8_t  can_sniff_id_count(void)    { return n_ids; }
 
 /* -------------------------------------------------------------------- feed */
-void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
+void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len, uint32_t rx_ms)
 {
     if (!active) return;
     if (len > 8u) len = 8u;
@@ -128,7 +129,9 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
     }
     e->len = len;
 
-    uint32_t now = HAL_GetTick();
+    /* Receive time, not now: after a stall the drain delivers a backlog, and
+     * "changed 20 ms ago" must not be a frame that arrived 400 ms ago. */
+    uint32_t now = rx_ms;
     for (uint8_t b = 0; b < len; b++) {
         /* Record the value in the distinct set (first sight included, so a byte
          * that never changes still shows its one value). Linear scan of <=

@@ -652,6 +652,13 @@ void obd_rx_poll(void) {
         }
         uint8_t dlc = (rh.DataLength >= FDCAN_DLC_BYTES_8) ? 8u : (uint8_t)rh.DataLength;
 
+        /* SNIFF sees every accepted frame, before any known ID is handled:
+         * the selector, OBD replies and UUDT too. It used to see only the
+         * unknown rest, so its table and fps were a silent subset. Stamped
+         * with the receive time, so ages survive a backlog. A no-op unless
+         * the SNIFF page is up. */
+        can_sniff_feed((uint16_t)rh.Identifier, d, dlc, rx_ms_cur);
+
         /* Selector/PRNDL broadcast: a plain 8-byte frame, not ISO-TP. byte 3 is
          * 01 P / 02 R / 03 N / 04 D (see docs/sniff-selector.md). Decoded here,
          * ahead of the OBD-range gate, and it also keeps can_ok alive. */
@@ -683,8 +690,8 @@ void obd_rx_poll(void) {
         /* accept ECM 0x7E8, TCM 0x7E9, and the trans controller 0x7EA */
         if (rh.Identifier < OBD_RESP_ECM || rh.Identifier > OBD_RESP_TCM2) {
             /* Everything else only reaches here with the sniffer's wide filter
-             * installed; normally the hardware rejects it. */
-            can_sniff_feed((uint16_t)rh.Identifier, d, dlc);
+             * installed (and was fed to it above); normally the hardware
+             * rejects it. */
             continue;
         }
         if (dlc < 1u) { rx_bad(); continue; }

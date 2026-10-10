@@ -51,10 +51,11 @@ typedef struct {
  * for the same RX FIFO the OBD replies use, so this must not stay on. */
 void can_sniff_set_active(bool on);
 bool can_sniff_is_active(void);
-bool can_sniff_filter_error(void);   /* an acceptance-filter switch was refused */
+bool can_sniff_filter_error(void);   /* the LAST acceptance-filter switch was refused */
 
-/* Feed one received frame (called for non-OBD IDs from the RX drain). */
-void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len);
+/* Feed one received frame: every accepted standard data frame, from the RX
+ * drain, with its receive time (HAL tick). Ignored unless active. */
+void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len, uint32_t rx_ms);
 
 /* Bytes whose distinct-value set is small enough to be a selector/state signal
  * (counters excluded). Best = most recently changed. This is the primary

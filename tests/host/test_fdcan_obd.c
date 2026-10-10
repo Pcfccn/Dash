@@ -115,14 +115,16 @@ void obd_on_update(void) { updates++; }
 /* Records what the sniffer is given, like the real one only while active. */
 static int      sniff_feeds;
 static uint16_t sniff_ids[64];
-void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len)
+static uint32_t sniff_last_rx;
+void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len, uint32_t rx_ms)
 {
     (void)d; (void)len;
     if (!sniff_on) return;
     if (sniff_feeds < 64) sniff_ids[sniff_feeds] = id;
     sniff_feeds++;
+    sniff_last_rx = rx_ms;
 }
-__attribute__((unused)) static bool sniff_saw(uint16_t id)
+static bool sniff_saw(uint16_t id)
 {
     for (int i = 0; i < sniff_feeds && i < 64; i++) if (sniff_ids[i] == id) return true;
     return false;
@@ -1165,6 +1167,41 @@ static void t_summary_needs_complete_data(void)
     CHECK(!policy_shown(&g_obd, M_BATTERY, now_ms));
 }
 
+/* --- Stage C2 deep-audit addendum ------------------------------------------ */
+/* D01: with SNIFF on, every accepted frame reaches the sniffer — the selector,
+ * OBD replies and UUDT too, not only unknown IDs. Off: nothing. */
+static void t_d01_sniff_sees_every_frame(void)
+{
+    sniff_on = true;
+    PUSH(0x1F5, 8, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00);
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    PUSH(0x5E8, 8, 0xFE, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    PUSH(0x342, 8, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88);
+    obd_rx_poll();
+    CHECK(sniff_feeds == 4);
+    CHECK(sniff_saw(0x1F5) && sniff_saw(0x7E8) && sniff_saw(0x5E8) && sniff_saw(0x342));
+    CHECK(g_obd.sel_range == 1 && near(g_obd.rpm, 2000.0f));     /* still decoded */
+    sniff_on = false; sniff_feeds = 0;
+    PUSH(0x1F5, 8, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00);
+    PUSH(0x342, 8, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88);
+    obd_rx_poll();
+    CHECK(sniff_feeds == 0);
+}
+
+/* D06: the sniffer gets the receive time, not the drain time. */
+static void t_d06_sniff_gets_rx_time(void)
+{
+    irq_mode();
+    sniff_on = true;
+    uint32_t t0 = now_ms;
+    PUSH(0x342, 8, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88);
+    FDCAN1_IT0_IRQHandler();
+    now_ms += 400u;                                     /* drained 400 ms later */
+    obd_rx_poll();
+    CHECK(sniff_feeds == 1 && sniff_last_rx == t0);
+}
+
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -1250,6 +1287,8 @@ int main(void)
         { "gear_and_boost_stamped",     t_gear_and_boost_stamped },
         { "boost_needs_baro_follows_map",t_boost_needs_baro_and_follows_map },
         { "tick_wraparound",            t_tick_wraparound },
+        { "d01_sniff_sees_every_frame", t_d01_sniff_sees_every_frame },
+        { "d06_sniff_gets_rx_time",     t_d06_sniff_gets_rx_time },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;
