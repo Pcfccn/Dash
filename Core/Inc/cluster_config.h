@@ -72,6 +72,12 @@
  * Set 1 only after docs/oil-pressure-test.md has passed. */
 #define OILP_VALIDATED         0
 
+/* Vehicle speed: PID 0x0D (A km/h) x this. One-point correction from the
+ * 2026-08-23 run (GPS 60 km/h = 67 on screen, ~12 % optimistic). It assumes the
+ * error is proportional; check against GPS at 3-4 more steady speeds (e.g. 40,
+ * 80, 100) and refit — and again after a tyre-size change. */
+#define SPEED_GPS_SCALE        (60.0f / 67.0f)
+
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
 #define OBD_MODE_FREEZE        0x02u

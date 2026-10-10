@@ -1074,6 +1074,20 @@ static void t_tick_wraparound(void)
     CHECK(tx_n == sent + 1);                        /* timed out across the wrap, next sent */
 }
 
+/* SC-09: oil temp has one source, DID 0x1154. Another tester's PID 0x5C reply
+ * is still parsed (the coolant next to it decodes) but does not touch M_OIL. */
+static void t_oil_temp_single_source(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x11, 0x54, 0x82, 0x00, 0x00, 0x00);   /* DID: 90 C */
+    obd_rx_poll();
+    CHECK(near(g_obd.oil, 90.0f));
+    PUSH(0x7E8, 8, 0x05, 0x41, 0x5C, 0x50, 0x05, 0x6E, 0x00, 0x00);   /* 5C 40 C, cool 70 */
+    obd_rx_poll();
+    CHECK(near(g_obd.oil, 90.0f));
+    CHECK(near(g_obd.cool, 70.0f));
+    CHECK(rx_bad_cnt == 0);
+}
+
 /* --- UI policy (cluster_policy.h) ----------------------------------------- */
 static void put(metric_key_t k, volatile float *dst, float v) { *dst = v; g_obd.upd_ms[k] = now_ms; }
 static void sel(int8_t r) { g_obd.sel_range = r; g_obd.sel_upd_ms = now_ms; }
@@ -1192,6 +1206,7 @@ int main(void)
         { "mil_tx_refusal_is_miss",     t_mil_tx_refusal_counts_as_miss },
         { "sniff_pauses_polling",       t_sniff_pauses_polling },
         { "sniff_fail_closed",          t_sniff_fail_closed },
+        { "oil_temp_single_source",     t_oil_temp_single_source },
         { "summary_needs_complete_data",t_summary_needs_complete_data },
         { "schedule_contents",          t_schedule_contents },
         { "layout_reasserted",          t_layout_reasserted },

@@ -9,7 +9,7 @@
 
 void cluster_app_init(FDCAN_HandleTypeDef *hfdcan) {
     cluster_ui_build();         /* create the 3 pages + alert strip on the active screen */
-    obd_init(hfdcan);           /* FDCAN filters + start (RX is polled below)            */
+    obd_init(hfdcan);           /* FDCAN filters + start; RX by interrupt into a ring    */
 }
 
 void cluster_app_run(void) {

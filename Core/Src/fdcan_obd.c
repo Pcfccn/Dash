@@ -415,12 +415,16 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
     for (i = 1; i < n; i += 1u + (uint16_t)mode01_len(p[i])) {
         const uint8_t *v = &p[i + 1];
         switch (p[i]) {
-            /* PID 0x0D is A km/h raw, but this ECM reads ~12% optimistic vs GPS
-             * (60 GPS = 67 on screen, 2026-08-23 run) — scale to match GPS.     */
-            case 0x0D: set_m(M_SPEED, &g_obd.speed,   v[0] * (60.0f / 67.0f));          break;
+            /* PID 0x0D is A km/h raw; SPEED_GPS_SCALE (cluster_config.h) is a
+             * one-point GPS correction, see there.                            */
+            case 0x0D: set_m(M_SPEED, &g_obd.speed,   v[0] * SPEED_GPS_SCALE);           break;
             case 0x0C: set_m(M_RPM, &g_obd.rpm,     ((v[0] * 256) + v[1]) / 4.0f);    break;
             case 0x05: set_m(M_COOL, &g_obd.cool,    v[0] - 40);                       break;
-            case 0x5C: set_m(M_OIL, &g_obd.oil,     v[0] - 40);                       break;
+            /* 0x5C (oil temp) is not supported by this E98 and only appears if
+             * another tester asks for it: its length is known (above) so the
+             * rest of the reply decodes, but M_OIL has ONE source, DID 0x1154,
+             * so two sensors / scalings can never alternate on the tile.      */
+            case 0x5C:                                                         break;
             case 0x0F: set_m(M_IAT, &g_obd.iat,     v[0] - 40);                       break;
             case 0x04: set_m(M_LOAD, &g_obd.load,    v[0] * 100.0f / 255.0f);          break;
             case 0x0B: last_map_kpa = (float)v[0]; map_upd_ms = rx_ms_cur;
