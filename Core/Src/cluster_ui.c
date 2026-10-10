@@ -538,7 +538,7 @@ static void build_sniff(void)
         "Selector: STATE row whose values are\n"
         "the detents. Temps/pressures: ANALOG,\n"
         "found on a warm-up / throttle blip.\n"
-        "Re-enter to clear. OBD paused.", F12, C_MUTED);
+        "P/N only. Re-enter to clear. OBD paused.", F12, C_MUTED);
     lv_obj_set_pos(hint, 10, 380);
     lv_obj_set_style_text_line_space(hint, 4, 0);
 
@@ -633,9 +633,27 @@ void cluster_ui_set_page(uint8_t p)
     }
 }
 
+/* SNIFF pauses OBD polling, so it must not be reachable on the move (one
+ * accidental tap while driving froze every OBD value). The selector broadcast
+ * keeps arriving while sniffing, OBD replies do not, so the selector is the
+ * gate: P or N only. Without a fresh selector (bench, another car) SNIFF is
+ * allowed unless a fresh speed says the vehicle is moving. */
+static bool sniff_allowed(void)
+{
+    uint32_t now  = HAL_GetTick();
+    bool     live = g_obd.can_ok;
+    if (live && obd_sel_fresh(&g_obd, now))
+        return g_obd.sel_range == 1 || g_obd.sel_range == 3;     /* P / N */
+    float sp = g_obd.speed;
+    bool moving = live && !isnan(sp) && obd_is_fresh(&g_obd, M_SPEED, now) && sp > 3.0f;
+    return !moving;
+}
+
 void cluster_ui_next_page(void)
 {
-    cluster_ui_set_page((s_page + 1) % PAGE_COUNT);
+    uint8_t next = (uint8_t)((s_page + 1u) % PAGE_COUNT);
+    if (next == PAGE_SNIFF && !sniff_allowed()) next = 0;        /* skip to DRIVE */
+    cluster_ui_set_page(next);
 }
 
 uint8_t cluster_ui_get_page(void)
@@ -740,6 +758,8 @@ void cluster_ui_refresh(void)
     d.sel_upd_ms = g_obd.sel_upd_ms;
     bool live = d.can_ok;
     s_now = HAL_GetTick();
+    /* Leave SNIFF by itself once the selector goes into R/D (see sniff_allowed). */
+    if (s_page == PAGE_SNIFF && !sniff_allowed()) cluster_ui_set_page(0);
     /* The selector broadcast has its own freshness; a stale one is "--",
      * and so is the gear number in D. */
     bool sel_ok = live && obd_sel_fresh(&d, s_now);
