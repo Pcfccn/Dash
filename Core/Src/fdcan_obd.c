@@ -32,6 +32,17 @@ volatile obd_data_t g_obd = {
 static FDCAN_HandleTypeDef *hfd;
 static volatile uint32_t    last_rx_ms;
 
+/* ---- RX ring between the FDCAN interrupt and the loop (see "RX" below) --- */
+#define RXQ_LEN 64u                          /* power of two                    */
+typedef struct {
+    uint32_t id, idtype, ftype, dlc;         /* raw header fields               */
+    uint8_t  data[8];
+} rxq_t;
+static rxq_t             rxq[RXQ_LEN];
+static volatile uint32_t rxq_head, rxq_tail;
+static volatile uint16_t rxq_drop;           /* ring full: frame dropped        */
+static bool              rx_irq;             /* RX interrupt active             */
+
 /* ---- ISO-TP reassembly (single flow at a time; OBD is request/response) --- */
 static uint8_t  itp_buf[64];
 static uint16_t itp_len, itp_got;
@@ -355,6 +366,8 @@ static void obd_check_health(void) {
         __HAL_FDCAN_CLEAR_FLAG(hfd, FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST);
         if (rx_lost_cnt < 0xFFFFu) rx_lost_cnt++;
     }
+    /* Stop/Start below change the handle the RX interrupt also uses. */
+    if (rx_irq) HAL_NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
     FDCAN_ProtocolStatusTypeDef ps;
     if (HAL_FDCAN_GetProtocolStatus(hfd, &ps) == HAL_OK) {
         busoff_now  = ps.BusOff ? 1u : 0u;
@@ -373,28 +386,88 @@ static void obd_check_health(void) {
     if (HAL_FDCAN_GetState(hfd) == HAL_FDCAN_STATE_READY &&
         HAL_FDCAN_Start(hfd) != HAL_OK && start_fail_cnt < 0xFFFFu)
         start_fail_cnt++;
+    if (rx_irq) HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
 }
 
 void obd_can_health(obd_health_t *h) {
     h->bus_off        = busoff_now;
     h->err_passive    = errpass_now;
-    h->rx_lost        = rx_lost_cnt;
+    uint32_t lost     = (uint32_t)rx_lost_cnt + rxq_drop;   /* FIFO + ring */
+    h->rx_lost        = (uint16_t)(lost > 0xFFFFu ? 0xFFFFu : lost);
+    h->rx_irq         = rx_irq;
     h->busoff_recover = busoff_cnt;
     h->rx_bad         = rx_bad_cnt;
     h->tx_fail        = tx_fail_cnt;
     h->start_fail     = start_fail_cnt;
 }
 
-/* =============================== RX (polled) ============================= */
-void obd_rx_poll(void) {
+/* =============================== RX ====================================== */
+/* Frames are taken out of the 16-deep hardware FIFO by the FDCAN interrupt and
+ * parked in this ring; obd_rx_poll() does all the checking and decoding from
+ * the loop. The loop can stall (rendering, a slow flush) without the FIFO
+ * overflowing, and every reply waiting here has really arrived — which is what
+ * makes millisecond deadlines safe again. Single producer (ISR) / single
+ * consumer (loop): the ISR only advances rxq_head, the loop only rxq_tail.
+ * If the interrupt cannot be enabled, obd_rx_poll() pumps the FIFO itself, the
+ * old polled behaviour. */
+/* (The ring itself is declared at the top of the file: health code uses it.) */
+
+/* Move everything the controller holds into the ring. Copy only. */
+static void rx_pump(void) {
     FDCAN_RxHeaderTypeDef rh;
     /* 64, not 8: HAL_FDCAN_GetRxMessage copies DLCtoBytes[DLC] bytes, and a
      * classic frame may legally carry DLC 9..15 (still 8 data bytes), which the
      * HAL would expand to up to 64 bytes and overrun an 8-byte buffer. */
     uint8_t d[64];
-    obd_check_health();
     while (HAL_FDCAN_GetRxFifoFillLevel(hfd, FDCAN_RX_FIFO0) > 0u) {
         if (HAL_FDCAN_GetRxMessage(hfd, FDCAN_RX_FIFO0, &rh, d) != HAL_OK) break;
+        uint32_t head = rxq_head;
+        if (head - rxq_tail >= RXQ_LEN) {
+            if (rxq_drop < 0xFFFFu) rxq_drop++;
+            continue;
+        }
+        rxq_t *e = &rxq[head & (RXQ_LEN - 1u)];
+        e->id = rh.Identifier; e->idtype = rh.IdType;
+        e->ftype = rh.RxFrameType; e->dlc = rh.DataLength;
+        memcpy(e->data, d, sizeof e->data);
+        __DMB();                             /* entry before the new head       */
+        rxq_head = head + 1u;
+    }
+}
+
+static bool rxq_pop(rxq_t *out) {
+    uint32_t tail = rxq_tail;
+    if (tail == rxq_head) return false;
+    __DMB();                                 /* head before the entry it covers */
+    *out = rxq[tail & (RXQ_LEN - 1u)];
+    __DMB();
+    rxq_tail = tail + 1u;
+    return true;
+}
+
+/* Defined here, not in stm32h7xx_it.c: enabling the FDCAN1 interrupt in
+ * CubeMX would generate a second definition — a deliberately loud link error. */
+void FDCAN1_IT0_IRQHandler(void) {
+    HAL_FDCAN_IRQHandler(hfd);
+}
+
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *h, uint32_t its) {
+    (void)its;
+    if (h == hfd) rx_pump();
+}
+
+void obd_rx_poll(void) {
+    obd_check_health();
+    if (!rx_irq) rx_pump();                  /* fallback: no RX interrupt       */
+
+    rxq_t e;
+    while (rxq_pop(&e)) {
+        FDCAN_RxHeaderTypeDef rh = {0};
+        rh.Identifier  = e.id;
+        rh.IdType      = e.idtype;
+        rh.RxFrameType = e.ftype;
+        rh.DataLength  = e.dlc;
+        const uint8_t *d = e.data;
 
         /* In this HAL DataLength is the DLC code, equal to the byte count for
          * 0..8 (FDCAN_DLC_BYTES_8 == 8); classic DLC 9..15 means 8 bytes. Every
@@ -612,7 +685,16 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
         return;
 
     if (!cfg_ok(HAL_FDCAN_Start(hfd))) return;
-    /* No ActivateNotification: obd_rx_poll() drains the FIFO from the loop. */
+
+    /* RX by interrupt (line 0, the HAL default). Priority 6: below the RTOS
+     * syscall ceiling, though the ISR makes no RTOS calls. If the notification
+     * cannot be enabled, obd_rx_poll() keeps draining the FIFO from the loop. */
+    rx_irq = false;
+    if (HAL_FDCAN_ActivateNotification(hfd, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) == HAL_OK) {
+        HAL_NVIC_SetPriority(FDCAN1_IT0_IRQn, 6, 0);
+        HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
+        rx_irq = true;
+    }
 }
 
 /* Tiered request scheduler. Call from a 20-50 Hz timer/task.

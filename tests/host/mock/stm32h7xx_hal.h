@@ -58,11 +58,21 @@ typedef struct {
 #define FDCAN_REJECT_REMOTE     0x00000001U
 #define FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST 0x00000008U
 
+#define FDCAN_IT_RX_FIFO0_NEW_MESSAGE 0x00000001U
+
+typedef enum { FDCAN1_IT0_IRQn = 19 } IRQn_Type;
+void HAL_NVIC_SetPriority(IRQn_Type irq, uint32_t pre, uint32_t sub);
+void HAL_NVIC_EnableIRQ(IRQn_Type irq);
+void HAL_NVIC_DisableIRQ(IRQn_Type irq);
+#define __DMB() __sync_synchronize()
+
 #define __HAL_FDCAN_GET_FLAG(h, f)   (0)
 #define __HAL_FDCAN_CLEAR_FLAG(h, f) ((void)0)
 
 uint32_t          HAL_GetTick(void);
 HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *h);
+HAL_StatusTypeDef HAL_FDCAN_ActivateNotification(FDCAN_HandleTypeDef *h, uint32_t its, uint32_t bufs);
+void              HAL_FDCAN_IRQHandler(FDCAN_HandleTypeDef *h);
 HAL_FDCAN_StateTypeDef HAL_FDCAN_GetState(const FDCAN_HandleTypeDef *h);
 HAL_StatusTypeDef HAL_FDCAN_ConfigFilter(FDCAN_HandleTypeDef *h, FDCAN_FilterTypeDef *f);
 HAL_StatusTypeDef HAL_FDCAN_ConfigGlobalFilter(FDCAN_HandleTypeDef *h, uint32_t a, uint32_t b,

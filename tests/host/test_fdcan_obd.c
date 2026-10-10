@@ -21,8 +21,8 @@ static uint32_t now_ms;
 uint32_t HAL_GetTick(void) { return now_ms; }
 
 typedef struct { uint32_t id, idtype, ftype, dlc; uint8_t data[64]; } rxf_t;
-static rxf_t rxq[64];
-static int   rx_head, rx_tail;
+static rxf_t hwq[64];
+static int   hw_head, hw_tail;
 
 typedef struct { uint32_t id; uint8_t data[8]; } txf_t;
 static txf_t             txlog[64];
@@ -35,6 +35,16 @@ static HAL_StatusTypeDef filter_status, start_status;
 static int init_calls, error_calls, start_calls;
 
 void Error_Handler(void) { error_calls++; }      /* firmware: record + hang */
+
+static HAL_StatusTypeDef notif_status;              /* RX IRQ enable result     */
+static bool nvic_on;
+HAL_StatusTypeDef HAL_FDCAN_ActivateNotification(FDCAN_HandleTypeDef *h, uint32_t its, uint32_t bufs)
+{ (void)h; (void)its; (void)bufs; return notif_status; }
+void HAL_NVIC_SetPriority(IRQn_Type irq, uint32_t pre, uint32_t sub) { (void)irq; (void)pre; (void)sub; }
+void HAL_NVIC_EnableIRQ(IRQn_Type irq)  { (void)irq; nvic_on = true; }
+void HAL_NVIC_DisableIRQ(IRQn_Type irq) { (void)irq; nvic_on = false; }
+/* The interrupt: what the real HAL_FDCAN_IRQHandler ends up calling. */
+void HAL_FDCAN_IRQHandler(FDCAN_HandleTypeDef *h) { HAL_FDCAN_RxFifo0Callback(h, FDCAN_IT_RX_FIFO0_NEW_MESSAGE); }
 
 HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *h)
 { init_calls++; h->State = HAL_FDCAN_STATE_READY; return HAL_OK; }
@@ -67,15 +77,15 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
 }
 
 uint32_t HAL_FDCAN_GetRxFifoFillLevel(FDCAN_HandleTypeDef *h, uint32_t fifo)
-{ (void)h; (void)fifo; return (uint32_t)(rx_tail - rx_head); }
+{ (void)h; (void)fifo; return (uint32_t)(hw_tail - hw_head); }
 
 /* Copies DLCtoBytes[DLC] bytes, exactly like the real HAL — up to 64. */
 HAL_StatusTypeDef HAL_FDCAN_GetRxMessage(FDCAN_HandleTypeDef *h, uint32_t loc,
                                          FDCAN_RxHeaderTypeDef *rh, uint8_t *data)
 {
     (void)h; (void)loc;
-    if (rx_head == rx_tail) return HAL_ERROR;
-    const rxf_t *f = &rxq[rx_head++];
+    if (hw_head == hw_tail) return HAL_ERROR;
+    const rxf_t *f = &hwq[hw_head++];
     memset(rh, 0, sizeof *rh);
     rh->Identifier  = f->id;
     rh->IdType      = f->idtype;
@@ -102,9 +112,9 @@ static int checks, fails;
 
 static void push_frame(uint32_t id, uint32_t idtype, uint32_t dlc, const uint8_t *b, int n)
 {
-    if (rx_head == rx_tail) rx_head = rx_tail = 0;   /* drained: restart the queue */
-    if (rx_tail >= (int)(sizeof rxq / sizeof rxq[0])) { printf("  rx queue overflow\n"); fails++; return; }
-    rxf_t *f = &rxq[rx_tail++];
+    if (hw_head == hw_tail) hw_head = hw_tail = 0;   /* drained: restart the queue */
+    if (hw_tail >= (int)(sizeof hwq / sizeof hwq[0])) { printf("  rx queue overflow\n"); fails++; return; }
+    rxf_t *f = &hwq[hw_tail++];
     f->id = id; f->idtype = idtype; f->ftype = FDCAN_DATA_FRAME; f->dlc = dlc;
     memset(f->data, 0xEE, sizeof f->data);           /* poison past the given bytes */
     memcpy(f->data, b, (size_t)n);
@@ -116,7 +126,7 @@ static FDCAN_HandleTypeDef hmock;
 
 static void reset(void)
 {
-    rx_head = rx_tail = 0; tx_n = 0; tx_status = HAL_OK; updates = 0; now_ms = 1000;
+    hw_head = hw_tail = 0; tx_n = 0; tx_status = HAL_OK; updates = 0; now_ms = 1000;
     sniff_on = false;
     memset(&sched, 0, sizeof sched);              /* scheduler position */
     await_sid = 0; await_key = 0;
@@ -128,6 +138,9 @@ static void reset(void)
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
     last_map_kpa = NAN; baro_kpa = 101.0f;
     filter_status = HAL_OK; start_status = HAL_OK;
+    notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
+    nvic_on = false;
+    rxq_head = rxq_tail = 0; rxq_drop = 0; rx_irq = false;
     init_calls = 0; error_calls = 0; start_calls = 0; start_fail_cnt = 0;
     hmock.Init.StdFiltersNbr   = 4;                 /* as MX_FDCAN1_Init sets it */
     hmock.Init.RxFifo0ElmtsNbr = 16;
@@ -617,6 +630,55 @@ static void t_start_retried_after_failure(void)      /* N2 */
     CHECK(hmock.State == HAL_FDCAN_STATE_BUSY);
 }
 
+/* --- RX by interrupt into the ring (stage C) ------------------------------ */
+static void irq_mode(void)
+{
+    notif_status = HAL_OK;
+    hmock.State = HAL_FDCAN_STATE_READY;
+    obd_init(&hmock);
+}
+
+static void t_irq_rx_path(void)
+{
+    CHECK(!rx_irq);                                 /* reset(): polled fallback */
+    irq_mode();
+    CHECK(rx_irq && nvic_on);
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);
+    obd_rx_poll();                                  /* loop must not touch the FIFO */
+    CHECK(isnan(g_obd.rpm));
+    CHECK(hw_head == 0 && hw_tail == 1);
+    FDCAN1_IT0_IRQHandler();                        /* the interrupt fires */
+    CHECK(hw_head == hw_tail);                      /* FIFO emptied into the ring */
+    obd_rx_poll();
+    CHECK(near(g_obd.rpm, 2000.0f));
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.rx_irq);
+}
+
+static void t_ring_overflow_counted(void)
+{
+    irq_mode();
+    for (int i = 0; i < 64; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x04, 0, 0, 0, 0);
+    FDCAN1_IT0_IRQHandler();                        /* ring now full (64) */
+    for (int i = 0; i < 6; i++) PUSH(0x1F5, 8, 0, 0, 0, 0x02, 0, 0, 0, 0);
+    FDCAN1_IT0_IRQHandler();                        /* 6 more: no room */
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.rx_lost == 6);
+    obd_rx_poll();                                  /* drains the 64 kept */
+    CHECK(g_obd.sel_range == 4);
+    CHECK(rxq_head == rxq_tail);
+}
+
+static void t_health_check_masks_rx_irq(void)
+{
+    irq_mode();
+    now_ms += 200;
+    obd_rx_poll();                                  /* health check runs */
+    CHECK(nvic_on);                                 /* re-enabled afterwards */
+}
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -671,6 +733,9 @@ int main(void)
         { "layout_ok_no_reinit",        t_layout_ok_no_reinit },
         { "filter_failure_is_fatal",    t_filter_failure_is_fatal },
         { "start_retried_after_failure",t_start_retried_after_failure },
+        { "irq_rx_path",                t_irq_rx_path },
+        { "ring_overflow_counted",      t_ring_overflow_counted },
+        { "health_check_masks_rx_irq",  t_health_check_masks_rx_irq },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

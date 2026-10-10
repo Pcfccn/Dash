@@ -64,7 +64,8 @@ void obd_on_update(void);
 typedef struct {
     bool     bus_off;           /* current fault state                          */
     bool     err_passive;
-    uint16_t rx_lost;           /* RX FIFO0 overflow events                      */
+    uint16_t rx_lost;           /* RX FIFO0 overflow events + RX ring drops      */
+    bool     rx_irq;            /* true: interrupt RX; false: polled fallback    */
     uint16_t busoff_recover;    /* bus-off recovery attempts                     */
     uint16_t rx_bad;            /* received frames dropped as truncated/malformed */
     uint16_t tx_fail;           /* requests the TX FIFO refused                  */

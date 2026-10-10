@@ -839,8 +839,10 @@ void cluster_ui_refresh(void)
          * being sniffed (and OBD polling was left running). */
         bool ferr = can_sniff_filter_error();
         char sb[64];
-        lv_snprintf(sb, sizeof sb, "%s%u fps  IDS %u  %s L%u",
-                    ferr ? "FILTER ERR " : "",
+        /* POLL: the FDCAN RX interrupt could not be enabled, frames are
+         * drained from the loop (the old, overflow-prone behaviour). */
+        lv_snprintf(sb, sizeof sb, "%s%s%u fps  IDS %u  %s L%u",
+                    ferr ? "FILTER ERR " : "", h.rx_irq ? "" : "POLL ",
                     (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
                     h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
                     (unsigned)h.rx_lost);
