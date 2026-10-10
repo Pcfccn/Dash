@@ -82,7 +82,7 @@ These conventions in the OBD path matter and are easy to break:
 
 **`can_sniff.c`/`.h`** is a workbench-only passive CAN change detector behind the SNIFF page: it widens the FDCAN acceptance filter to all standard IDs and lists the bytes that changed most recently, so operating one control identifies the frame carrying it. It exists because the signals still missing an identifier (selector range/PRNDL, soot, DPF ∆P, since-regen) are broadcast as ordinary frames — the OEM cluster displayed them. Listening is deliberately tied to the page being visible: the wide filter competes with OBD replies for the same RX FIFO, and `obd_poll_tick()` is suspended while it runs.
 
-**Dead code:** `can_gauges.c`/`.h` and `ui_dashboard.c`/`.h` are retired stubs (empty translation units), kept only so the CubeIDE build file list stays valid after the functionality was replaced by `fdcan_obd.c` + `cluster_ui.c`. They're safe to delete along with removing them from the CubeIDE project.
+**Removed dead code:** the empty `can_gauges.c`/`.h` and `ui_dashboard.c`/`.h` stubs and the unused SNIFF views (`can_sniff_top`/`_get`/`_top_ids`) are gone. CubeIDE drops deleted files on the next Refresh/Build; a stale `Debug/` makefile still listing them needs that refresh before a raw CLI `make`.
 
 **Design reference:** `design/Diesel_Cluster_v2_3.html` is the standalone HTML/JS mockup of the cluster UI (colors, layout, thresholds) that `cluster_ui.c` and `cluster_config.h` were ported from — check it when the visual design intent of a page/metric is unclear from the C code alone. `design/README.md` is currently empty.
 

@@ -106,7 +106,6 @@ static struct {
 #define PAGE_COUNT  3
 
 static uint8_t s_page = 0;
-static volatile bool s_dirty = true;
 
 static const metric_key_t DRIVE_M[4] = { M_COOL, M_OIL, M_ATF, M_OILP };
 static const metric_key_t STAT_M[4]  = { M_BATTERY, M_IAT, M_LOAD, M_RAIL };
@@ -627,7 +626,6 @@ void cluster_ui_set_page(uint8_t p)
         if (i == p) lv_obj_clear_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
         else        lv_obj_add_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
     }
-    s_dirty = true;
 }
 
 void cluster_ui_next_page(void)
@@ -851,7 +849,7 @@ void cluster_ui_refresh(void)
     }
 
     /* ----- SNIFF -----
-     * Only while visible: can_sniff_top() is a scan over the whole table and
+     * Only while visible: the candidate/mover views scan the whole table and
      * the page is hidden the rest of the time. */
     if (s_page == PAGE_SNIFF) {
         /* Lead with the frame rate and bus health: a frozen row table means
@@ -977,12 +975,12 @@ void cluster_ui_refresh(void)
     } else {
         lv_obj_add_flag(ui.border, LV_OBJ_FLAG_HIDDEN);
     }
-
-    s_dirty = false;
 }
 
-/* called by fdcan_obd.c whenever a decoded value changes */
+/* Called by fdcan_obd.c whenever a decoded value changes. Nothing to do: the
+ * refresh reads g_obd at ~25 Hz regardless (freshness can expire without any
+ * new frame), and the change-only ui_* helpers make an unchanged refresh
+ * cheap. Kept as the hook so a future event-driven UI has one place to start. */
 void obd_on_update(void)
 {
-    s_dirty = true;
 }

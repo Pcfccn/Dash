@@ -21,20 +21,10 @@
 #include <stdbool.h>
 
 #define SNIFF_MAX_IDS      80u   /* distinct standard IDs tracked             */
-#define SNIFF_TOP_N         8u   /* rows the UI asks for                      */
 #define SNIFF_DISTINCT_MAX 10u   /* distinct values kept per byte before it   */
                                  /* is written off as a counter/checksum      */
 #define SNIFF_MOVER_MAX_CH 300u  /* above this many changes a wide-span byte  */
                                  /* is a free-running counter, not a sensor   */
-
-typedef struct {
-    uint16_t id;
-    uint8_t  byte_idx;
-    uint8_t  prev;               /* value before the most recent change       */
-    uint8_t  cur;
-    uint16_t changes;            /* total changes seen since reset            */
-    uint32_t age_ms;             /* how long ago it last changed              */
-} sniff_hit_t;
 
 /* One low-cardinality byte: a selector-shaped signal and its value set. */
 typedef struct {
@@ -66,18 +56,6 @@ bool can_sniff_filter_error(void);   /* an acceptance-filter switch was refused 
 /* Feed one received frame (called for non-OBD IDs from the RX drain). */
 void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len);
 
-/* Fill out[] with the most interesting recent changes, best first.
- * Returns how many rows were written (<= max). */
-uint8_t can_sniff_top(sniff_hit_t *out, uint8_t max);
-
-/* Latest full 8-byte payload for one ID (missing bytes zero-filled).
- * Returns false if that ID has not been seen. */
-bool can_sniff_get(uint16_t id, uint8_t *out8, uint8_t *len_out);
-
-/* Most-recently-changed distinct IDs (chatty bytes excluded), best first.
- * One row per frame, for the full-payload watch view. */
-uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max);
-
 /* Bytes whose distinct-value set is small enough to be a selector/state signal
  * (counters excluded). Best = most recently changed. This is the primary
  * discovery view: it names the position byte and lists its codes directly. */
@@ -87,9 +65,8 @@ uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max);
  * pressures) that the candidate view discards. Widest span first. */
 uint8_t can_sniff_movers(sniff_mover_t *out, uint8_t max);
 
-/* Distinct IDs seen and total frames counted, for a "is it even listening?" readout. */
+/* Distinct IDs seen, for an "is it even listening?" readout. */
 uint8_t  can_sniff_id_count(void);
-uint32_t can_sniff_frame_count(void);
 
 /* Frames received in the last ~1 s: 0 = bus silent, nonzero = live traffic. */
 uint16_t can_sniff_fps(void);

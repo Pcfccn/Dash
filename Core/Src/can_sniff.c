@@ -6,17 +6,11 @@
 #include "fdcan.h"                /* hfdcan1 */
 #include <string.h>
 
-/* A byte that changes this many times is a counter, a checksum or a live
- * sensor -- never a selector position. Ranked out so it cannot bury the one
- * byte that moved twice when the lever moved twice. */
-#define SNIFF_CHATTY  40u
-
 typedef struct {
     uint16_t id;
     uint8_t  len;
     bool     primed;              /* first frame seen: baseline captured      */
     uint8_t  cur[8];
-    uint8_t  prev[8];
     uint16_t changes[8];
     uint32_t last_ms[8];
     /* Distinct values ever seen per byte, in FIRST-SEEN order (capped). This is
@@ -38,7 +32,6 @@ typedef struct {
 
 static sniff_id_t tbl[SNIFF_MAX_IDS];
 static uint8_t    n_ids;
-static uint32_t   n_frames;
 static bool       active;
 
 /* Rolling 1-second frame rate. This is the one number that tells "bus asleep"
@@ -75,7 +68,6 @@ void can_sniff_reset(void)
 {
     memset(tbl, 0, sizeof tbl);
     n_ids = 0;
-    n_frames = 0;
     fps_val = 0; fps_cnt = 0; fps_t0 = HAL_GetTick();
 }
 
@@ -114,14 +106,12 @@ bool can_sniff_is_active(void)    { return active; }
 bool can_sniff_filter_error(void) { return filter_err; }
 
 uint8_t  can_sniff_id_count(void)    { return n_ids; }
-uint32_t can_sniff_frame_count(void) { return n_frames; }
 
 /* -------------------------------------------------------------------- feed */
 void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
 {
     if (!active) return;
     if (len > 8u) len = 8u;
-    n_frames++;
     if (fps_cnt < 0xFFFFu) fps_cnt++;
 
     sniff_id_t *e = NULL;
@@ -158,7 +148,6 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len)
         if (data[b] < e->vmin[b]) e->vmin[b] = data[b];
         if (data[b] > e->vmax[b]) e->vmax[b] = data[b];
         if (e->cur[b] != data[b]) {
-            e->prev[b]    = e->cur[b];
             e->cur[b]     = data[b];
             e->last_ms[b] = now;
             if (e->changes[b] < 0xFFFFu) e->changes[b]++;
@@ -251,103 +240,6 @@ uint8_t can_sniff_movers(sniff_mover_t *out, uint8_t max)
         out[n].cur      = best_e->cur[best_b];
         out[n].changes  = best_e->changes[best_b];
         out[n].age_ms   = now - best_e->last_ms[best_b];
-        n++;
-    }
-    return n;
-}
-
-/* --------------------------------------------------------------------- top */
-/* Most recently changed first, with chatty bytes excluded. Selection sort over
- * the whole table: at most 80*8 candidates, run a couple of times a second. */
-uint8_t can_sniff_top(sniff_hit_t *out, uint8_t max)
-{
-    if (max > SNIFF_TOP_N) max = SNIFF_TOP_N;
-    uint32_t now = HAL_GetTick();
-    uint32_t taken_ms[SNIFF_TOP_N];
-    uint8_t  n = 0;
-
-    for (uint8_t slot = 0; slot < max; slot++) {
-        const sniff_id_t *best_e = NULL;
-        uint8_t  best_b  = 0;
-        uint32_t best_ms = 0;
-
-        for (uint8_t i = 0; i < n_ids; i++) {
-            const sniff_id_t *e = &tbl[i];
-            for (uint8_t b = 0; b < e->len; b++) {
-                if (e->changes[b] == 0u) continue;
-                if (e->changes[b] > SNIFF_CHATTY) continue;
-                uint32_t ms = e->last_ms[b];
-                if (ms <= best_ms) continue;
-                bool already = false;              /* skip slots already taken */
-                for (uint8_t k = 0; k < n; k++) {
-                    if (taken_ms[k] == ms && out[k].id == e->id && out[k].byte_idx == b) {
-                        already = true; break;
-                    }
-                }
-                if (already) continue;
-                best_e = e; best_b = b; best_ms = ms;
-            }
-        }
-        if (best_e == NULL) break;
-
-        out[n].id       = best_e->id;
-        out[n].byte_idx = best_b;
-        out[n].prev     = best_e->prev[best_b];
-        out[n].cur      = best_e->cur[best_b];
-        out[n].changes  = best_e->changes[best_b];
-        out[n].age_ms   = now - best_ms;
-        taken_ms[n]     = best_ms;
-        n++;
-    }
-    return n;
-}
-
-/* ------------------------------------------------------------------ watch */
-/* Latest full payload for one ID. Reading the whole frame (not just the byte
- * the digest flagged) is what turns "byte 3 of 1F5 keeps changing" into
- * "1F5 = 62 5A 00 03 ..., and 03 is the gear": stepping the lever one detent
- * at a time and photographing the row gives an unambiguous value->position
- * table that a single changed-byte cannot. */
-bool can_sniff_get(uint16_t id, uint8_t *out8, uint8_t *len_out)
-{
-    for (uint8_t i = 0; i < n_ids; i++) {
-        if (tbl[i].id != id) continue;
-        for (uint8_t b = 0; b < 8; b++)
-            out8[b] = (b < tbl[i].len) ? tbl[i].cur[b] : 0u;
-        if (len_out) *len_out = tbl[i].len;
-        return true;
-    }
-    return false;
-}
-
-/* The distinct IDs that changed most recently, chatty ones excluded, best
- * first. Same ranking as can_sniff_top but collapsed to one row per frame so a
- * selector move surfaces the WHOLE frame rather than one byte of it. */
-uint8_t can_sniff_top_ids(uint16_t *ids, uint32_t *age_ms, uint8_t max)
-{
-    uint32_t now = HAL_GetTick();
-    uint8_t  n   = 0;
-
-    for (uint8_t slot = 0; slot < max; slot++) {
-        const sniff_id_t *best_e = NULL;
-        uint32_t best_ms = 0;
-
-        for (uint8_t i = 0; i < n_ids; i++) {
-            const sniff_id_t *e = &tbl[i];
-            uint32_t id_ms = 0;                     /* most recent non-chatty change */
-            for (uint8_t b = 0; b < e->len; b++) {
-                if (e->changes[b] == 0u || e->changes[b] > SNIFF_CHATTY) continue;
-                if (e->last_ms[b] > id_ms) id_ms = e->last_ms[b];
-            }
-            if (id_ms == 0u || id_ms <= best_ms) continue;
-            bool already = false;
-            for (uint8_t k = 0; k < n; k++) if (ids[k] == e->id) { already = true; break; }
-            if (already) continue;
-            best_e = e; best_ms = id_ms;
-        }
-        if (best_e == NULL) break;
-        ids[n] = best_e->id;
-        if (age_ms) age_ms[n] = now - best_ms;
         n++;
     }
     return n;
