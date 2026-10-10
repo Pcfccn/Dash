@@ -119,9 +119,12 @@ static void fmt(char *b, size_t n, float v, uint8_t dec)
     if (dec == 0) {
         lv_snprintf(b, n, "%d", iround(v));
     } else {
+        /* Sign handled apart: -0.4 has a 0 integer part, so "%d.%d" of
+         * (t/10, t%10) used to print "0.4". */
         int t = iround(v * 10.0f);
-        int w = t / 10, f = t % 10; if (f < 0) f = -f;
-        lv_snprintf(b, n, "%d.%d", w, f);
+        const char *sign = (t < 0) ? "-" : "";
+        if (t < 0) t = -t;
+        lv_snprintf(b, n, "%s%d.%d", sign, t / 10, t % 10);
     }
 }
 
@@ -543,6 +546,9 @@ static void build_sniff(void)
 }
 
 /* --------------------------------------------------------------- alert strip */
+/* Strip tags, left to right. 1..5 are measured values (TAG_M in refresh). */
+static const char *const TAG_NAME[8] = { "MIL","CLT","OIL","ATF","EGT","BAT","DTC","CAN" };
+static const char *const TAG_UNIT[8] = { "", DEG "C", DEG "C", DEG "C", DEG "C", "V", "", "" };
 static void build_strip(lv_obj_t *scr)
 {
     ui.strip = lv_obj_create(scr);
@@ -557,9 +563,8 @@ static void build_strip(lv_obj_t *scr)
     lv_obj_set_style_pad_all(ui.strip, 0, 0);
     lv_obj_clear_flag(ui.strip, LV_OBJ_FLAG_SCROLLABLE);
 
-    static const char *TAG[8] = { "MIL","CLT","OIL","ATF","EGT","BAT","DTC","CAN" };
     for (int i = 0; i < 8; i++) {
-        ui.tag[i] = mk_label(ui.strip, TAG[i], F12, C_FAINT);
+        ui.tag[i] = mk_label(ui.strip, TAG_NAME[i], F12, C_FAINT);
         lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, -3);
         /* hairline state underline beneath each tag (coloured in refresh) */
         ui.tag_ul[i] = mk_tick(ui.strip, 4 + i * 24, 25, 18, 2, C_LINE);
@@ -945,11 +950,37 @@ void cluster_ui_refresh(void)
         if (ts[i] >= ST_WARN) nalarm++;
     }
 
-    const char *txt; lv_color_t col;
-    if (!live)                 { txt = LV_SYMBOL_WARNING " CAN LOST"; col = C_CRIT; }
-    else if (worst == ST_CRIT) { txt = LV_SYMBOL_WARNING " CHECK";    col = C_CRIT; }
-    else if (worst == ST_WARN) { txt = LV_SYMBOL_WARNING " WARN";     col = C_WARN; }
-    else                       { txt = "NOMINAL";                    col = C_OK;   }
+    /* Name the alarm instead of a bare CHECK/WARN: the most severe tag (first
+     * in strip order on a tie), with its reading where it has one. */
+    int cause = -1;
+    for (int i = 0; i < 8; i++)
+        if (ts[i] >= ST_WARN && (cause < 0 || ts[i] > ts[cause])) cause = i;
+    /* The link can be "live" on broadcasts alone while the ECM answers
+     * nothing: then there is nothing to call NOMINAL. RPM (0 with the engine
+     * off) or coolant fresh means the ECM is answering. */
+    bool ecm_fresh = shown(&d, M_RPM, live) || shown(&d, M_COOL, live);
+
+    char sum[28];
+    const char *txt = sum; lv_color_t col;
+    if (!live) {
+        txt = LV_SYMBOL_WARNING " CAN LOST"; col = C_CRIT;
+    } else if (cause >= 0) {
+        col = (ts[cause] == ST_CRIT) ? C_CRIT : C_WARN;
+        if (cause >= 1 && cause <= 5) {
+            char v[12];
+            fmt(v, sizeof v, mval(&d, TAG_M[cause]), metrics[TAG_M[cause]].decimals);
+            lv_snprintf(sum, sizeof sum, LV_SYMBOL_WARNING " %s %s%s",
+                        TAG_NAME[cause], v, TAG_UNIT[cause]);
+        } else if (cause == 0) {
+            lv_snprintf(sum, sizeof sum, LV_SYMBOL_WARNING " MIL ON");
+        } else {
+            lv_snprintf(sum, sizeof sum, LV_SYMBOL_WARNING " %u DTC", (unsigned)d.dtc_count);
+        }
+    } else if (!ecm_fresh) {
+        txt = "NO ECM DATA"; col = C_WARN;
+    } else {
+        txt = "NOMINAL"; col = C_OK;
+    }
     ui_text(ui.summary, txt);
     ui_text_color(ui.summary, col);
 
@@ -959,7 +990,7 @@ void cluster_ui_refresh(void)
     /* strip background tint by worst state */
     lv_color_t sbg = C_ALERTBG, sbd = C_LINE;
     if (worst == ST_CRIT || !live) { sbg = lv_color_hex(0x1a0a0d); sbd = C_CRIT; }
-    else if (worst == ST_WARN)     { sbg = lv_color_hex(0x1a1408); sbd = C_WARN; }
+    else if (worst == ST_WARN || !ecm_fresh) { sbg = lv_color_hex(0x1a1408); sbd = C_WARN; }
     ui_bg_color(ui.strip, sbg, 0);
     ui_border_color(ui.strip, sbd);
 
