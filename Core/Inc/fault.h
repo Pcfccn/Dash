@@ -7,6 +7,7 @@
 #define FAULT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /* ---- Bench self-test -------------------------------------------------------
  * 0 = off. With the key held for FAULT_TEST_HOLD_MS:
@@ -32,6 +33,7 @@ void        fault_init(void);              /* first thing at boot: latch + clear
 void        fault_record(fault_code_t c);  /* call right before a fatal stop; survives reset  */
 const char *fault_reset_text(void);        /* why the previous run ended, e.g. "WATCHDOG"     */
 bool        fault_reset_abnormal(void);    /* watchdog or recorded fault, not a power-up      */
+uint32_t    fault_reset_streak(void);      /* abnormal resets in a row (0 = this boot normal) */
 
 void        fault_wdg_start_boot(void);    /* start IWDG1 with the long boot timeout (10 s)   */
 void        fault_wdg_run_mode(void);      /* switch to the run timeout (3 s) after init      */

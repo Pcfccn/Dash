@@ -430,8 +430,13 @@ static void build_diag(void)
     /* Left side of the eyebrow: why the previous run ended. A watchdog or
      * fault reset is amber so it is noticed; a normal power-up stays quiet. */
     lv_obj_t *tb = mk_eyebrow(pg, "DIAG");
-    char rb[32];
-    lv_snprintf(rb, sizeof rb, "LAST RESET: %s", fault_reset_text());
+    char rb[40];
+    /* xN: N abnormal resets in a row — a reset storm, not a one-off. */
+    if (fault_reset_streak() > 1u)
+        lv_snprintf(rb, sizeof rb, "LAST RESET: %s x%u", fault_reset_text(),
+                     (unsigned)fault_reset_streak());
+    else
+        lv_snprintf(rb, sizeof rb, "LAST RESET: %s", fault_reset_text());
     lv_obj_t *rst = mk_label(tb, rb, F12, fault_reset_abnormal() ? C_WARN : C_MUTED);
     lv_obj_align(rst, LV_ALIGN_LEFT_MID, 8, 0);
 

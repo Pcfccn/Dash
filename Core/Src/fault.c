@@ -16,20 +16,38 @@ typedef struct {
     uint32_t magic;
     uint32_t code;
     uint32_t code_inv;       /* ~code: rejects a half-written or random record */
+    uint32_t streak;         /* abnormal resets in a row, this one included    */
+    uint32_t streak_inv;
 } fault_rec_t;
 static volatile fault_rec_t s_rec __attribute__((section(".noinit")));
 
+/* A reset storm (fault -> reset -> fault ...) looks like one reset on DIAG
+ * unless counted: the streak survives resets in the record and is cleared
+ * once a run has lasted FAULT_STREAK_CLEAR_MS. */
+#define FAULT_STREAK_CLEAR_MS 60000u
+
 static const char *s_reset_text = "?";
 static bool        s_abnormal;
+static uint32_t    s_streak;
+static bool        s_streak_cleared;
+
+static void rec_set_streak(uint32_t n)
+{
+    s_rec.streak     = n;
+    s_rec.streak_inv = ~n;
+}
 
 void fault_init(void)
 {
     uint32_t rsr  = RCC->RSR;
     bool     cold = (rsr & (RCC_RSR_PORRSTF | RCC_RSR_BORRSTF)) != 0u;
     uint32_t code = FAULT_NONE;
+    uint32_t prev_streak = 0u;
 
     if (!cold && s_rec.magic == FAULT_MAGIC && s_rec.code_inv == ~s_rec.code)
         code = s_rec.code;
+    if (!cold && s_rec.magic == FAULT_MAGIC && s_rec.streak_inv == ~s_rec.streak)
+        prev_streak = s_rec.streak;
     s_rec.magic    = FAULT_MAGIC;
     s_rec.code     = FAULT_NONE;
     s_rec.code_inv = ~(uint32_t)FAULT_NONE;
@@ -47,6 +65,8 @@ void fault_init(void)
         else if (rsr & RCC_RSR_PINRSTF)    s_reset_text = "RESET PIN";
         else                               s_reset_text = "OTHER";
     }
+    s_streak = s_abnormal ? (prev_streak < 0xFFFFu ? prev_streak + 1u : prev_streak) : 0u;
+    rec_set_streak(s_streak);
     /* Clear the flags so the next boot reports only its own reset. */
     RCC->RSR |= RCC_RSR_RMVF;
 }
@@ -61,6 +81,7 @@ void fault_record(fault_code_t c)
 
 const char *fault_reset_text(void)     { return s_reset_text; }
 bool        fault_reset_abnormal(void) { return s_abnormal; }
+uint32_t    fault_reset_streak(void)   { return s_streak; }
 
 /* IWDG1 runs from the ~32 kHz LSI, which starting the IWDG switches on; the
  * LSI is not trimmed, so real timeouts can differ from nominal by tens of
@@ -104,6 +125,11 @@ void fault_wdg_run_mode(void)
 void fault_wdg_kick(void)
 {
     IWDG1->KR = 0xAAAAu;
+    /* A run this long ends the streak: the next abnormal reset counts 1. */
+    if (!s_streak_cleared && HAL_GetTick() >= FAULT_STREAK_CLEAR_MS) {
+        s_streak_cleared = true;
+        rec_set_streak(0u);
+    }
 }
 
 #if FAULT_TEST
