@@ -835,14 +835,18 @@ void cluster_ui_refresh(void)
          * bus asleep (procedural, not a bug); BOFF/EP/LOST = a real fault. */
         obd_health_t h;
         obd_can_health(&h);
+        /* FILTER ERR: the wide acceptance filter was refused, so nothing is
+         * being sniffed (and OBD polling was left running). */
+        bool ferr = can_sniff_filter_error();
         char sb[64];
-        lv_snprintf(sb, sizeof sb, "%u fps  IDS %u  %s L%u",
+        lv_snprintf(sb, sizeof sb, "%s%u fps  IDS %u  %s L%u",
+                    ferr ? "FILTER ERR " : "",
                     (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
                     h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
                     (unsigned)h.rx_lost);
         ui_text(ui.sn_stat, sb);
-        ui_text_color(ui.sn_stat,
-                      h.bus_off ? C_CRIT : (can_sniff_fps() ? C_OK : C_WARN));
+        ui_text_color(ui.sn_stat, (h.bus_off || ferr) ? C_CRIT
+                                  : (can_sniff_fps() ? C_OK : C_WARN));
 
         /* STATE: low-cardinality bytes with their distinct value set. The
          * selector is the row whose values are the detent codes, listed in

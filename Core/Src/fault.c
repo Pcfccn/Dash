@@ -118,6 +118,14 @@ void fault_selftest(void)
 }
 #endif
 
+/* Build-time tripwire for a value a CubeMX regeneration writes from Dash.ioc
+ * (both now say 64 KB): a regen with an old .ioc fails the build here instead
+ * of failing at run time. The 16 KB default-task stack cannot be checked at
+ * compile time; if it ever shrinks, the overflow hook below reports
+ * "STACK OVERFLOW" on DIAG. */
+_Static_assert(configTOTAL_HEAP_SIZE >= 65536,   /* a cast, so not #if */
+               "FreeRTOS heap below 64 KB - was the code regenerated from an old Dash.ioc?");
+
 /* configCHECK_FOR_STACK_OVERFLOW = 2 (FreeRTOSConfig.h). Overrides the weak
  * stub in cmsis_os2.c. Record and stop; the IWDG then resets the board. */
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)

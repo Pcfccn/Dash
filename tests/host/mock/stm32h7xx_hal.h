@@ -7,7 +7,21 @@
 
 typedef enum { HAL_OK = 0, HAL_ERROR = 1, HAL_BUSY = 2, HAL_TIMEOUT = 3 } HAL_StatusTypeDef;
 
-typedef struct { int dummy; } FDCAN_HandleTypeDef;
+typedef enum {
+    HAL_FDCAN_STATE_RESET = 0, HAL_FDCAN_STATE_READY = 1,
+    HAL_FDCAN_STATE_BUSY = 2,  HAL_FDCAN_STATE_ERROR = 3
+} HAL_FDCAN_StateTypeDef;
+
+typedef struct {
+    uint32_t StdFiltersNbr, ExtFiltersNbr, RxFifo0ElmtsNbr, RxFifo0ElmtSize;
+} FDCAN_InitTypeDef;
+
+typedef struct {
+    FDCAN_InitTypeDef      Init;
+    HAL_FDCAN_StateTypeDef State;
+} FDCAN_HandleTypeDef;
+
+#define FDCAN_DATA_BYTES_8      0x00000004U
 
 typedef struct {
     uint32_t Identifier, IdType, TxFrameType, DataLength, ErrorStateIndicator;
@@ -48,6 +62,8 @@ typedef struct {
 #define __HAL_FDCAN_CLEAR_FLAG(h, f) ((void)0)
 
 uint32_t          HAL_GetTick(void);
+HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *h);
+HAL_FDCAN_StateTypeDef HAL_FDCAN_GetState(const FDCAN_HandleTypeDef *h);
 HAL_StatusTypeDef HAL_FDCAN_ConfigFilter(FDCAN_HandleTypeDef *h, FDCAN_FilterTypeDef *f);
 HAL_StatusTypeDef HAL_FDCAN_ConfigGlobalFilter(FDCAN_HandleTypeDef *h, uint32_t a, uint32_t b,
                                                uint32_t c, uint32_t d);

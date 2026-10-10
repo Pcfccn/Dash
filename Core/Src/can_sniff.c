@@ -54,7 +54,9 @@ static uint32_t   fps_t0;
  * so frames WILL be lost while sniffing. That is fine for this job: a selector
  * position is broadcast continuously and held for seconds, so a dropped frame
  * costs nothing. It is not fine as a permanent mode, hence the switch. */
-static void apply_filter(bool promiscuous)
+static bool filter_err;          /* a filter switch was refused (shown on SNIFF) */
+
+static bool apply_filter(bool promiscuous)
 {
     FDCAN_FilterTypeDef f = {0};
     f.IdType       = FDCAN_STANDARD_ID;
@@ -63,7 +65,10 @@ static void apply_filter(bool promiscuous)
     f.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     f.FilterID1    = promiscuous ? 0x000u : OBD_RESP_ECM;
     f.FilterID2    = promiscuous ? 0x7FFu : OBD_RESP_TCM2;
-    HAL_FDCAN_ConfigFilter(&hfdcan1, &f);   /* legal while running (READY|BUSY) */
+    /* Legal while running (READY|BUSY); refused only in RESET/ERROR state. */
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &f) == HAL_OK) return true;
+    filter_err = true;
+    return false;
 }
 
 void can_sniff_reset(void)
@@ -87,15 +92,26 @@ uint16_t can_sniff_fps(void)
     return fps_val;
 }
 
+/* If the wide filter cannot be installed, sniffing stays off: the page would
+ * otherwise sit on an empty table while OBD polling is paused for nothing.
+ * Leaving is always honoured (OBD polling resumes); if the narrow filter
+ * cannot be restored, the extra frames only reach can_sniff_feed, which
+ * ignores them while inactive. */
 void can_sniff_set_active(bool on)
 {
     if (on == active) return;
-    active = on;
-    if (on) can_sniff_reset();
-    apply_filter(on);
+    if (on) {
+        can_sniff_reset();
+        if (!apply_filter(true)) return;
+        active = true;
+    } else {
+        active = false;
+        (void)apply_filter(false);
+    }
 }
 
-bool can_sniff_is_active(void) { return active; }
+bool can_sniff_is_active(void)    { return active; }
+bool can_sniff_filter_error(void) { return filter_err; }
 
 uint8_t  can_sniff_id_count(void)    { return n_ids; }
 uint32_t can_sniff_frame_count(void) { return n_frames; }

@@ -31,13 +31,27 @@ static HAL_StatusTypeDef tx_status;
 
 static const uint8_t DLC2B[16] = { 0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64 };
 
+static HAL_StatusTypeDef filter_status, start_status;
+static int init_calls, error_calls, start_calls;
+
+void Error_Handler(void) { error_calls++; }      /* firmware: record + hang */
+
+HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *h)
+{ init_calls++; h->State = HAL_FDCAN_STATE_READY; return HAL_OK; }
+HAL_FDCAN_StateTypeDef HAL_FDCAN_GetState(const FDCAN_HandleTypeDef *h) { return h->State; }
 HAL_StatusTypeDef HAL_FDCAN_ConfigFilter(FDCAN_HandleTypeDef *h, FDCAN_FilterTypeDef *f)
-{ (void)h; (void)f; return HAL_OK; }
+{ (void)h; (void)f; return filter_status; }
 HAL_StatusTypeDef HAL_FDCAN_ConfigGlobalFilter(FDCAN_HandleTypeDef *h, uint32_t a, uint32_t b,
                                                uint32_t c, uint32_t d)
 { (void)h; (void)a; (void)b; (void)c; (void)d; return HAL_OK; }
-HAL_StatusTypeDef HAL_FDCAN_Start(FDCAN_HandleTypeDef *h) { (void)h; return HAL_OK; }
-HAL_StatusTypeDef HAL_FDCAN_Stop(FDCAN_HandleTypeDef *h)  { (void)h; return HAL_OK; }
+HAL_StatusTypeDef HAL_FDCAN_Start(FDCAN_HandleTypeDef *h)
+{
+    start_calls++;
+    if (start_status != HAL_OK) return start_status;
+    h->State = HAL_FDCAN_STATE_BUSY;
+    return HAL_OK;
+}
+HAL_StatusTypeDef HAL_FDCAN_Stop(FDCAN_HandleTypeDef *h) { h->State = HAL_FDCAN_STATE_READY; return HAL_OK; }
 
 HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
                                                 FDCAN_TxHeaderTypeDef *tx, uint8_t *data)
@@ -113,6 +127,12 @@ static void reset(void)
     await_resp_id = 0; await_ttl = 0; itp_active = false; itp_ttl = 0;
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
     last_map_kpa = NAN; baro_kpa = 101.0f;
+    filter_status = HAL_OK; start_status = HAL_OK;
+    init_calls = 0; error_calls = 0; start_calls = 0; start_fail_cnt = 0;
+    hmock.Init.StdFiltersNbr   = 4;                 /* as MX_FDCAN1_Init sets it */
+    hmock.Init.RxFifo0ElmtsNbr = 16;
+    hmock.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+    hmock.State = HAL_FDCAN_STATE_READY;
     obd_init(&hmock);
 }
 
@@ -552,6 +572,51 @@ static void t_schedule_contents(void)
     CHECK(seen_rail && seen_load && seen_atf && seen_gear && seen_oil);
 }
 
+/* R1: a CubeMX regen that drops the RX FIFO / filter counts must not leave
+ * the controller deaf — obd_init re-lays out the message RAM. */
+static void t_layout_reasserted(void)
+{
+    hmock.Init.StdFiltersNbr   = 0;                 /* what Dash.ioc used to give */
+    hmock.Init.RxFifo0ElmtsNbr = 0;
+    hmock.State = HAL_FDCAN_STATE_READY;
+    init_calls = 0;
+    obd_init(&hmock);
+    CHECK(init_calls == 1);
+    CHECK(hmock.Init.StdFiltersNbr == 4 && hmock.Init.RxFifo0ElmtsNbr == 16);
+    CHECK(hmock.State == HAL_FDCAN_STATE_BUSY);     /* started */
+    CHECK(error_calls == 0);
+}
+
+static void t_layout_ok_no_reinit(void)
+{
+    CHECK(init_calls == 0);                         /* reset() ran obd_init */
+    CHECK(hmock.State == HAL_FDCAN_STATE_BUSY);
+}
+
+static void t_filter_failure_is_fatal(void)          /* N2 */
+{
+    hmock.State = HAL_FDCAN_STATE_READY;
+    filter_status = HAL_ERROR;
+    start_calls = 0;
+    obd_init(&hmock);
+    CHECK(error_calls == 1);
+    CHECK(start_calls == 0);                        /* never started half-configured */
+}
+
+static void t_start_retried_after_failure(void)      /* N2 */
+{
+    hmock.State = HAL_FDCAN_STATE_READY;            /* e.g. after a bus-off Stop */
+    start_status = HAL_ERROR;
+    now_ms += 200;
+    obd_rx_poll();                                  /* runs the health check */
+    CHECK(start_fail_cnt == 1);
+    CHECK(hmock.State == HAL_FDCAN_STATE_READY);
+    start_status = HAL_OK;
+    now_ms += 200;
+    obd_rx_poll();
+    CHECK(hmock.State == HAL_FDCAN_STATE_BUSY);
+}
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -602,6 +667,10 @@ int main(void)
         { "mil_tx_refusal_is_miss",     t_mil_tx_refusal_counts_as_miss },
         { "sniff_pauses_polling",       t_sniff_pauses_polling },
         { "schedule_contents",          t_schedule_contents },
+        { "layout_reasserted",          t_layout_reasserted },
+        { "layout_ok_no_reinit",        t_layout_ok_no_reinit },
+        { "filter_failure_is_fatal",    t_filter_failure_is_fatal },
+        { "start_retried_after_failure",t_start_retried_after_failure },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

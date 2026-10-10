@@ -245,7 +245,19 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
 /* SPI2 speed-up and DMA. Runs once, before the panel init sequence. */
 static void spi2_dma_init(void)
 {
-    /* Re-init SPI2 at the faster clock (MX_SPI2_Init set the CubeMX value). */
+    /* Re-init SPI2 with everything this panel depends on, not only the faster
+     * clock, so a CubeMX regen of spi.c cannot change it behind our back.
+     * Dash.ioc matches mode 0 and /16 but keeps 2LINES (switching it to
+     * half-duplex in CubeMX would also drop the MISO pin); this block is what
+     * guarantees the panel's settings. Mode 0 because these ILI9488 clones
+     * want it; 1LINE because the panel is write-only. */
+    hspi2.Init.Mode              = SPI_MODE_MASTER;
+    hspi2.Init.Direction         = SPI_DIRECTION_1LINE;
+    hspi2.Init.DataSize          = SPI_DATASIZE_8BIT;
+    hspi2.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    hspi2.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    hspi2.Init.NSS               = SPI_NSS_SOFT;
+    hspi2.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     hspi2.Init.BaudRatePrescaler = LCD_SPI_PRESCALER;
     if (HAL_SPI_Init(&hspi2) != HAL_OK) Error_Handler();
 

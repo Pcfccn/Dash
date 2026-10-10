@@ -34,6 +34,8 @@ Two gotchas with the generated makefile:
 
 Peripheral/pin config lives in `Dash.ioc` — regenerating code from it via CubeMX/CubeIDE will rewrite the `USER CODE BEGIN/END` guarded sections in `Core/Src/*.c` and `Core/Inc/*.h`; only edit within those guards in CubeMX-owned files (`main.c`, `freertos.c`, `gpio.c`, `spi.c`, `tim.c`, `fdcan.c`, `stm32h7xx_*`) or edits will be lost on regeneration.
 
+`Dash.ioc` now matches the code for everything that matters (FDCAN 4 std filters + 16-deep RX FIFO0, default task 4096 words = 16 KB, heap 64 KB, SPI2 mode 0 at /16), and the firmware no longer depends on regeneration getting it right: `obd_init()` re-lays out the FDCAN message RAM if the counts are short, `lv_port_disp.c` re-inits SPI2 with every setting the panel needs (1LINE stays code-only — changing it in CubeMX would also drop the MISO pin), a `_Static_assert` in `fault.c` fails the build if the heap shrinks, and a shrunk stack shows up as `LAST RESET: STACK OVERFLOW`. After any regeneration, still read the `git diff` of the generated files before building: expect `spi.c` to go back to 2LINES and lose its comments (harmless, overridden), nothing else functional.
+
 Flash/debug config is in `Dash.launch` (ST-LINK GDB server, configured in CubeIDE).
 
 Host-side unit tests live in `tests/host/`: they `#include` the real `Core/Src/fdcan_obd.c` against a mocked HAL (`tests/host/mock/`) and cover frame validation, ISO-TP, reply ownership, TX errors and MIL freshness. Run them with `python tools/host_test.py` (gcc/clang, or `pip install ziglang`); UBSan is always on, ASan off Windows. When you change `fdcan_obd.c`, run them and add a case for the change. Nothing else (UI, LVGL, drivers) has tests.

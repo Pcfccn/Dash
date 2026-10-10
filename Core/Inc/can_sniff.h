@@ -61,6 +61,7 @@ typedef struct {
  * for the same RX FIFO the OBD replies use, so this must not stay on. */
 void can_sniff_set_active(bool on);
 bool can_sniff_is_active(void);
+bool can_sniff_filter_error(void);   /* an acceptance-filter switch was refused */
 
 /* Feed one received frame (called for non-OBD IDs from the RX drain). */
 void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len);

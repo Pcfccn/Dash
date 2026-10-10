@@ -68,6 +68,7 @@ typedef struct {
     uint16_t busoff_recover;    /* bus-off recovery attempts                     */
     uint16_t rx_bad;            /* received frames dropped as truncated/malformed */
     uint16_t tx_fail;           /* requests the TX FIFO refused                  */
+    uint16_t start_fail;        /* controller restarts refused (retried)         */
 } obd_health_t;
 void obd_can_health(obd_health_t *h);
 

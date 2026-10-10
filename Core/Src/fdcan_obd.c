@@ -12,6 +12,7 @@
  *  by MX_FDCAN1_Init (HSE 25 MHz kernel -> 500 kbps), not here.
  * ========================================================================== */
 #include "fdcan_obd.h"
+#include "main.h"                /* Error_Handler */
 #include "cluster_config.h"
 #include "can_sniff.h"
 #include <string.h>
@@ -341,6 +342,7 @@ static bool dispatch(uint32_t resp_id, const uint8_t *p, uint16_t n) {
  * Reads are gated to ~10 Hz; the message-lost flag is a single register bit. */
 static volatile uint16_t rx_lost_cnt;   /* RX FIFO0 overflow events            */
 static volatile uint16_t busoff_cnt;    /* bus-off recoveries attempted        */
+static volatile uint16_t start_fail_cnt; /* HAL_FDCAN_Start refusals (retried) */
 static volatile uint8_t  busoff_now, errpass_now;
 
 static void obd_check_health(void) {
@@ -362,10 +364,15 @@ static void obd_check_health(void) {
              * Stop then Start does that and begins the recovery sequence.
              * Filters live in message RAM and survive the cycle. */
             if (busoff_cnt < 0xFFFFu) busoff_cnt++;
-            HAL_FDCAN_Stop(hfd);
-            HAL_FDCAN_Start(hfd);
+            (void)HAL_FDCAN_Stop(hfd);
         }
     }
+    /* Stopped (the recovery above, or a Start that failed before): start it.
+     * A failed Start leaves the controller READY, so this retries on every
+     * health check instead of leaving the node off the bus for good. */
+    if (HAL_FDCAN_GetState(hfd) == HAL_FDCAN_STATE_READY &&
+        HAL_FDCAN_Start(hfd) != HAL_OK && start_fail_cnt < 0xFFFFu)
+        start_fail_cnt++;
 }
 
 void obd_can_health(obd_health_t *h) {
@@ -375,6 +382,7 @@ void obd_can_health(obd_health_t *h) {
     h->busoff_recover = busoff_cnt;
     h->rx_bad         = rx_bad_cnt;
     h->tx_fail        = tx_fail_cnt;
+    h->start_fail     = start_fail_cnt;
 }
 
 /* =============================== RX (polled) ============================= */
@@ -514,11 +522,37 @@ void obd_rx_poll(void) {
 }
 
 /* =============================== init/poll =============================== */
+/* Message-RAM layout this module needs: 4 standard filters (set below) and a
+ * 16-deep RX FIFO0 of 8-byte elements. fdcan.c and Dash.ioc carry the same
+ * values; asserting them here keeps reception working even if a CubeMX
+ * regeneration drops them again. That has bitten before: RxFifo0ElmtsNbr = 0
+ * meant nothing could be received at all, and with too few filter elements
+ * HAL_FDCAN_ConfigFilter does NOT fail (the index check is an assert_param,
+ * compiled out) — it silently writes the filter over the next RAM section. */
+#define OBD_STD_FILTERS   4u
+#define OBD_RX_FIFO0_LEN 16u
+
+/* A config call that fails at init is fatal: there is no CAN without it, and
+ * Error_Handler records "HAL ERROR" for DIAG before the watchdog resets. */
+static bool cfg_ok(HAL_StatusTypeDef s) {
+    if (s == HAL_OK) return true;
+    Error_Handler();
+    return false;
+}
+
 void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     hfd = hfdcan;
 
-    /* Accept only the two ECU response IDs into RX FIFO 0.
-     * (MX_FDCAN1_Init must allocate >=1 std filter + a non-zero RX FIFO0.) */
+    if (hfd->Init.StdFiltersNbr < OBD_STD_FILTERS ||
+        hfd->Init.RxFifo0ElmtsNbr < OBD_RX_FIFO0_LEN ||
+        hfd->Init.RxFifo0ElmtSize != FDCAN_DATA_BYTES_8) {
+        hfd->Init.StdFiltersNbr   = OBD_STD_FILTERS;
+        hfd->Init.RxFifo0ElmtsNbr = OBD_RX_FIFO0_LEN;
+        hfd->Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+        if (!cfg_ok(HAL_FDCAN_Init(hfd))) return;   /* READY: re-lays out RAM */
+    }
+
+    /* Accept only the two ECU response IDs into RX FIFO 0. */
     FDCAN_FilterTypeDef f = {0};
     f.IdType       = FDCAN_STANDARD_ID;
     f.FilterIndex  = 0;
@@ -527,7 +561,7 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     f.FilterID1    = OBD_RESP_ECM;               /* 0x7E8 (range low)           */
     f.FilterID2    = OBD_RESP_TCM2;              /* 0x7EA (range high): ECM,     */
                                                  /* TCM(7E9) and trans(7EA)      */
-    HAL_FDCAN_ConfigFilter(hfd, &f);
+    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &f))) return;
 
     /* Filter 1: the selector/PRNDL broadcast (0x1F5). It is not an OBD
      * request/response, so the narrow OBD filter above would reject it; this
@@ -541,7 +575,7 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fs.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     fs.FilterID1    = CAN_ID_SELECTOR;
     fs.FilterID2    = 0x7FFu;                 /* full mask = exact match         */
-    HAL_FDCAN_ConfigFilter(hfd, &fs);
+    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fs))) return;
 
     /* Filter 2: 0x1BA — oil-pressure candidate #1. Mode-22 DIDs 0x115C and
      * 0x1470 return NRC 22/31 on this E98, so oil pressure must be a broadcast
@@ -556,7 +590,7 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fo.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     fo.FilterID1    = CAN_ID_OILP_BCAST;
     fo.FilterID2    = 0x7FFu;                   /* exact match                     */
-    HAL_FDCAN_ConfigFilter(hfd, &fo);
+    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fo))) return;
 
     /* Filter 3: 0x0C9 — second oil-pressure candidate under test (2026-07-24).
      * Same rationale as filter 2: capture the frame passively so its byte 2 can
@@ -571,12 +605,13 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
     fc.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     fc.FilterID1    = CAN_ID_OILP_CAND2;
     fc.FilterID2    = 0x7FFu;                   /* exact match                     */
-    HAL_FDCAN_ConfigFilter(hfd, &fc);
+    if (!cfg_ok(HAL_FDCAN_ConfigFilter(hfd, &fc))) return;
 
-    HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
-                                 FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+    if (!cfg_ok(HAL_FDCAN_ConfigGlobalFilter(hfd, FDCAN_REJECT, FDCAN_REJECT,
+                                             FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE)))
+        return;
 
-    HAL_FDCAN_Start(hfd);
+    if (!cfg_ok(HAL_FDCAN_Start(hfd))) return;
     /* No ActivateNotification: obd_rx_poll() drains the FIFO from the loop. */
 }
 
