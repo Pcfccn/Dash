@@ -19,7 +19,6 @@
 #include "st7735_status.h"
 #include "main.h"   /* STM32 HAL + GPIO */
 #include "lvgl.h"
-#include "fdcan_obd.h"    /* g_obd (CAN status + battery) */
 #include "src/drivers/display/st7735/lv_st7735.h"
 #include <math.h>
 
@@ -249,26 +248,50 @@ void st7735_status_init(void)
     }
 }
 
-void st7735_status_set(int32_t speed_kmh, int32_t rpm)
+void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_t link)
 {
+    /* Last drawn values: lv_label_set_text invalidates (= an SPI4 repaint)
+     * even when the text is the same, so only changes are written. */
+    static int32_t  s_speed = INT32_MIN, s_rpm = INT32_MIN, s_batt = INT32_MIN;
+    static int      s_link = -1;
+    static uint32_t s_up = UINT32_MAX;
     if (status_disp == NULL) {
         return;
     }
     lv_lock();
     /* negative = unknown: the caller has no fresh value */
-    if (speed_kmh >= 0) lv_label_set_text_fmt(lbl_speed, "%d", (int)speed_kmh);
-    else                lv_label_set_text(lbl_speed, "--");
-    if (rpm >= 0)       lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
-    else                lv_label_set_text(lbl_rpm, "RPM --");
-    lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)(lv_tick_get() / 1000u));
-    lv_label_set_text(lbl_can, g_obd.can_ok ? "CAN OK" : "CAN --");
-    lv_obj_set_style_text_color(lbl_can, lv_color_hex(g_obd.can_ok ? 0x37d67a : 0xff2d2d), 0);
-    /* battery is NaN until the PID actually answers; casting that to int is UB,
-     * so test before converting rather than relying on it landing on 0 */
-    float bv = g_obd.battery;
-    int bmv = isnan(bv) ? 0 : (int)(bv * 10.0f + 0.5f);   /* 0.1 V steps */
-    if (bmv > 10) lv_label_set_text_fmt(lbl_canid, "B %d.%dV", bmv / 10, bmv % 10);
-    else          lv_label_set_text(lbl_canid, "B --");
+    if (speed_kmh < 0) speed_kmh = -1;
+    if (rpm < 0)       rpm = -1;
+    if (batt_dv <= 10) batt_dv = -1;                     /* <= 1.0 V: no reading */
+    if (speed_kmh != s_speed) {
+        s_speed = speed_kmh;
+        if (speed_kmh >= 0) lv_label_set_text_fmt(lbl_speed, "%d", (int)speed_kmh);
+        else                lv_label_set_text(lbl_speed, "--");
+    }
+    if (rpm != s_rpm) {
+        s_rpm = rpm;
+        if (rpm >= 0) lv_label_set_text_fmt(lbl_rpm, "RPM %d", (int)rpm);
+        else          lv_label_set_text(lbl_rpm, "RPM --");
+    }
+    uint32_t up = lv_tick_get() / 1000u;
+    if (up != s_up) {
+        s_up = up;
+        lv_label_set_text_fmt(lbl_uptime, "t %us", (unsigned)up);
+    }
+    if ((int)link != s_link) {
+        s_link = (int)link;
+        static const char *const TXT[] = { "CAN --", "NO ECM", "ECM OK" };
+        static const uint32_t    COL[] = { 0xff2d2d, 0xffc033, 0x37d67a };
+        unsigned i = (unsigned)link <= ST_LINK_ECM ? (unsigned)link : 0u;
+        lv_label_set_text(lbl_can, TXT[i]);
+        lv_obj_set_style_text_color(lbl_can, lv_color_hex(COL[i]), 0);
+    }
+    if (batt_dv != s_batt) {
+        s_batt = batt_dv;
+        if (batt_dv > 0) lv_label_set_text_fmt(lbl_canid, "B %d.%dV",
+                                               (int)(batt_dv / 10), (int)(batt_dv % 10));
+        else             lv_label_set_text(lbl_canid, "B --");
+    }
     lv_unlock();
 }
 

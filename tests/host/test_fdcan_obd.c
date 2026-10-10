@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include "../../Core/Src/fdcan_obd.c"
+#include "cluster_policy.h"               /* UI decisions, tested below */
 
 static int checks, fails;                /* harness counters (see below) */
 
@@ -1073,6 +1074,59 @@ static void t_tick_wraparound(void)
     CHECK(tx_n == sent + 1);                        /* timed out across the wrap, next sent */
 }
 
+/* --- UI policy (cluster_policy.h) ----------------------------------------- */
+static void put(metric_key_t k, volatile float *dst, float v) { *dst = v; g_obd.upd_ms[k] = now_ms; }
+static void sel(int8_t r) { g_obd.sel_range = r; g_obd.sel_upd_ms = now_ms; }
+
+/* Audit U01: SNIFF fails closed — only a fresh P/N opens (and keeps) it. */
+static void t_sniff_fail_closed(void)
+{
+    CHECK(!policy_sniff_allowed(&g_obd, now_ms));        /* CAN down            */
+    g_obd.can_ok = true;
+    CHECK(!policy_sniff_allowed(&g_obd, now_ms));        /* selector never seen,
+                                                            though inside its window */
+    sel(1); CHECK(policy_sniff_allowed(&g_obd, now_ms)); /* P */
+    sel(3); CHECK(policy_sniff_allowed(&g_obd, now_ms)); /* N */
+    sel(2); CHECK(!policy_sniff_allowed(&g_obd, now_ms));/* R */
+    sel(4); CHECK(!policy_sniff_allowed(&g_obd, now_ms));/* D: also ends SNIFF */
+    sel(1);
+    put(M_SPEED, &g_obd.speed, 20.0f);                   /* P but rolling       */
+    CHECK(!policy_sniff_allowed(&g_obd, now_ms));
+    now_ms += metric_stale_ms[M_SPEED] + 1u;             /* speed stale (SNIFF  */
+    sel(1);                                              /* pauses OBD), P fresh */
+    CHECK(policy_sniff_allowed(&g_obd, now_ms));
+    now_ms += SEL_STALE_MS + 1u;                         /* selector stale      */
+    CHECK(!policy_sniff_allowed(&g_obd, now_ms));
+    PUSH(0x1F5, 8, 0, 0, 0, 0x01, 0, 0, 0, 0);           /* P from the bus      */
+    obd_rx_poll();
+    CHECK(policy_sniff_allowed(&g_obd, now_ms));
+    PUSH(0x1F5, 8, 0, 0, 0, 0x04, 0, 0, 0, 0);           /* shift to D          */
+    obd_rx_poll();
+    CHECK(!policy_sniff_allowed(&g_obd, now_ms));
+}
+
+/* Audit U02: NOMINAL only with every judged, supplied value fresh. */
+static void t_summary_needs_complete_data(void)
+{
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_CAN_LOST);
+    g_obd.can_ok = true; sel(1);
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_NO_ECM);   /* broadcast only */
+    CHECK(policy_summary(&g_obd, now_ms, true)  == SUM_ALARM);
+    put(M_RPM, &g_obd.rpm, 800.0f);
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* RPM alone */
+    put(M_COOL, &g_obd.cool, 85.0f); put(M_OIL, &g_obd.oil, 90.0f);
+    put(M_ATF, &g_obd.atf, 70.0f);   put(M_BATTERY, &g_obd.battery, 14.1f);
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* MIL unknown */
+    g_obd.mil_valid = true;
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_NOMINAL);
+    CHECK(isnan(g_obd.egt) && isnan(g_obd.oil_press));            /* not required */
+    now_ms += metric_stale_ms[M_BATTERY] + 1u;                     /* all go stale */
+    put(M_RPM, &g_obd.rpm, 800.0f); put(M_COOL, &g_obd.cool, 85.0f);
+    put(M_OIL, &g_obd.oil, 90.0f);  put(M_ATF, &g_obd.atf, 70.0f);
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* battery stale */
+    CHECK(!policy_shown(&g_obd, M_BATTERY, now_ms));
+}
+
 static void t_sniff_pauses_polling(void)
 {
     sniff_on = true;
@@ -1137,6 +1191,8 @@ int main(void)
         { "mil_invalid_after_3_misses", t_mil_invalid_after_three_misses },
         { "mil_tx_refusal_is_miss",     t_mil_tx_refusal_counts_as_miss },
         { "sniff_pauses_polling",       t_sniff_pauses_polling },
+        { "sniff_fail_closed",          t_sniff_fail_closed },
+        { "summary_needs_complete_data",t_summary_needs_complete_data },
         { "schedule_contents",          t_schedule_contents },
         { "layout_reasserted",          t_layout_reasserted },
         { "layout_ok_no_reinit",        t_layout_ok_no_reinit },

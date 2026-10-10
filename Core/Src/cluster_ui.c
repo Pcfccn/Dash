@@ -18,6 +18,7 @@
 #include "cluster_ui.h"
 #include "cluster_config.h"
 #include "fdcan_obd.h"
+#include "cluster_policy.h"   /* shown / SNIFF gate / summary decisions */
 #include "can_sniff.h"
 #include "fault.h"
 #include "app_main.h"         /* app_loop_max_ms() for the DIAG readout */
@@ -138,12 +139,11 @@ static lv_color_t state_color(metric_state_t s)
     }
 }
 
-/* "Do we actually have this number?" — g_obd initialises every float to NaN and
- * only a decoded frame overwrites it, so this covers both the enhanced DIDs that
- * are still unmapped and any standard PID this calibration does not support.
+/* "Do we actually have this number?" is policy_fresh() (cluster_policy.h):
+ * g_obd initialises every float to NaN and only a decoded frame overwrites it,
+ * so NaN covers both unmapped DIDs and PIDs this calibration does not support.
  * Blanket-blacklisting metrics (the old is_enhanced()) hid real data the moment
  * a DID started working. */
-static bool has_value(float v) { return !isnan(v); }
 
 /* the °C gauge temperatures — get a "cold" blue tint below 50°C */
 static bool is_temp(metric_key_t k)
@@ -151,19 +151,7 @@ static bool is_temp(metric_key_t k)
     return k == M_COOL || k == M_OIL || k == M_ATF || k == M_EGT;
 }
 
-static float mval(const obd_data_t *d, metric_key_t k)
-{
-    switch (k) {
-        case M_SPEED: return d->speed;   case M_RPM:  return d->rpm;
-        case M_COOL:  return d->cool;    case M_OIL:  return d->oil;
-        case M_ATF:   return d->atf;     case M_EGT:  return d->egt;
-        case M_OILP:  return d->oil_press;
-        case M_BOOST: return d->boost;   case M_BATTERY: return d->battery;
-        case M_IAT:   return d->iat;     case M_LOAD: return d->load;
-        case M_RAIL:  return d->rail;    case M_GEAR: return d->gear;
-        default: return 0;
-    }
-}
+static float mval(const obd_data_t *d, metric_key_t k) { return policy_value(d, k); }
 
 static int pct_of(metric_key_t k, float v)
 {
@@ -620,9 +608,12 @@ void cluster_ui_build(void)
     cluster_ui_set_page(0);
 }
 
+static bool sniff_allowed(void);
+
 void cluster_ui_set_page(uint8_t p)
 {
     if (p >= PAGE_COUNT) p = 0;
+    if (p == PAGE_SNIFF && !sniff_allowed()) p = 0;   /* any caller, not only next_page */
     s_page = p;
     /* Sniffing costs the OBD poller its bus access, so it is tied to the page
      * being visible: you cannot leave it running by accident. */
@@ -634,19 +625,12 @@ void cluster_ui_set_page(uint8_t p)
 }
 
 /* SNIFF pauses OBD polling, so it must not be reachable on the move (one
- * accidental tap while driving froze every OBD value). The selector broadcast
- * keeps arriving while sniffing, OBD replies do not, so the selector is the
- * gate: P or N only. Without a fresh selector (bench, another car) SNIFF is
- * allowed unless a fresh speed says the vehicle is moving. */
+ * accidental tap while driving froze every OBD value): fresh P or N only,
+ * fail closed — see policy_sniff_allowed(). SNIFF_BENCH_OVERRIDE opens it on
+ * the bench without a selector. */
 static bool sniff_allowed(void)
 {
-    uint32_t now  = HAL_GetTick();
-    bool     live = g_obd.can_ok;
-    if (live && obd_sel_fresh(&g_obd, now))
-        return g_obd.sel_range == 1 || g_obd.sel_range == 3;     /* P / N */
-    float sp = g_obd.speed;
-    bool moving = live && !isnan(sp) && obd_is_fresh(&g_obd, M_SPEED, now) && sp > 3.0f;
-    return !moving;
+    return policy_sniff_allowed(&g_obd, HAL_GetTick());
 }
 
 void cluster_ui_next_page(void)
@@ -702,7 +686,7 @@ static uint32_t s_now;
  * (metric_stale_ms in cluster_config.h). Otherwise the UI shows "--". */
 static bool shown(const obd_data_t *d, metric_key_t k, bool live)
 {
-    return live && has_value(mval(d, k)) && obd_is_fresh(d, k, s_now);
+    return live && policy_fresh(d, k, s_now);
 }
 
 /* set one big value + optional bar + optional dot from a metric */
@@ -989,15 +973,18 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 8; i++)
         if (ts[i] >= ST_WARN && (cause < 0 || ts[i] > ts[cause])) cause = i;
     /* The link can be "live" on broadcasts alone while the ECM answers
-     * nothing: then there is nothing to call NOMINAL. RPM (0 with the engine
-     * off) or coolant fresh means the ECM is answering. */
-    bool ecm_fresh = shown(&d, M_RPM, live) || shown(&d, M_COOL, live);
+     * nothing, and one fresh RPM says nothing about the temperatures: NOMINAL
+     * needs every judged value this truck supplies (policy_summary). */
+    policy_summary_t ps = policy_summary(&d, s_now, cause >= 0);
+    bool ecm_fresh = (ps != SUM_NO_ECM);
 
     char sum[28];
     const char *txt = sum; lv_color_t col;
-    if (!live) {
+    switch (ps) {
+    case SUM_CAN_LOST:
         txt = LV_SYMBOL_WARNING " CAN LOST"; col = C_CRIT;
-    } else if (cause >= 0) {
+        break;
+    case SUM_ALARM:
         col = (ts[cause] == ST_CRIT) ? C_CRIT : C_WARN;
         if (cause >= 1 && cause <= 5) {
             char v[12];
@@ -1009,10 +996,16 @@ void cluster_ui_refresh(void)
         } else {
             lv_snprintf(sum, sizeof sum, LV_SYMBOL_WARNING " %u DTC", (unsigned)d.dtc_count);
         }
-    } else if (!ecm_fresh) {
+        break;
+    case SUM_NO_ECM:
         txt = "NO ECM DATA"; col = C_WARN;
-    } else {
+        break;
+    case SUM_PARTIAL:   /* no alarm among what is known — not "healthy" */
+        txt = "PARTIAL DATA"; col = C_MUTED;
+        break;
+    default:
         txt = "NOMINAL"; col = C_OK;
+        break;
     }
     ui_text(ui.summary, txt);
     ui_text_color(ui.summary, col);

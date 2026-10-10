@@ -166,8 +166,8 @@ Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
 2. *(Optional but recommended)* Bench-test CAN first with a USB-CAN adapter or an
    OBD-II simulator, so you know the transceiver + wiring work before the car.
 3. In the car, **KOEO**: connect CAN + power (buck on switched 12 V).
-   - Check the small status screen: **CAN OK** (green), speed `0`, battery
-     **~12.4 V**.
+   - Check the small status screen: **ECM OK** (green; amber **NO ECM** = frames
+     on the bus but the ECM answers nothing), speed `0`, battery **~12.4 V**.
    - If CAN shows `--` (red): re-check termination (60 Ω), CANH/CANL not swapped,
      transceiver VCC = 3.3 V, and PD0/PD1 not reversed.
 4. **Verify termination** reads ~60 Ω (ignition off) if you haven't already.

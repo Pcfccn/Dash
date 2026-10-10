@@ -10,9 +10,18 @@
  * Call once, after lv_port_disp_init() (i.e. after lv_init() has run). */
 void st7735_status_init(void);
 
+/* Link line: the bus carrying frames is not the same as the ECM answering
+ * (broadcasts alone keep the bus up). */
+typedef enum {
+    ST_LINK_DOWN = 0,           /* no frames: "CAN --" (red)                    */
+    ST_LINK_BUS,                /* frames, but no fresh ECM data: "NO ECM" (amber) */
+    ST_LINK_ECM                 /* ECM answering: "ECM OK" (green)              */
+} st_link_t;
+
 /* Refresh the status readout. Safe to call from the LVGL task; throttle the
- * caller (a few Hz is plenty). */
-void st7735_status_set(int32_t speed_kmh, int32_t rpm);   /* < 0 = unknown, shown as "--" */
+ * caller (a few Hz is plenty). Values < 0 = unknown/stale, shown as "--";
+ * batt_dv is the battery in 0.1 V. Only changed labels are redrawn. */
+void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_t link);
 
 /* Diagnostic line: current cluster page, live KEY(PC13) level, press count.
  * Lets us see whether the page button is wired/seen. */

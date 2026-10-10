@@ -3,6 +3,7 @@
 #include "cluster_app.h"     /* 3-page Colorado cluster + OBD-II poller */
 #include "cluster_ui.h"      /* cluster_ui_next_page() for the KEY button */
 #include "fdcan_obd.h"       /* g_obd (for the small status screen) */
+#include "cluster_policy.h"   /* what is fresh enough to show */
 #include "st7735_status.h"   /* small on-board 0.96" status display */
 #include "fdcan.h"           /* hfdcan1 */
 #include "lvgl.h"
@@ -258,14 +259,16 @@ void AppMain_Run(void)
     uint32_t now = lv_tick_get();
     if (now - last_status_ms >= 250u) {
         last_status_ms = now;
-        /* NaN means the PID has never answered; casting that to int32_t is UB */
         /* -1 = nothing to show ("--"): never decoded (NaN), stale, or the
-         * link is down. 0 would be a believable reading. */
+         * link is down — the same test as the main display (cluster_policy.h).
+         * 0 would be a believable reading, and casting NaN to int is UB. */
         uint32_t tn = HAL_GetTick();
-        bool live = g_obd.can_ok;
-        float sp = g_obd.speed, rp = g_obd.rpm;
-        st7735_status_set((live && !isnan(sp) && obd_is_fresh(&g_obd, M_SPEED, tn)) ? (int32_t)sp : -1,
-                          (live && !isnan(rp) && obd_is_fresh(&g_obd, M_RPM, tn))   ? (int32_t)rp : -1);
+        st_link_t link = !g_obd.can_ok ? ST_LINK_DOWN
+                       : (policy_ecm_fresh(&g_obd, tn) ? ST_LINK_ECM : ST_LINK_BUS);
+        st7735_status_set(policy_shown(&g_obd, M_SPEED, tn)   ? (int32_t)g_obd.speed : -1,
+                          policy_shown(&g_obd, M_RPM, tn)     ? (int32_t)g_obd.rpm   : -1,
+                          policy_shown(&g_obd, M_BATTERY, tn) ? (int32_t)(g_obd.battery * 10.0f + 0.5f) : -1,
+                          link);
         /* KEY diagnostic: page index, live PC13 level, accepted-press count */
         st7735_status_key_dbg(cluster_ui_get_page(), key_now, s_key_cnt);
         /* in brightness mode: overlay the current backlight level on the small screen */
