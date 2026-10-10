@@ -64,8 +64,9 @@ static inline void cs_high(void) { HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GP
 static inline void dc_cmd(void)  { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_RESET); }
 static inline void dc_data(void) { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET); }
 
-/* SPI transfers that went wrong: a blocking send that timed out or failed,
- * or a DMA transfer abandoned by dma_wait(). Shown on DIAG when non-zero.
+/* SPI transfers that went wrong: a blocking send that timed out or failed, a
+ * refused DMA start, a DMA error, a DMA transfer abandoned by dma_wait(), or
+ * an area too big for tx_buf. Shown on DIAG when non-zero.
  * Bounded timeouts instead of HAL_MAX_DELAY: a stuck SPI used to hang the
  * loop until the IWDG reset the board; now the transfer is aborted, counted,
  * and the next repaint tries again. */
@@ -211,6 +212,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
     if (hspi == &hspi2) {
         cs_high();
         s_dma_busy = false;
+        spi_err();                   /* the area did not reach the panel */
     }
 }
 
@@ -230,6 +232,7 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
      * ever does, drop the area rather than corrupt memory (a missing patch
      * repaints on the next change, a smashed HAL handle resets the board). */
     if (n > TX_BUF_BYTES) {
+        spi_err();                   /* counted: a dropped area is a lost repaint */
         lv_display_flush_ready(disp);
         return;
     }
@@ -254,8 +257,10 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     cs_low();
     s_dma_busy = true;
     if (HAL_SPI_Transmit_DMA(&hspi2, tx_buf, (uint16_t)n) != HAL_OK) {
-        /* Fall back to a blocking send so the frame is not lost. */
+        /* Fall back to a blocking send so the frame is not lost; the refused
+         * DMA start is counted either way. */
         s_dma_busy = false;
+        spi_err();
         lcd_tx(tx_buf, (uint16_t)n, LCD_BULK_TIMEOUT_MS);
         cs_high();
     }
