@@ -630,7 +630,7 @@ void cluster_ui_set_page(uint8_t p)
 }
 
 /* SNIFF pauses OBD polling, so it must not be reachable on the move (one
- * accidental tap while driving froze every OBD value): fresh P or N only,
+ * accidental tap while driving froze every OBD value): fresh P only,
  * fail closed — see policy_sniff_allowed(). SNIFF_BENCH_OVERRIDE opens it on
  * the bench without a selector. */
 static bool sniff_allowed(void)

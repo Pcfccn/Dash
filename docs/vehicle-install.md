@@ -150,10 +150,11 @@ that never writes calibrations, memory or actuators and **never clears codes**
 - **One volatile configuration, for oil pressure only:** if the ECM refuses
   `$22 A22C`, GMLAN `$2C FE A22C` defines diagnostic data packet `0xFE` in ECM
   RAM (gone at the next ECM reset), then `$AA 01 FE` reads it. This is **not a
-  pure read**. It is fenced: sent only at standstill (selector P/N, or a fresh
-  0 km/h), at most 6 times per power-up, and off entirely with
-  `OILP_DPID_ENABLE 0` in `cluster_config.h` (then `$2C`/`$AA` are never sent —
-  host-tested). A second tester on the port using DPID `0xFE` may redefine it;
+  pure read**, so it is **off in the default build** (`OILP_DPID_ENABLE 0` in
+  `cluster_config.h`: `$2C`/`$AA` are never sent — host-tested). Only a
+  separate KOEO experiment build turns it on, and even then `$2C` goes out
+  only with the selector in P and a fresh 0 km/h, at most 6 times per
+  power-up. A second tester on the port using DPID `0xFE` may redefine it;
   see `docs/oil-pressure-test.md`.
 
 Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.

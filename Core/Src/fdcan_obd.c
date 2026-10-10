@@ -104,8 +104,9 @@ static void mil_attempt_failed(void) {
  * parameter to pack into a diagnostic packet. The definition lives in ECM RAM
  * and is gone at its next reset; no calibration, memory or actuator is touched,
  * and it is what GM scan tools do for live data. Nothing is ever cleared.
- * Until it is confirmed on this ECM it is fenced: sent only at standstill, at
- * most OILP_DEFINE_MAX times per power-up (then NONE), see cluster_config.h.
+ * Until it is confirmed on this ECM it is fenced: off in the road build
+ * (OILP_DPID_ENABLE 0), and in the experiment build sent only parked, at most
+ * OILP_DEFINE_MAX times per power-up (then NONE), see cluster_config.h.
  * The byte is the ECM's value as received; whether it is the true pressure is
  * for docs/oil-pressure-test.md to show (OILP_VALIDATED). */
 #define OILP_MISS22_MAX 3u      /* unanswered $22 A22C before trying $2C/$AA   */
@@ -282,17 +283,15 @@ static bool req_mode22(uint32_t req_id, uint16_t did) {
     return request(req_id, d, 0x22, did);
 }
 
-/* Standing still, for $2C: a fresh selector in P/N (and not a fresh speed
- * above walking pace), or, without a selector, a fresh 0 km/h. Unknown is
- * not standstill. sel_range -1 is "never received", whatever its stamp says. */
+/* Parked, for $2C: a fresh selector in P AND a fresh speed below 1 km/h —
+ * both known. N can roll, and a missing selector or speed is unknown, not
+ * standstill. sel_range -1 is "never received", whatever its stamp says. */
 #if OILP_DPID_ENABLE
 static bool oilp_standstill(void) {
     uint32_t now = HAL_GetTick();
     bool spd_ok = !isnan(g_obd.speed) && obd_is_fresh(&g_obd, M_SPEED, now);
-    if (spd_ok && g_obd.speed >= 1.0f) return false;
-    if (g_obd.sel_range >= 1 && obd_sel_fresh(&g_obd, now))
-        return g_obd.sel_range == 1 || g_obd.sel_range == 3;     /* P / N */
-    return spd_ok;
+    bool in_p   = g_obd.sel_range == 1 && obd_sel_fresh(&g_obd, now);
+    return in_p && spd_ok && g_obd.speed < 1.0f;
 }
 #endif
 

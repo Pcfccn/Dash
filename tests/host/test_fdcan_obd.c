@@ -112,7 +112,21 @@ HAL_StatusTypeDef HAL_FDCAN_GetProtocolStatus(FDCAN_HandleTypeDef *h, FDCAN_Prot
 static int  updates;
 static bool sniff_on;
 void obd_on_update(void) { updates++; }
-void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len) { (void)id; (void)d; (void)len; }
+/* Records what the sniffer is given, like the real one only while active. */
+static int      sniff_feeds;
+static uint16_t sniff_ids[64];
+void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len)
+{
+    (void)d; (void)len;
+    if (!sniff_on) return;
+    if (sniff_feeds < 64) sniff_ids[sniff_feeds] = id;
+    sniff_feeds++;
+}
+__attribute__((unused)) static bool sniff_saw(uint16_t id)
+{
+    for (int i = 0; i < sniff_feeds && i < 64; i++) if (sniff_ids[i] == id) return true;
+    return false;
+}
 bool can_sniff_is_active(void) { return sniff_on; }
 
 /* ------------------------------------------------------------- harness */
@@ -136,7 +150,7 @@ static FDCAN_HandleTypeDef hmock;
 static void reset(void)
 {
     hw_head = hw_tail = 0; tx_n = 0; tx_status = HAL_OK; updates = 0; now_ms = 1000;
-    sniff_on = false;
+    sniff_on = false; sniff_feeds = 0;
     memset(&sched, 0, sizeof sched);              /* scheduler position */
     await_sid = 0; await_key = 0;
     memset((void *)&g_obd, 0, sizeof g_obd);
@@ -428,8 +442,12 @@ static bool last_tx_is(uint32_t id, int n, const uint8_t *b)
     return tx_n > 0 && txlog[tx_n - 1].id == id && memcmp(txlog[tx_n - 1].data, b, (size_t)n) == 0;
 }
 
-/* Selector in P, fresh: standstill for the $2C gate. */
-static void park(void) { g_obd.sel_range = 1; g_obd.sel_upd_ms = now_ms; }
+/* Selector in P and 0 km/h, both fresh: parked for the $2C gate. */
+static void park(void)
+{
+    g_obd.sel_range = 1; g_obd.sel_upd_ms = now_ms;
+    g_obd.speed = 0.0f;  g_obd.upd_ms[M_SPEED] = now_ms;
+}
 
 static void t_oilp_via22(void)
 {
@@ -560,7 +578,7 @@ static void t_oilp_ff_is_not_a_reading(void)
 }
 
 #if OILP_DPID_ENABLE
-/* $2C only at standstill: fresh P/N, or a fresh 0 km/h; unknown is not. */
+/* $2C only parked: fresh P AND fresh 0 km/h; N, unknown or stale is not. */
 static void t_oilp_define_waits_for_standstill(void)
 {
     oilp.mode = OILP_DEFINE;
@@ -570,11 +588,17 @@ static void t_oilp_define_waits_for_standstill(void)
     g_obd.sel_range = 1;                                /* P, but rolling      */
     g_obd.speed = 30.0f; g_obd.upd_ms[M_SPEED] = now_ms;
     CHECK(!req_oilp() && tx_n == 0);
-    g_obd.speed = 0.0f;                                 /* P, stopped          */
+    g_obd.speed = NAN;                                  /* P, speed unknown    */
+    CHECK(!req_oilp() && tx_n == 0);
+    g_obd.sel_range = 3; g_obd.speed = 0.0f;            /* N, stopped          */
+    CHECK(!req_oilp() && tx_n == 0);
+    g_obd.sel_range = 1;                                /* P, stopped          */
     CHECK(req_oilp() && tx_n == 1 && txlog[0].data[1] == 0x2C);
     await_resp_id = 0;
     now_ms += SEL_STALE_MS + 1u;                        /* selector gone stale */
     g_obd.upd_ms[M_SPEED] = now_ms;                     /* speed 0, fresh      */
+    CHECK(!req_oilp() && tx_n == 1);
+    g_obd.sel_upd_ms = now_ms;                          /* P fresh again       */
     CHECK(req_oilp() && tx_n == 2);
     /* and the slot is not wasted while it waits: a fast request goes instead */
     await_resp_id = 0; tx_n = 0;
@@ -1092,7 +1116,7 @@ static void t_oil_temp_single_source(void)
 static void put(metric_key_t k, volatile float *dst, float v) { *dst = v; g_obd.upd_ms[k] = now_ms; }
 static void sel(int8_t r) { g_obd.sel_range = r; g_obd.sel_upd_ms = now_ms; }
 
-/* Audit U01: SNIFF fails closed — only a fresh P/N opens (and keeps) it. */
+/* Audit U01 / C2: SNIFF fails closed — only a fresh P opens (and keeps) it. */
 static void t_sniff_fail_closed(void)
 {
     CHECK(!policy_sniff_allowed(&g_obd, now_ms));        /* CAN down            */
@@ -1100,7 +1124,7 @@ static void t_sniff_fail_closed(void)
     CHECK(!policy_sniff_allowed(&g_obd, now_ms));        /* selector never seen,
                                                             though inside its window */
     sel(1); CHECK(policy_sniff_allowed(&g_obd, now_ms)); /* P */
-    sel(3); CHECK(policy_sniff_allowed(&g_obd, now_ms)); /* N */
+    sel(3); CHECK(!policy_sniff_allowed(&g_obd, now_ms));/* N: can roll */
     sel(2); CHECK(!policy_sniff_allowed(&g_obd, now_ms));/* R */
     sel(4); CHECK(!policy_sniff_allowed(&g_obd, now_ms));/* D: also ends SNIFF */
     sel(1);

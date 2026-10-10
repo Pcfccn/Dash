@@ -9,6 +9,12 @@ reference build: if compiler options change there, change them here too.
     python tools/build.py              # incremental build -> build/Dash.elf
     python tools/build.py --clean      # wipe build/ first
     python tools/build.py --toolchain C:/path/to/arm-gnu-toolchain/bin
+    python tools/build.py -D OILP_DPID_ENABLE=1   # experiment build -> build-oilp_dpid_enable_1/
+
+-D NAME=VALUE (repeatable) adds a define on top of the project's own, for an
+explicit experiment build. It goes to its own build-<name>/ directory, so the
+normal build/ is never silently a variant (the dependency check cannot see a
+changed -D).
 
 The toolchain is looked up in --toolchain, then $ARM_GCC_DIR, then PATH, then
 ~/tools/arm-gnu-toolchain-*/bin. Warnings in Core/ (our code) are listed at the
@@ -130,7 +136,15 @@ def main():
     ap.add_argument("--toolchain")
     ap.add_argument("--clean", action="store_true")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
+    ap.add_argument("-D", dest="defines", action="append", default=[], metavar="NAME=VALUE")
     args = ap.parse_args()
+
+    global OUT, CFLAGS
+    if args.defines:
+        tag = "_".join(re.sub(r"[^A-Za-z0-9]+", "_", d).lower() for d in args.defines)
+        OUT = ROOT / f"build-{tag}"
+        CFLAGS = CFLAGS + [f"-D{d}" for d in args.defines]
+        print(f"experiment build: {' '.join('-D' + d for d in args.defines)} -> {OUT.name}/")
 
     bindir = find_toolchain(args.toolchain)
     if args.clean and OUT.exists():

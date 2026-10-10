@@ -65,16 +65,18 @@ static inline bool policy_complete(const volatile obd_data_t *d, uint32_t now)
 }
 
 /* SNIFF pauses OBD polling, so it opens (and stays open) only while the
- * truck is known to be parked: a fresh selector in P or N, and no fresh speed
- * above walking pace. Fail closed — CAN lost, a selector never received or
- * gone stale, or R/D: not allowed. The selector broadcast keeps arriving
- * while sniffing (OBD replies do not), so this also ends SNIFF on a shift. */
+ * truck is known to be parked: a fresh selector in P, and no fresh speed
+ * above walking pace. Not N: in N the truck can roll, and while sniffing the
+ * speed goes stale (OBD paused), so nothing would notice. Fail closed — CAN
+ * lost, a selector never received or gone stale, N/R/D: not allowed. The
+ * selector broadcast keeps arriving while sniffing (OBD replies do not), so
+ * this also ends SNIFF on a shift. */
 static inline bool policy_sniff_allowed(const volatile obd_data_t *d, uint32_t now)
 {
     if (!d->can_ok) return SNIFF_BENCH_OVERRIDE;
     if (policy_fresh(d, M_SPEED, now) && d->speed > 3.0f) return false;
     if (d->sel_range >= 1 && obd_sel_fresh(d, now))
-        return d->sel_range == 1 || d->sel_range == 3;           /* P / N */
+        return d->sel_range == 1;                                /* P only */
     return SNIFF_BENCH_OVERRIDE;
 }
 

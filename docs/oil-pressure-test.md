@@ -32,10 +32,11 @@ transaction at a time:
    works this way). Answer `62 A2 2C A` → value.
 2. If the ECM **refuses** it (any NRC except busy `21` / conditions `22`), or
    ignores it three times: **`$2C FE A2 2C`** defines packet `0xFE` → answer
-   `6C FE`. Only with `OILP_DPID_ENABLE 1` (`cluster_config.h`; with 0 the
-   search ends here, `NONE`), only at **standstill** (fresh selector P/N, or a
-   fresh 0 km/h — unknown is not standstill; the slot does a fast request
-   while it waits), and at most **6 times per power-up**, then `NONE`.
+   `6C FE`. **Only in the experiment build** (`OILP_DPID_ENABLE 1`, see
+   below; the default road build stops at `NONE` here and never sends `$2C`
+   or `$AA`), only **parked** (a fresh selector in **P** and a fresh 0 km/h —
+   N, unknown or stale is not parked; the slot does a fast request while it
+   waits), and at most **6 times per power-up**, then `NONE`.
 3. Then **`$AA 01 FE`** (send the packet once) every slot → a UUDT frame on
    **`0x5E8`**: `FE A …` (no ISO-TP, no SID) → value. This goes on while
    driving. A missing or refused packet (ECM reset) goes back to step 2.
@@ -86,6 +87,13 @@ separate decision (rpm/oil-temp context, duration, hysteresis) once real
 numbers exist.
 
 ## Check on the car
+
+**Which firmware.** The default build reads oil pressure with `$22` only. If
+DIAG then shows `OILP NONE  22/31`, the ECM wants the data-packet path: flash
+the experiment build for a KOEO session —
+`python tools/build.py -D OILP_DPID_ENABLE=1` (→ `build-oilp_dpid_enable_1/Dash.elf`),
+or set `OILP_DPID_ENABLE 1` in `cluster_config.h` for a CubeIDE build — and go
+back to the default build for everyday driving until the test has passed.
 
 1. Key on, engine off, DIAG: within a few seconds `RAW` should show a byte near
    `00` (on path `22` or `AA`), or the path ends at `NONE`. Note what it says.

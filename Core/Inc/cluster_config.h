@@ -56,15 +56,17 @@
 #define OILP_DPID              0xFEu    /* data packet number ScanGauge uses   */
 #define OBD_UUDT_ECM           0x5E8u   /* ECM's UUDT diagnostic packets       */
 
-/* OILP_DPID_ENABLE 1: if the ECM refuses $22 A22C, use the data-packet path.
+/* OILP_DPID_ENABLE 0 (default, the road build): $22 A22C only. The firmware
+ *   never transmits $2C or $AA (host-tested), and oil pressure stays "--" if
+ *   the ECM refuses $22.
+ * 1: the KOEO experiment build (python tools/build.py -D OILP_DPID_ENABLE=1,
+ *   or set it here in CubeIDE): if $22 is refused, use the data-packet path.
  *   $2C is NOT a pure read — it configures a (volatile) packet definition in
- *   the ECM — so it is only sent at standstill (fresh selector P/N, or a fresh
- *   0 km/h) and at most OILP_DEFINE_MAX times per power-up; $AA reads then go
- *   on while driving.
- * 0: $22 only. The firmware never transmits $2C or $AA (host-tested), and
- *   oil pressure stays "--" if $22 is refused. */
+ *   the ECM — so it is only sent with a fresh selector in P and a fresh 0 km/h,
+ *   and at most OILP_DEFINE_MAX times per power-up; $AA reads then go on while
+ *   driving. Keep it out of the everyday firmware until the KOEO test passed. */
 #ifndef OILP_DPID_ENABLE
-#define OILP_DPID_ENABLE       1
+#define OILP_DPID_ENABLE       0
 #endif
 #define OILP_DEFINE_MAX        6u
 /* OILP_VALIDATED 0: the reading is shown but never coloured as a warning —
