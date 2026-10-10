@@ -134,7 +134,7 @@ static void reset(void)
     g_obd.speed = NAN; g_obd.rpm = NAN; g_obd.cool = NAN; g_obd.oil = NAN; g_obd.iat = NAN;
     g_obd.load = NAN; g_obd.boost = NAN; g_obd.rail = NAN; g_obd.egt = NAN; g_obd.battery = NAN;
     g_obd.atf = NAN; g_obd.oil_press = NAN; g_obd.gear = -1; g_obd.sel_range = -1;
-    await_resp_id = 0; await_ttl = 0; itp_active = false; itp_ttl = 0;
+    await_resp_id = 0; await_deadline = 0; itp_active = false; itp_deadline = 0;
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
     last_map_kpa = NAN; baro_kpa = 101.0f;
     filter_status = HAL_OK; start_status = HAL_OK;
@@ -300,8 +300,13 @@ static void t_reassembly_times_out(void)                               /* A2 */
     PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, 0x01, 0x0B, 0xB8, 0x00);
     obd_rx_poll();
     CHECK(itp_active);
-    for (unsigned i = 0; i < ITP_TTL_TICKS; i++) obd_poll_tick();
-    CHECK(!itp_active);
+    now_ms += ITP_TIMEOUT_MS - 1u;
+    obd_poll_tick();
+    CHECK(itp_active);                                  /* not yet            */
+    now_ms += 1u;
+    obd_poll_tick();
+    CHECK(!itp_active);                                 /* 1 s without a CF   */
+    CHECK(await_resp_id == 0 || await_key != 0x78);
 }
 
 static void t_foreign_sf_keeps_slot(void)                              /* A1 */
@@ -358,7 +363,7 @@ static void t_mil_goes_stale(void)                                     /* A3 */
     /* The ECM goes quiet, the selector broadcast keeps can_ok alive. */
     for (int i = 0; i < 400; i++) {
         tx_n = 0;
-        now_ms += 25;
+        now_ms += OBD_AWAIT_MS;                     /* each tick times the last out */
         obd_poll_tick();
         PUSH(0x1F5, 8, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00);
         obd_rx_poll();
@@ -371,7 +376,7 @@ static void t_mil_stays_fresh_when_answered(void)
 {
     for (int i = 0; i < 400; i++) {
         tx_n = 0;
-        now_ms += 25;
+        now_ms += OBD_AWAIT_MS;                     /* each tick times the last out */
         obd_poll_tick();
         if (tx_n == 1 && txlog[0].data[1] == 0x01 && txlog[0].data[2] == 0x01)
             PUSH(0x7E8, 8, 0x06, 0x41, 0x01, 0x00, 0x07, 0xE5, 0x00, 0x00);
@@ -486,12 +491,29 @@ static void t_scheduler_waits_then_resumes(void)
     obd_poll_tick();                                    /* first request out */
     CHECK(tx_n == 1 && await_resp_id != 0);
     uint32_t tick0 = sched.tick;
+    now_ms += OBD_AWAIT_MS - 1u;
     obd_poll_tick();                                    /* unanswered: waits */
     CHECK(tx_n == 1);
     CHECK(sched.tick == tick0);                         /* band not advanced */
+    now_ms += 1u;
     obd_poll_tick();                                    /* times out, next one goes */
     CHECK(tx_n == 2);
     CHECK(sched.tick == tick0 + 1);
+}
+
+/* A stalled loop must not time out a request whose answer arrived in time:
+ * the reply is processed (obd_rx_poll) before the deadline is checked. */
+static void t_stall_does_not_fake_timeout(void)
+{
+    static const uint8_t rpm = 0x0C;
+    req_mode01(&rpm, 1);
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);  /* arrived at once */
+    now_ms += 2000u;                                    /* loop stalled 2 s     */
+    obd_rx_poll();                                      /* cluster_app_run order */
+    obd_poll_tick();
+    CHECK(near(g_obd.rpm, 2000.0f));
+    CHECK(tx_n == 2);                                   /* answered, next sent  */
+    CHECK(mil_miss == 0);
 }
 
 static void t_nrc78_long_wait_is_bounded(void)
@@ -500,9 +522,11 @@ static void t_nrc78_long_wait_is_bounded(void)
     req_mode01(&rpm, 1);
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x01, 0x78, 0x00, 0x00, 0x00, 0x00);
     obd_rx_poll();
-    for (unsigned i = 0; i < OBD_PENDING_TICKS - 1u; i++) obd_poll_tick();
+    now_ms += OBD_PENDING_MS - 1u;
+    obd_poll_tick();
     CHECK(await_resp_id == 0x7E8);                      /* still waiting      */
     CHECK(tx_n == 1);                                   /* nothing else sent  */
+    now_ms += 1u;
     obd_poll_tick();
     CHECK(tx_n == 2);                                   /* gave up, moved on  */
 }
@@ -529,7 +553,8 @@ static void t_mil_invalid_after_three_misses(void)      /* F7 */
          * treat that one as answered so the MIL request can go out. */
         await_resp_id = 0;
         CHECK(req_mode01(&mil, 1));
-        for (unsigned i = 0; i < OBD_AWAIT_TICKS; i++) obd_poll_tick();   /* time out */
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();                                /* time out */
         CHECK(await_resp_id == 0 || await_key != 0x01);
         CHECK(g_obd.mil_valid == (miss < 3));           /* invalid on the 3rd */
     }
@@ -556,6 +581,7 @@ static void t_schedule_contents(void)
     int  bad_req = 0;
     for (int i = 0; i < 2000; i++) {
         tx_n = 0;
+        now_ms += OBD_AWAIT_MS;
         obd_poll_tick();
         for (int k = 0; k < tx_n; k++) {
             const uint8_t *q = txlog[k].data;
@@ -723,6 +749,7 @@ int main(void)
         { "rev_short_sf_keeps_pending", t_matching_short_frame_clears_pending },
         { "rev_pending_not_replaced",   t_pending_replaced_before_timeout },
         { "scheduler_waits_resumes",    t_scheduler_waits_then_resumes },
+        { "stall_does_not_fake_timeout",t_stall_does_not_fake_timeout },
         { "nrc78_long_wait_bounded",    t_nrc78_long_wait_is_bounded },
         { "fc_tx_fail_aborts",          t_fc_tx_fail_aborts_transfer },
         { "mil_invalid_after_3_misses", t_mil_invalid_after_three_misses },

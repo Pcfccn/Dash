@@ -49,12 +49,10 @@ static uint16_t itp_len, itp_got;
 static uint8_t  itp_next_seq;
 static bool     itp_active;
 static uint32_t itp_src_id;          /* CFs must come from the FF's sender      */
-/* A transfer with no progress for this many POLL TICKS is abandoned. Ticks,
- * not milliseconds, for the same reason as OBD_AWAIT_TICKS below: CFs can sit
- * in the RX FIFO while a display flush blocks the loop, and a wall-clock check
- * at drain time would throw away a transfer that actually arrived in time. */
-#define ITP_TTL_TICKS 4u
-static uint8_t  itp_ttl;
+/* A transfer with no FF/CF progress for this long is abandoned (ISO 15765-2
+ * N_Cr is 1 s). See the deadline note below for why milliseconds are safe. */
+#define ITP_TIMEOUT_MS 1000u
+static uint32_t itp_deadline;
 
 /* Frames dropped because their length / PCI did not add up (truncated or
  * malformed). Surfaced on DIAG next to the RX FIFO loss count. */
@@ -96,18 +94,19 @@ static void mil_attempt_failed(void) {
  * Single-frame replies are still decoded whoever asked: they need no FC and
  * the decoders key off the echoed PID/DID, so another tester's polling feeds
  * our gauges too. */
-/* Timeouts are in POLL TICKS, not milliseconds. A wall-clock deadline is
- * unusable here: lv_port_disp's flush is a blocking row-by-row HAL_SPI_Transmit
- * of the whole 320x480 panel, so one superloop iteration can take a few hundred
- * ms. A 50 ms deadline had always expired by the time obd_rx_poll() next ran,
- * which silently killed EVERY multi-frame reply (fast/misc/EGT groups) while
- * single-frame ones kept working -- exactly the "0 everywhere" symptom.
- * obd_rx_poll and obd_poll_tick share that same stalled loop, so counting ticks
- * tracks the real request/response cadence no matter how slow a frame is. */
-#define OBD_AWAIT_TICKS    2u   /* normal answer                                */
-#define OBD_PENDING_TICKS 40u   /* after NRC 0x78: the ECU promised an answer   */
+/* Deadlines are in milliseconds and are only looked at in obd_poll_tick(),
+ * which must run after obd_rx_poll() in the same iteration (cluster_app_run
+ * does exactly that). The loop can still stall, but every reply that arrived
+ * before the check has been captured by the RX interrupt into the ring (or is
+ * still in the FIFO in the polled fallback) and is processed first, so a stall
+ * cannot make an answered request look timed out. They used to be poll ticks:
+ * with RX drained only from the loop behind a blocking full-screen flush, a
+ * 50 ms deadline had always expired by the time obd_rx_poll() ran, silently
+ * killing every multi-frame reply. */
+#define OBD_AWAIT_MS    150u    /* normal answer (OBD P2 is 50 ms)              */
+#define OBD_PENDING_MS 5000u    /* after NRC 0x78: UDS P2* limit                */
 static uint32_t await_resp_id;  /* 0 = idle, else the response ID we wait for   */
-static uint8_t  await_ttl;
+static uint32_t await_deadline; /* HAL tick at which the transaction fails      */
 static uint8_t  await_sid;      /* service of the outstanding request           */
 static uint16_t await_key;      /* its first PID (mode 01) or DID (mode 22)     */
 
@@ -174,7 +173,7 @@ static bool request(uint32_t req_id, const uint8_t *d, uint8_t sid, uint16_t key
         return false;
     }
     await_resp_id = req_id + 8u;     /* 0x7E0->0x7E8, 0x7E2->0x7EA              */
-    await_ttl     = OBD_AWAIT_TICKS;
+    await_deadline = HAL_GetTick() + OBD_AWAIT_MS;
     await_sid     = sid;
     await_key     = key;
     return true;
@@ -540,7 +539,7 @@ void obd_rx_poll(void) {
             if (ours && valid) {
                 /* NRC 0x78 (response pending) promises the real answer later:
                  * keep the transaction open for it, with a longer bound. */
-                if (pl[0] == 0x7F && pl[2] == 0x78) await_ttl = OBD_PENDING_TICKS;
+                if (pl[0] == 0x7F && pl[2] == 0x78) await_deadline = HAL_GetTick() + OBD_PENDING_MS;
                 else                                txn_close();
             }
             /* ours && !valid: a malformed answer leaves the transaction open
@@ -563,7 +562,7 @@ void obd_rx_poll(void) {
             itp_len  = len;
             itp_got  = 0; itp_next_seq = 1; itp_active = true;
             itp_src_id = rh.Identifier;
-            itp_ttl  = ITP_TTL_TICKS;
+            itp_deadline = HAL_GetTick() + ITP_TIMEOUT_MS;
             for (int i = 0; i < 6; i++) itp_buf[itp_got++] = d[2 + i];
             /* No FC on the wire means the ECU never streams the rest. */
             if (!send_flow_control(rh.Identifier)) txn_failed();
@@ -582,7 +581,7 @@ void obd_rx_poll(void) {
             }
             itp_next_seq = (itp_next_seq + 1) & 0x0F;
             for (uint16_t i = 0; i < need; i++) itp_buf[itp_got++] = d[1 + i];
-            itp_ttl = ITP_TTL_TICKS;
+            itp_deadline = HAL_GetTick() + ITP_TIMEOUT_MS;
             if (itp_got >= itp_len) {
                 /* The transfer belongs to the open transaction, so completing
                  * it closes exactly that one — never a newer request. */
@@ -718,14 +717,14 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  * PID 0x5C (oil temp: omitted from grouped replies; 0x1154 is the source),
  * PID 0x78 (EGT: no reply), mode 03 (DTC list: never decoded — the count comes
  * from PID 0x01), and the DPF/soot/EGR probes. An unanswered request now holds
- * the one transaction slot for OBD_AWAIT_TICKS, so each of these cost real
+ * the one transaction slot for OBD_AWAIT_MS, so each of these cost real
  * polling time. Their decoders stay: another tester's replies still feed us.
  *
- * One transaction at a time: while a request is outstanding a tick only ages
- * it (await_ttl, or itp_ttl while its multi-frame answer is arriving), and
- * the band position does not advance. A reply normally lands before the next
- * iteration, so this costs nothing; a request that is never answered (e.g. an
- * unsupported PID) costs OBD_AWAIT_TICKS ticks.
+ * One transaction at a time: while a request is outstanding a tick only checks
+ * its deadline (await_deadline, or itp_deadline while its multi-frame answer
+ * is arriving), and the band position does not advance. A reply normally lands
+ * before the next iteration, so this costs nothing; a request that is never
+ * answered (e.g. an unsupported PID) costs OBD_AWAIT_MS.
  *
  * Reply budget: every grouped mode-01 request must fit a single ISO-TP frame
  * (≤7 payload bytes: 0x41 echo + PID/data), so it never holds the slot for a
@@ -751,11 +750,8 @@ void obd_poll_tick(void) {
     if (can_sniff_is_active()) return;
 
     if (await_resp_id != 0u) {
-        if (itp_active) {                   /* answer arriving: reassembly clock */
-            if (itp_ttl == 0u || --itp_ttl == 0u) txn_failed();
-        } else if (await_ttl == 0u || --await_ttl == 0u) {
-            txn_failed();
-        }
+        uint32_t deadline = itp_active ? itp_deadline : await_deadline;
+        if ((int32_t)(HAL_GetTick() - deadline) >= 0) txn_failed();
         if (await_resp_id != 0u) return;    /* still outstanding: send nothing   */
     }
 
