@@ -13,6 +13,9 @@
  *   1 = the superloop hangs  -> the IWDG resets after ~3 s; DIAG "LAST RESET: WATCHDOG"
  *   2 = MPU-blocked read     -> HardFault records the code and stops, then the
  *                               IWDG resets after ~3 s; DIAG "LAST RESET: HARDFAULT"
+ *   3 = main-panel SPI errors injected (no reset) -> the panel is re-initialised
+ *                               and repainted, at most every 5 s while held;
+ *                               DIAG "SPI n/0 Rm" counts it (lv_port_disp.c)
  * (Times are nominal: the LSI behind the IWDG is untrimmed.)
  * SET TO 0 BEFORE USING IN THE CAR.                                          */
 #define FAULT_TEST         0

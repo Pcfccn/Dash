@@ -10,5 +10,12 @@
 
 void lv_port_disp_init(void);
 uint16_t lv_port_disp_spi_errors(void);   /* aborted SPI2 transfers since boot */
+uint16_t lv_port_disp_recoveries(void);   /* panel re-inits after error runs   */
+
+/* Repair after SPI errors: repaint the screen, or re-init the panel after a
+ * run of errors. Call from the loop, outside lv_timer_handler(). */
+void lv_port_disp_service(void);
+
+void lv_port_disp_inject_errors(void);   /* FAULT_TEST 3 only (fault.h)        */
 
 #endif /* LV_PORT_DISP_H */

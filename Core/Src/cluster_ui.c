@@ -862,11 +862,13 @@ void cluster_ui_refresh(void)
         o += lv_snprintf(db + o, sizeof db - o, "OILP %s  22/%s 2C/%s AA/%s  RAW %s",
                          OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE],
                          n22, n2c, naa, raw);
-        /* Aborted display SPI transfers (main / status screen): only shown
-         * when something went wrong, so the line stays short normally. */
+        /* Aborted display SPI transfers (main / status screen) and main-panel
+         * re-inits: only shown when something went wrong, so the line stays
+         * short normally. */
         uint16_t se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
         if ((se || se4) && o < (int)sizeof db)
-            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u", (unsigned)se, (unsigned)se4);
+            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u R%u", (unsigned)se, (unsigned)se4,
+                        (unsigned)lv_port_disp_recoveries());
         ui_text(ui.did_dbg, db);
     }
 

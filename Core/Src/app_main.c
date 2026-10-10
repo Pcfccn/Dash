@@ -251,6 +251,7 @@ void AppMain_Run(void)
     if (key_now && (t - key_down_t) >= FAULT_TEST_HOLD_MS) fault_selftest();
 #endif
 
+    lv_port_disp_service();   /* repaint / re-init the 4" panel after SPI errors */
     lv_timer_handler();   /* LVGL rendering for both displays */
     cluster_app_run();    /* OBD-II: RX drain, request scheduler, UI refresh, watchdog */
 

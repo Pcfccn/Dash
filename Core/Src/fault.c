@@ -1,5 +1,6 @@
 /* fault.c — see fault.h. */
 #include "fault.h"
+#include "lv_port_disp.h"     /* FAULT_TEST 3 */
 #include "main.h"            /* HAL + CMSIS device header: RCC, IWDG1, DBGMCU */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -110,6 +111,8 @@ void fault_selftest(void)
 {
 #if FAULT_TEST == 1
     for (;;) { }                     /* the loop stops feeding the IWDG */
+#elif FAULT_TEST == 3
+    lv_port_disp_inject_errors();    /* display recovery path, no reset */
 #elif FAULT_TEST == 2
     /* MPU region 0 (main.c MPU_Config) forbids 0x60000000..0xDFFFFFFF; the
      * MemManage fault is not enabled, so it escalates to HardFault. */
