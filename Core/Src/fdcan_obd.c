@@ -99,19 +99,27 @@ static void mil_attempt_failed(void) {
  * once) asks for the packet, and it arrives as a UUDT frame on 0x5E8:
  * [FE][A]... — no ISO-TP PCI, no SID. NRCs still come on 0x7E8.
  * Plain $22 A22C is tried first (this ECM answers $22 for other GM PIDs, e.g.
- * 0x1154); only a refusal switches to $2C/$AA.
+ * 0x1154); only a refusal switches to $2C/$AA, and only with OILP_DPID_ENABLE.
  * $2C is the one service here that is not a pure read: it tells the ECM which
  * parameter to pack into a diagnostic packet. The definition lives in ECM RAM
  * and is gone at its next reset; no calibration, memory or actuator is touched,
- * and it is what GM scan tools do for live data. Nothing is ever cleared. */
+ * and it is what GM scan tools do for live data. Nothing is ever cleared.
+ * Until it is confirmed on this ECM it is fenced: sent only at standstill, at
+ * most OILP_DEFINE_MAX times per power-up (then NONE), see cluster_config.h.
+ * The byte is the ECM's value as received; whether it is the true pressure is
+ * for docs/oil-pressure-test.md to show (OILP_VALIDATED). */
 #define OILP_MISS22_MAX 3u      /* unanswered $22 A22C before trying $2C/$AA   */
 static struct {                 /* file scope: the host tests reset it          */
     uint8_t mode;               /* obd_oilp_mode_t                              */
     uint8_t miss22;
+    uint8_t defines;            /* $2C requests sent since power-up             */
     uint8_t nrc22, nrc2c, nrcaa;
     bool    have_raw;
     uint8_t raw;
 } oilp;
+
+/* Where $22 leads when it is refused or ignored. */
+#define OILP_AFTER_22 (OILP_DPID_ENABLE ? OILP_DEFINE : OILP_NONE)
 
 /* ---- the outstanding diagnostic transaction ------------------------------
  * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
@@ -164,7 +172,7 @@ static void oilp_refused(uint8_t nrc) {
         case 0x22:
             if (await_key != OILP_PID) break;
             oilp.nrc22 = nrc;
-            if (!retry) oilp.mode = OILP_DEFINE;
+            if (!retry) oilp.mode = OILP_AFTER_22;
             break;
         case 0x2C: oilp.nrc2c = nrc; if (!retry) oilp.mode = OILP_NONE; break;
         case 0xAA: oilp.nrcaa = nrc; oilp.mode = OILP_DEFINE;          break;
@@ -176,7 +184,7 @@ static void oilp_refused(uint8_t nrc) {
  * treated like one that refuses it; a lost $AA answer re-defines the packet. */
 static void oilp_failed(void) {
     if (await_sid == 0x22 && await_key == OILP_PID) {
-        if (++oilp.miss22 >= OILP_MISS22_MAX) oilp.mode = OILP_DEFINE;
+        if (++oilp.miss22 >= OILP_MISS22_MAX) oilp.mode = OILP_AFTER_22;
     } else if (await_sid == 0xAA) {
         oilp.mode = OILP_DEFINE;
     }
@@ -274,22 +282,45 @@ static bool req_mode22(uint32_t req_id, uint16_t did) {
     return request(req_id, d, 0x22, did);
 }
 
+/* Standing still, for $2C: a fresh selector in P/N (and not a fresh speed
+ * above walking pace), or, without a selector, a fresh 0 km/h. Unknown is
+ * not standstill. sel_range -1 is "never received", whatever its stamp says. */
+#if OILP_DPID_ENABLE
+static bool oilp_standstill(void) {
+    uint32_t now = HAL_GetTick();
+    bool spd_ok = !isnan(g_obd.speed) && obd_is_fresh(&g_obd, M_SPEED, now);
+    if (spd_ok && g_obd.speed >= 1.0f) return false;
+    if (g_obd.sel_range >= 1 && obd_sel_fresh(&g_obd, now))
+        return g_obd.sel_range == 1 || g_obd.sel_range == 3;     /* P / N */
+    return spd_ok;
+}
+#endif
+
 /* Oil pressure, one step of whichever path is current (see "oil pressure"
  * above). $2C: [2C][DPID][PID hi][PID lo] -> [6C][DPID]. $AA: [AA][01 = send
- * once][DPID] -> UUDT [DPID][A] on 0x5E8. Returns false when there is nothing
- * to ask (no source). */
+ * once][DPID] -> UUDT [DPID][A] on 0x5E8. Returns false when nothing was sent
+ * (no source, or the define is waiting for standstill): the slot then goes to
+ * a fast request. */
 static bool req_oilp(void) {
+#if OILP_DPID_ENABLE
     uint8_t d[8] = {0};
+#endif
     switch (oilp.mode) {
         case OILP_VIA22:
             return req_mode22(OBD_REQ_ECM, OILP_PID);
+#if OILP_DPID_ENABLE
         case OILP_DEFINE:
+            if (oilp.defines >= OILP_DEFINE_MAX) { oilp.mode = OILP_NONE; return false; }
+            if (!oilp_standstill()) return false;
             d[0] = 0x04; d[1] = 0x2C; d[2] = OILP_DPID;
             d[3] = (uint8_t)(OILP_PID >> 8); d[4] = (uint8_t)(OILP_PID & 0xFFu);
-            return request(OBD_REQ_ECM, d, 0x2C, OILP_DPID);
+            if (!request(OBD_REQ_ECM, d, 0x2C, OILP_DPID)) return false;
+            oilp.defines++;
+            return true;
         case OILP_READ:
             d[0] = 0x03; d[1] = 0xAA; d[2] = 0x01; d[3] = OILP_DPID;
             return request(OBD_REQ_ECM, d, 0xAA, OILP_DPID);
+#endif
         default:
             return false;
     }
@@ -320,6 +351,9 @@ bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) {
 
 static void oilp_value(uint8_t a) {
     oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0;
+    /* 0xFF would be 10.2 bar, the top of the byte and far above any pump
+     * relief: a saturated / no-data code, not a reading. Raw stays on DIAG. */
+    if (a == 0xFFu) return;
     set_m(M_OILP, &g_obd.oil_press, (float)a * 0.04f);   /* 4 kPa = 0.04 bar */
 }
 

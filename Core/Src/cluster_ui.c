@@ -726,9 +726,12 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     ui_text(val, b);
 
     metric_state_t s = metric_state(k, v);
-    /* Oil pressure is ~0 with the key on and the engine stopped, and builds
-     * while cranking: judge it only with the engine running. */
-    if (k == M_OILP && !(shown(d, M_RPM, live) && d->rpm >= 400.0f)) s = ST_INFO;
+    /* Oil pressure: shown, but never a warning colour until the source and
+     * thresholds are validated on this engine (OILP_VALIDATED); then only
+     * with the engine running — it is ~0 key-on/engine-off and builds while
+     * cranking. It is not on the alert strip either way. */
+    if (k == M_OILP && (!OILP_VALIDATED || !(shown(d, M_RPM, live) && d->rpm >= 400.0f)))
+        s = ST_INFO;
     lv_color_t c = state_color(s);
     /* Cold temperature (engine warming up): light blue instead of green. */
     if (s == ST_OK && is_temp(k) && v < 50.0f) c = C_COLD;

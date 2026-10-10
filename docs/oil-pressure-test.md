@@ -32,13 +32,19 @@ transaction at a time:
    works this way). Answer `62 A2 2C A` → value.
 2. If the ECM **refuses** it (any NRC except busy `21` / conditions `22`), or
    ignores it three times: **`$2C FE A2 2C`** defines packet `0xFE` → answer
-   `6C FE`.
+   `6C FE`. Only with `OILP_DPID_ENABLE 1` (`cluster_config.h`; with 0 the
+   search ends here, `NONE`), only at **standstill** (fresh selector P/N, or a
+   fresh 0 km/h — unknown is not standstill; the slot does a fast request
+   while it waits), and at most **6 times per power-up**, then `NONE`.
 3. Then **`$AA 01 FE`** (send the packet once) every slot → a UUDT frame on
-   **`0x5E8`**: `FE A …` (no ISO-TP, no SID) → value. A missing or refused
-   packet (ECM reset) goes back to step 2.
+   **`0x5E8`**: `FE A …` (no ISO-TP, no SID) → value. This goes on while
+   driving. A missing or refused packet (ECM reset) goes back to step 2.
 4. If `$2C` is refused too, the search ends: **`NONE`** on DIAG, the slot goes
    back to fast polling, and OIL P stays `--`. That calibration then has no such
    parameter (e.g. an engine with only an oil-pressure *switch*).
+
+A raw `FF` (10.2 bar, the top of the byte) is treated as a no-data code: shown
+as `RAW FF` on DIAG, never as a reading.
 
 `$2C` is the only service here that is not a pure read. It tells the ECM which
 parameter to put into a diagnostic packet; the definition lives in ECM RAM and
@@ -71,9 +77,13 @@ OILP AA  22/31 2C/-- AA/--  RAW 4B
   working `AA` is the expected picture if `$22` is refused.
 - `RAW 4B` — last raw byte (hex). `4B` = 75 × 4 kPa = 3.0 bar.
 
-The **OIL P** tile on DRIVE shows the value in bar. Its colour is only judged
-with the engine running (RPM ≥ 400); key on / engine off shows the reading in
-blue, not as a red alarm.
+The **OIL P** tile on DRIVE shows the value in bar, in neutral blue: it is
+**never a warning colour while `OILP_VALIDATED` is 0** (the default — the
+byte is the ECM's value as received, but its meaning and scaling on this
+engine are not yet confirmed). After validation it is judged only with the
+engine running (RPM ≥ 400). It is not on the alert strip; adding it there is a
+separate decision (rpm/oil-temp context, duration, hysteresis) once real
+numbers exist.
 
 ## Check on the car
 
@@ -85,6 +95,10 @@ blue, not as a red alarm.
    - **1 s after releasing** — falls back with RPM.
 3. Photo of DIAG if the line says `NONE`, with the three NRCs.
 
-Pass: zero with the engine off, rises with RPM, plausible warm idle. Then tune
-the OIL P low thresholds in `cluster_config.h` (now 0.8 warn / 0.4 crit, a
-guess) against the real warm-idle value.
+A rise with RPM shows the byte is a pressure-like signal, **not** that it is
+the right pressure. To set `OILP_VALIDATED 1`, also compare against an
+independent reference: a mechanical gauge on the sensor port, or at least the
+engine's published warm-idle / 2000-rpm oil pressure spec. Then tune the OIL P
+low thresholds in `cluster_config.h` (now 0.8 warn / 0.4 crit, a guess). Until
+then the reading is information, not engine protection — the OEM oil
+tell-tale stays the warning.

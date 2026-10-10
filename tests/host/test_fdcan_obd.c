@@ -16,6 +16,8 @@
 
 #include "../../Core/Src/fdcan_obd.c"
 
+static int checks, fails;                /* harness counters (see below) */
+
 /* ------------------------------------------------------------- mock HAL */
 static uint32_t now_ms;
 uint32_t HAL_GetTick(void) { return now_ms; }
@@ -67,6 +69,13 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
                                                 FDCAN_TxHeaderTypeDef *tx, uint8_t *data)
 {
     (void)h;
+#if !OILP_DPID_ENABLE
+    /* Built with the data-packet path off: $2C / $AA must never go out. */
+    if (data[1] == 0x2C || data[1] == 0xAA) {
+        fails++;
+        printf("  FAIL: SID %02X transmitted with OILP_DPID_ENABLE 0\n", data[1]);
+    }
+#endif
     if (tx_status != HAL_OK) return tx_status;
     if (tx_n < 64) {
         txlog[tx_n].id = tx->Identifier;
@@ -106,7 +115,6 @@ void can_sniff_feed(uint16_t id, const uint8_t *d, uint8_t len) { (void)id; (voi
 bool can_sniff_is_active(void) { return sniff_on; }
 
 /* ------------------------------------------------------------- harness */
-static int checks, fails;
 #define CHECK(cond) do { checks++; if (!(cond)) { fails++; \
     printf("  FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond); } } while (0)
 
@@ -419,6 +427,9 @@ static bool last_tx_is(uint32_t id, int n, const uint8_t *b)
     return tx_n > 0 && txlog[tx_n - 1].id == id && memcmp(txlog[tx_n - 1].data, b, (size_t)n) == 0;
 }
 
+/* Selector in P, fresh: standstill for the $2C gate. */
+static void park(void) { g_obd.sel_range = 1; g_obd.sel_upd_ms = now_ms; }
+
 static void t_oilp_via22(void)
 {
     CHECK(req_oilp());
@@ -434,8 +445,10 @@ static void t_oilp_via22(void)
     CHECK(!obd_is_fresh(&g_obd, M_OILP, now_ms + metric_stale_ms[M_OILP] + 1u));
 }
 
+#if OILP_DPID_ENABLE
 static void t_oilp_22_refused_then_dpid(void)
 {
+    park();
     CHECK(req_oilp());
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
     obd_rx_poll();
@@ -491,6 +504,7 @@ static void t_oilp_foreign_define_ignored(void)
 
 static void t_oilp_2c_refused_ends_search(void)
 {
+    park();
     oilp.mode = OILP_DEFINE;
     CHECK(req_oilp());
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x2C, 0x31, 0x00, 0x00, 0x00, 0x00);
@@ -510,6 +524,8 @@ static void t_oilp_2c_refused_ends_search(void)
     CHECK(asked == 0);
 }
 
+#endif /* OILP_DPID_ENABLE */
+
 static void t_oilp_busy_nrc_retried(void)
 {
     CHECK(req_oilp());
@@ -528,7 +544,60 @@ static void t_oilp_22_silent_falls_back(void)
         obd_poll_tick();                                /* times out (and sends the next) */
         await_resp_id = 0;
     }
-    CHECK(oilp.mode == OILP_DEFINE);
+    CHECK(oilp.mode == OILP_AFTER_22);
+}
+
+/* 0xFF is the top of the byte (10.2 bar): a no-data code, never a reading. */
+static void t_oilp_ff_is_not_a_reading(void)
+{
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x04, 0x62, 0xA2, 0x2C, 0xFF, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(isnan(g_obd.oil_press));
+    CHECK(oilp.have_raw && oilp.raw == 0xFF);           /* still visible on DIAG */
+    CHECK(await_resp_id == 0);                          /* answered all the same */
+}
+
+#if OILP_DPID_ENABLE
+/* $2C only at standstill: fresh P/N, or a fresh 0 km/h; unknown is not. */
+static void t_oilp_define_waits_for_standstill(void)
+{
+    oilp.mode = OILP_DEFINE;
+    CHECK(!req_oilp() && tx_n == 0);                    /* nothing known       */
+    g_obd.sel_range = 4; g_obd.sel_upd_ms = now_ms;     /* D                   */
+    CHECK(!req_oilp() && tx_n == 0);
+    g_obd.sel_range = 1;                                /* P, but rolling      */
+    g_obd.speed = 30.0f; g_obd.upd_ms[M_SPEED] = now_ms;
+    CHECK(!req_oilp() && tx_n == 0);
+    g_obd.speed = 0.0f;                                 /* P, stopped          */
+    CHECK(req_oilp() && tx_n == 1 && txlog[0].data[1] == 0x2C);
+    await_resp_id = 0;
+    now_ms += SEL_STALE_MS + 1u;                        /* selector gone stale */
+    g_obd.upd_ms[M_SPEED] = now_ms;                     /* speed 0, fresh      */
+    CHECK(req_oilp() && tx_n == 2);
+    /* and the slot is not wasted while it waits: a fast request goes instead */
+    await_resp_id = 0; tx_n = 0;
+    g_obd.speed = 50.0f;
+    sched.tick = 5u; sched.med_idx = 6u;                /* next tick: medium item 6 */
+    obd_poll_tick();
+    CHECK(tx_n == 1 && txlog[0].data[1] == 0x01);
+}
+
+/* At most OILP_DEFINE_MAX $2C per power-up, then the search ends. */
+static void t_oilp_define_capped(void)
+{
+    park();
+    oilp.mode = OILP_DEFINE;
+    for (unsigned i = 0; i < OILP_DEFINE_MAX; i++) {
+        park();
+        CHECK(req_oilp());
+        now_ms += OBD_AWAIT_MS;                         /* no answer */
+        txn_failed();
+    }
+    int sent = tx_n;
+    park();
+    CHECK(!req_oilp());
+    CHECK(tx_n == sent && oilp.mode == OILP_NONE);
 }
 
 /* No packet after $AA (or an NRC for it): the ECM may have lost the
@@ -547,6 +616,23 @@ static void t_oilp_lost_read_redefines(void)
     obd_rx_poll();
     CHECK(oilp.mode == OILP_DEFINE && oilp.nrcaa == 0x31);
 }
+#else
+/* OILP_DPID_ENABLE 0: a refused $22 ends the search; nothing else is ever
+ * sent for oil pressure (the TX mock fails any $2C / $AA). */
+static void t_oilp_off_never_defines(void)
+{
+    park();
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_NONE);
+    for (int i = 0; i < 500; i++) { park(); now_ms += OBD_AWAIT_MS; obd_poll_tick(); }
+    oilp.mode = OILP_DEFINE;                            /* even if forced */
+    CHECK(!req_oilp());
+    oilp.mode = OILP_READ;
+    CHECK(!req_oilp());
+}
+#endif
 
 /* --- Cases from the independent stage-A review (Dash_Stage_A_Adversarial_Tests.c),
  * which were red before the one-transaction-at-a-time rework: a follow-up
@@ -1026,13 +1112,20 @@ int main(void)
         { "selector_dlc_checked",       t_selector_dlc_checked },
         { "dlc15_classic_frame",        t_dlc15_classic_frame },
         { "oilp_via22",                 t_oilp_via22 },
+        { "oilp_busy_nrc_retried",      t_oilp_busy_nrc_retried },
+        { "oilp_22_silent_falls_back",  t_oilp_22_silent_falls_back },
+        { "oilp_ff_is_not_a_reading",   t_oilp_ff_is_not_a_reading },
+#if OILP_DPID_ENABLE
         { "oilp_22_refused_then_dpid",  t_oilp_22_refused_then_dpid },
         { "oilp_foreign_uudt_ignored",  t_oilp_foreign_uudt_ignored },
         { "oilp_foreign_define_ignored",t_oilp_foreign_define_ignored },
         { "oilp_2c_refused_ends_search",t_oilp_2c_refused_ends_search },
-        { "oilp_busy_nrc_retried",      t_oilp_busy_nrc_retried },
-        { "oilp_22_silent_falls_back",  t_oilp_22_silent_falls_back },
+        { "oilp_define_waits_standstill",t_oilp_define_waits_for_standstill },
+        { "oilp_define_capped",         t_oilp_define_capped },
         { "oilp_lost_read_redefines",   t_oilp_lost_read_redefines },
+#else
+        { "oilp_off_never_defines",     t_oilp_off_never_defines },
+#endif
         { "rev_response_pending_lost_ff", t_response_pending_loses_delayed_ff },
         { "rev_interleaved_cf_pending", t_interleaved_cf_clears_new_pending },
         { "rev_short_sf_keeps_pending", t_matching_short_frame_clears_pending },

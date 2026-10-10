@@ -56,6 +56,22 @@
 #define OILP_DPID              0xFEu    /* data packet number ScanGauge uses   */
 #define OBD_UUDT_ECM           0x5E8u   /* ECM's UUDT diagnostic packets       */
 
+/* OILP_DPID_ENABLE 1: if the ECM refuses $22 A22C, use the data-packet path.
+ *   $2C is NOT a pure read — it configures a (volatile) packet definition in
+ *   the ECM — so it is only sent at standstill (fresh selector P/N, or a fresh
+ *   0 km/h) and at most OILP_DEFINE_MAX times per power-up; $AA reads then go
+ *   on while driving.
+ * 0: $22 only. The firmware never transmits $2C or $AA (host-tested), and
+ *   oil pressure stays "--" if $22 is refused. */
+#ifndef OILP_DPID_ENABLE
+#define OILP_DPID_ENABLE       1
+#endif
+#define OILP_DEFINE_MAX        6u
+/* OILP_VALIDATED 0: the reading is shown but never coloured as a warning —
+ * the scaling and the low thresholds have not been checked on this engine.
+ * Set 1 only after docs/oil-pressure-test.md has passed. */
+#define OILP_VALIDATED         0
+
 /* OBD service (mode) bytes */
 #define OBD_MODE_CURRENT       0x01u    /* live data (SAE J1979)               */
 #define OBD_MODE_FREEZE        0x02u
@@ -115,7 +131,7 @@ static const metric_cfg_t metrics[M_COUNT] = {
   { "IAT",         THR_INFO,     -20,    100,     0,     0,     0,     0,   0 },
   { "LOAD",        THR_INFO,       0,    100,     0,     0,     0,     0,   0 },
   { "RAIL",        THR_INFO,       0,   2000,     0,     0,     0,     0,   0 }, /* bar            */
-  { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,   8.0f,  9.0f,  1 }, /* bar; low = danger, high never trips within 0-7. Judged only with the engine running (cluster_ui.c). Lows are a guess: check against warm idle */
+  { "OIL P",       THR_WINDOW,     0,      7,   0.8f,  0.4f,  99.0f, 99.0f, 1 }, /* bar; low side only (99 = no high alarm). Judged only when OILP_VALIDATED and the engine runs (cluster_ui.c). Lows are a guess: check against warm idle */
   { "GEAR",        THR_NONE,       0,      8,     0,     0,     0,     0,   0 }  /* TCM D1..D6     */
 };
 

@@ -137,14 +137,26 @@ bus errors / no comms.
 
 ---
 
-## 3. Read-only safety
+## 3. What the firmware sends
 
-This firmware is **read-only** — it only *requests* live data (OBD mode 01) and
-reads DTCs (mode 03/07) and enhanced DIDs (mode 22). It never writes calibrations
-and **never clears codes** (mode 04 is intentionally unused). It is still an
-**active bus node** (it transmits request frames, like any scan tool), which is
-normal and low-risk. Do the first power-up **key-on / engine-off (KOEO)** to
-validate before driving.
+It is an **active diagnostic node** (it transmits requests, like any scan tool)
+that never writes calibrations, memory or actuators and **never clears codes**
+(no mode 04). Requests:
+
+- **Reads:** OBD mode 01 live data, and `$22` (ReadDataByIdentifier) for the
+  GM DIDs: ATF temp and gear on `0x7E2`, oil temp `0x1154` and oil pressure
+  `0xA22C` on `0x7E0`. Mode 03/07 (DTC lists) is not requested; the DTC count
+  comes from PID `0x01`.
+- **One volatile configuration, for oil pressure only:** if the ECM refuses
+  `$22 A22C`, GMLAN `$2C FE A22C` defines diagnostic data packet `0xFE` in ECM
+  RAM (gone at the next ECM reset), then `$AA 01 FE` reads it. This is **not a
+  pure read**. It is fenced: sent only at standstill (selector P/N, or a fresh
+  0 km/h), at most 6 times per power-up, and off entirely with
+  `OILP_DPID_ENABLE 0` in `cluster_config.h` (then `$2C`/`$AA` are never sent —
+  host-tested). A second tester on the port using DPID `0xFE` may redefine it;
+  see `docs/oil-pressure-test.md`.
+
+Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
 
 ---
 
@@ -167,21 +179,14 @@ validate before driving.
 
 ## 5. Known gaps for a "complete" in-car build
 
-- **Enhanced metrics — partially wired, unverified on the car.** The poller now
-  requests, with community-sourced (not yet car-verified) DIDs:
-  - **ATF / trans fluid temp** — mode 22 DID `0x1940` on the trans controller
-    (`0x7E2` → `0x7EA`), `A − 40 °C`.
-  - **Current gear** — mode 22 DID `0x199A` on `0x7E2`, raw index in byte A.
-  - **EGR temp** — standard J1979 mode 01 PID `0x6B`, sensor 1 = `B − 40 °C`.
-
-  If any of these stay blank in the car, the module/DID/scaling is wrong for this
-  truck — the request is in `obd_poll_tick()` and the decode in `decode_mode22()`
-  / `decode_mode01()` (`fdcan_obd.c`); adjust there. **DPF soot %, DPF ΔP and
-  distance-since-regen are NOT polled** — GM guards those and the DIDs vary by
-  model year, so discover the working DIDs on the actual truck (BiScan for GM /
-  Gretio / Torque GM set) and add them. Everything on standard J1979 (speed, RPM,
-  coolant, modelled oil, IAT, load, MAP/boost, rail, EGT sensor, battery) works
-  as-is.
+- **Enhanced metrics.** What this truck answers is the signal table in
+  `CLAUDE.md` (verified in the car): ATF temp `0x1940` and gear `0x199A` on
+  `0x7E2` work; oil temp comes from DID `0x1154`; EGR temp `0x6B`, EGT `0x78`
+  and oil temp `0x5C` are not supported by this E98. **Oil pressure** (PID
+  `0xA22C`) is wired but not yet seen in the car — `docs/oil-pressure-test.md`.
+  **DPF soot %, DPF ΔP and distance-since-regen are not polled**; ScanGauge's
+  LWN 2.8 list reads them the same `$2C`/`$AA` way as oil pressure, a candidate
+  once oil pressure is confirmed.
 - **Main-display backlight polarity.** The Si4599 **P-channel** (high-side)
   MOSFET conducts while PA8 is LOW. `app_main.c` handles that with
   `BACKLIGHT_ACTIVE_LOW 1`: `backlight_set()` takes **brightness** (100 = full,
