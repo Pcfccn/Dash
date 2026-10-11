@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   "Core/Inc/app_main.h": {
-    "mtime": 1791600897.8738143,
-    "seen": 1791698891.2263436,
-    "ast_hash": "05b5006590013304f85f1bbcb8aea2d5",
+    "mtime": 1791701151.847855,
+    "seen": 1791701441.9969351,
+    "ast_hash": "2dccaa892edf53034fd446257dfb62be",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_app.h": {
@@ -90,9 +90,9 @@
     "semantic_hash": "5025ea19ecb95acc84b17dcc17d3ebab"
   },
   "Core/Src/app_main.c": {
-    "mtime": 1791699921.308902,
-    "seen": 1791700338.6011055,
-    "ast_hash": "2292933d5586f5b5d10cfc86c77b7a1c",
+    "mtime": 1791701152.904825,
+    "seen": 1791701441.996952,
+    "ast_hash": "d9448020d54fcafd77f670a4b85dcfa8",
     "semantic_hash": ""
   },
   "Core/Src/cluster_app.c": {
@@ -150,9 +150,9 @@
     "semantic_hash": ""
   },
   "Core/Src/st7735_status.c": {
-    "mtime": 1791619902.5488822,
-    "seen": 1791698891.2263675,
-    "ast_hash": "7b12f2bbbda2bb92d0671d07bb347793",
+    "mtime": 1791701155.0123806,
+    "seen": 1791701441.996962,
+    "ast_hash": "c36d3187142dccade37606ccb2ffc276",
     "semantic_hash": ""
   },
   "Core/Src/stm32h7xx_hal_msp.c": {
@@ -186,9 +186,9 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1791700257.4003842,
-    "seen": 1791700338.6011274,
-    "ast_hash": "6f43dd0f036c37c74ea0209a101d63c3",
+    "mtime": 1791701434.1534936,
+    "seen": 1791701441.9969728,
+    "ast_hash": "2633397be8b28c53b84ddcd9520f5555",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "docs/REVIEW.md": {
-    "mtime": 1791700261.6213892,
-    "seen": 1791700338.6011367,
-    "ast_hash": "d8d3fcc1dfc772db93c52f05a336bd94",
+    "mtime": 1791701434.1024327,
+    "seen": 1791701441.9969816,
+    "ast_hash": "815d139ad507990781784d7d43613cdd",
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
@@ -852,9 +852,9 @@
     "semantic_hash": ""
   },
   "docs/future/build-hardware.md": {
-    "mtime": 1791700208.630945,
-    "seen": 1791700338.6011386,
-    "ast_hash": "9d77417c402966c752a48ec5c354f782",
+    "mtime": 1791701304.2182033,
+    "seen": 1791701441.9969833,
+    "ast_hash": "1e463affcee41fbc497fcf50c59e6625",
     "semantic_hash": ""
   },
   "docs/future/gps-odometer-fuel.md": {
