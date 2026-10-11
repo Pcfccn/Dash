@@ -96,7 +96,7 @@ static void reset(void)
 {
     reset_mocks();
     s_spi_err = 0; s_err_streak = 0; s_need_repaint = false; s_recover_cnt = 0;
-    s_dma_fallback = 0; s_dma_busy = false; s_disp = NULL;
+    s_reinit_pending = false; s_dma_fallback = 0; s_dma_busy = false; s_disp = NULL;
     memset(&s_svc, 0, sizeof s_svc);
     lv_port_disp_init();
     swreset_cnt = 0;                       /* count inits after boot from here */
@@ -115,7 +115,7 @@ static void t_clean_boot(void)
 {
     reset_mocks();
     s_spi_err = 0; s_err_streak = 0; s_need_repaint = false; s_recover_cnt = 0;
-    memset(&s_svc, 0, sizeof s_svc);
+    s_reinit_pending = false; memset(&s_svc, 0, sizeof s_svc);
     lv_port_disp_init();
     CHECK(swreset_cnt == 1 && the_disp.cb != NULL && error_calls == 0);
     CHECK(s_spi_err == 0 && s_err_streak == 0 && !s_need_repaint);
@@ -196,7 +196,7 @@ static void t_failed_reinit_retried(void)
     now_ms += 2000u;
     lv_port_disp_service();
     CHECK(swreset_cnt == 1 && s_recover_cnt == 1);
-    CHECK(s_err_streak >= LCD_RECOVER_STREAK && s_need_repaint);   /* not done */
+    CHECK(s_reinit_pending && s_need_repaint);     /* not done */
     now_ms += LCD_REPAINT_GAP_MS;
     lv_port_disp_service();
     CHECK(swreset_cnt == 1);                       /* inside the 5 s gap: repaint only */
@@ -205,7 +205,29 @@ static void t_failed_reinit_retried(void)
     now_ms += LCD_RECOVER_GAP_MS;
     lv_port_disp_service();
     CHECK(swreset_cnt == 2 && s_recover_cnt == 2);
-    CHECK(s_err_streak == 0 && !s_need_repaint);
+    CHECK(!s_reinit_pending && s_err_streak == 0 && !s_need_repaint);
+}
+
+/* Review C4-SW-01: a failed re-init followed by a good pixel DMA must not
+ * erase the re-init it still owes. */
+static void t_failed_reinit_then_good_dma(void)
+{
+    dma_status = HAL_ERROR; fail_bulk_tx = 1;
+    for (int i = 0; i < 3; i++) flush(320, 40);
+    fail_cmd = 0x11;
+    now_ms += 2000u;
+    lv_port_disp_service();
+    CHECK(s_recover_cnt == 1 && s_reinit_pending && s_need_repaint);
+    fail_bulk_tx = 0; dma_status = HAL_OK;
+    flush(320, 40); dma_done();
+    CHECK(s_err_streak == 0 && s_reinit_pending);   /* link fine, re-init still owed */
+    now_ms += LCD_REPAINT_GAP_MS;
+    lv_port_disp_service();
+    CHECK(s_need_repaint);                       /* still pending after a repaint */
+    fail_cmd = -1;
+    now_ms += LCD_RECOVER_GAP_MS;
+    lv_port_disp_service();
+    CHECK(s_recover_cnt == 2 && !s_reinit_pending && !s_need_repaint);   /* retried after the gap */
 }
 
 /* Boot init with SPI errors: the first service call re-inits the panel. */
@@ -213,12 +235,29 @@ static void t_boot_errors_force_reinit(void)
 {
     reset_mocks();
     s_spi_err = 0; s_err_streak = 0; s_need_repaint = false; s_recover_cnt = 0;
-    memset(&s_svc, 0, sizeof s_svc);
+    s_reinit_pending = false; memset(&s_svc, 0, sizeof s_svc);
     fail_cmd = 0x29;                               /* DISPLAY ON fails */
     lv_port_disp_init();
-    CHECK(s_spi_err == 1 && s_err_streak == LCD_RECOVER_STREAK && s_need_repaint);
+    CHECK(s_spi_err == 1 && s_reinit_pending && s_need_repaint);
     fail_cmd = -1;
     swreset_cnt = 0;
+    now_ms += 2000u;
+    lv_port_disp_service();
+    CHECK(swreset_cnt == 1 && s_recover_cnt == 1 && !s_need_repaint);
+}
+
+/* Same, but the first screen goes out by DMA before the service runs (boot is
+ * shorter than LCD_REPAINT_GAP_MS): the good area must not cancel the re-init. */
+static void t_boot_errors_then_good_dma(void)
+{
+    reset_mocks();
+    s_spi_err = 0; s_err_streak = 0; s_need_repaint = false; s_recover_cnt = 0;
+    s_reinit_pending = false; memset(&s_svc, 0, sizeof s_svc);
+    fail_cmd = 0x29;                               /* DISPLAY ON fails */
+    lv_port_disp_init();
+    fail_cmd = -1;
+    swreset_cnt = 0;
+    flush(320, 40); dma_done();                    /* first frame, DMA fine */
     now_ms += 2000u;
     lv_port_disp_service();
     CHECK(swreset_cnt == 1 && s_recover_cnt == 1 && !s_need_repaint);
@@ -266,7 +305,9 @@ int main(void)
         { "three_lost_reinit",          t_three_lost_reinit },
         { "good_area_resets_streak",    t_good_area_resets_streak },
         { "failed_reinit_retried",      t_failed_reinit_retried },
+        { "failed_reinit_then_good_dma", t_failed_reinit_then_good_dma },
         { "boot_errors_force_reinit",   t_boot_errors_force_reinit },
+        { "boot_errors_then_good_dma",  t_boot_errors_then_good_dma },
         { "window_fail_drops_area",     t_window_fail_drops_area },
         { "missed_dma_irq",             t_missed_dma_irq },
         { "oversized_area_dropped",     t_oversized_area_dropped },

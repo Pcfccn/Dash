@@ -82,15 +82,20 @@ static volatile uint16_t s_spi_err;
  * state. lv_port_disp_service() repairs both from the loop:
  *   - after any error: repaint the whole screen, at most every
  *     LCD_REPAINT_GAP_MS (a full repaint is ~200 ms of wire time);
- *   - after LCD_RECOVER_STREAK errors in a row: reset and re-init the panel
- *     first (~400 ms, well inside the 3 s IWDG), at most every
- *     LCD_RECOVER_GAP_MS, counted (R on DIAG).
- * A panel that resets itself (supply dip) produces no SPI error on this
- * write-only bus and is not detected here. */
+ *   - after LCD_RECOVER_STREAK errors in a row, or an init (boot or re-init)
+ *     that hit an error: reset and re-init the panel first (~400 ms, well
+ *     inside the 3 s IWDG), at most every LCD_RECOVER_GAP_MS, counted (R on
+ *     DIAG), until an init goes through clean.
+ * The owed re-init is its own flag, not the error streak: a good pixel DMA
+ * resets the streak (the SPI link works) but says nothing about whether the
+ * panel's registers were set, so it must not cancel the re-init (review
+ * C4-SW-01). A panel that resets itself (supply dip) produces no SPI error on
+ * this write-only bus and is not detected here. */
 #define LCD_RECOVER_STREAK    3u
 #define LCD_REPAINT_GAP_MS 1000u
 #define LCD_RECOVER_GAP_MS 5000u
 static volatile uint16_t s_err_streak;     /* errors since the last good DMA area */
+static volatile bool     s_reinit_pending; /* the panel owes a clean init         */
 static volatile bool     s_need_repaint;   /* something did not reach the panel   */
 static uint16_t          s_recover_cnt;
 static lv_display_t     *s_disp;
@@ -107,6 +112,7 @@ static void spi_err(void)
 {
     if (s_spi_err < 0xFFFFu) s_spi_err++;
     if (s_err_streak < 0xFFFFu) s_err_streak++;
+    if (s_err_streak >= LCD_RECOVER_STREAK) s_reinit_pending = true;
     s_need_repaint = true;
 }
 
@@ -382,8 +388,9 @@ void lv_port_disp_init(void)
     s_disp = disp;
     /* An init sequence with SPI errors may have left the panel unconfigured:
      * have the first service call re-init it (then retried every
-     * LCD_RECOVER_GAP_MS while it keeps failing), not only repaint. */
-    s_err_streak = (s_spi_err != 0u) ? LCD_RECOVER_STREAK : 0u;
+     * LCD_RECOVER_GAP_MS while it keeps failing), not only repaint. The first
+     * screen's good DMA areas do not cancel that. */
+    if (s_spi_err != 0u) s_reinit_pending = true;
 }
 
 #if FAULT_TEST == 3
@@ -408,8 +415,7 @@ void lv_port_disp_service(void)
     if (now - s_svc.t_repaint < LCD_REPAINT_GAP_MS) return;
     s_svc.t_repaint = now;
 
-    bool reinit_failed = false;
-    if (s_err_streak >= LCD_RECOVER_STREAK &&
+    if (s_reinit_pending &&
         (!s_svc.recovered_once || now - s_svc.t_recover >= LCD_RECOVER_GAP_MS)) {
         s_svc.recovered_once = true;
         s_svc.t_recover = now;
@@ -419,14 +425,14 @@ void lv_port_disp_service(void)
         uint16_t e0 = s_spi_err;
         ili9488_init_sequence();
         if (s_recover_cnt < 0xFFFFu) s_recover_cnt++;
-        /* A re-init that itself hit errors did not take: keep the streak so
-         * it is tried again after the gap, and keep repairing meanwhile. */
-        reinit_failed  = (s_spi_err != e0);
-        s_err_streak   = reinit_failed ? LCD_RECOVER_STREAK : 0u;
+        /* A re-init that itself hit errors did not take: it stays owed, is
+         * tried again after the gap, and the screen is repaired meanwhile. */
+        s_reinit_pending = (s_spi_err != e0);
+        if (!s_reinit_pending) s_err_streak = 0u;
     }
     /* Stay pending while a re-init is still owed (it failed, or the gap has
      * not passed yet): clearing it on a repaint-only pass meant the service
      * never ran again, so a failed re-init was never retried. */
-    s_need_repaint = reinit_failed || s_err_streak >= LCD_RECOVER_STREAK;
+    s_need_repaint = s_reinit_pending;
     lv_obj_invalidate(lv_display_get_screen_active(s_disp));
 }
