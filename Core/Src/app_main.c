@@ -19,9 +19,16 @@
  * the gate is ever driven through an inverting stage (an NPN / N-FET pulling
  * the P-FET gate up to 5 V — worth doing: from a 3.3 V pin, with the FET's
  * source on 5 V, "off" is only Vgs = -1.7 V and may not fully close it; to be
- * measured). */
+ * measured).
+ * That stage is planned (docs/future/build-hardware.md §3, 2N7000) and is a
+ * hardware switch-over: the default 1 matches today's direct-drive wiring, and
+ * an image built with it on the 2N7000 board turns the backlight OFF at 100 %.
+ * Build the new board's image with `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0`
+ * (review C5-HW-04). */
+#ifndef BACKLIGHT_ACTIVE_LOW
 #define BACKLIGHT_ACTIVE_LOW 1
-#define BACKLIGHT_BOOT_PCT   100u    /* full brightness at boot (PA8 held LOW, as before) */
+#endif
+#define BACKLIGHT_BOOT_PCT   100u    /* full brightness at boot (PA8 held LOW on the direct drive) */
 
 /* KEY (PC13) gestures: short press = page/step, 3 s hold = toggle backlight mode. */
 #define KEY_HOLD_MS     3000u
