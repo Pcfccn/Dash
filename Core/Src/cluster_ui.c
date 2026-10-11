@@ -1,5 +1,5 @@
 /* ============================================================================
- *  cluster_ui.c — LVGL 9 UI for the Holden Colorado 2.8 (E98) cluster.
+ *  cluster_ui.c — LVGL 9 UI for the auxiliary display (LC100, Colorado 2.8 E98 swap).
  *
  *  Faithful port of the visual reference
  *      reference/diesel_dashboard_320x480_h743_rich.html

@@ -1,6 +1,7 @@
 /* ============================================================================
  *  cluster_config.h
- *  Holden Colorado RG 2.8 Duramax (E98 ECM) — instrument cluster display
+ *  Toyota Land Cruiser 100 with a Holden Colorado RG 2.8 Duramax swap
+ *  (E98 ECM + its TCM) — auxiliary instrument display
  *  Target: STM32 + SN65HVD230, HS-CAN 500 kbps, 320x480, READ-ONLY
  *
  *  Single source of truth for:

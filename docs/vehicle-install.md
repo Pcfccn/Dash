@@ -1,7 +1,9 @@
 # In-vehicle install — from bench demo to a live car
 
 How to take this cluster off the desk (USB-powered, `OBD_DEMO 1`) and run it in
-the Holden Colorado RG for real: powering the WeAct board from the car, tapping
+the car — a Toyota Land Cruiser 100 with a Holden Colorado RG 2.8 Duramax swap
+(the CAN data is the Colorado ECU's; fuses, switch blanks and illumination are
+Toyota's) — for real: powering the WeAct board from the car, tapping
 the HS-CAN bus through the SN65HVD230, and the bring-up sequence.
 
 > **Firmware prerequisite:** `OBD_DEMO` in `Core/Inc/cluster_config.h` must be
