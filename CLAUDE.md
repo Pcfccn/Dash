@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Firmware for a custom auxiliary instrument display in a Holden Colorado RG 2.8 Duramax (E98 ECM). It is an add-on, not a replacement: the OEM cluster stays installed and keeps every legally required tell-tale (ABS, SRS, brakes, indicators, high beam, fuel), so this display does not need to replicate them. Runs on an STM32H743VITx (WeAct MiniSTM32H743 board), reads live engine/transmission data **read-only** over the vehicle's HS-CAN bus via OBD-II, and renders it with LVGL across two independent SPI displays:
+Firmware for a custom auxiliary instrument display in a **Toyota Land Cruiser 100** (1998–2007) running a **Holden Colorado RG 2.8 Duramax swap** (E98 ECM + its 6-speed TCM): the data comes from the Colorado ECU, while the cabin — switch blanks, fuses, dash illumination — is Toyota's. It is an add-on, not a replacement: the OEM cluster stays installed and keeps every legally required tell-tale (ABS, SRS, brakes, indicators, high beam, fuel), so this display does not need to replicate them. Runs on an STM32H743VITx (WeAct MiniSTM32H743 board), reads live engine/transmission data **read-only** over the vehicle's HS-CAN bus via OBD-II, and renders it with LVGL across two independent SPI displays:
 
 - **Main 4" ILI9488** (320x480, SPI2) — the 3-page cluster (DRIVE / DIAG / SNIFF), driven by `lv_port_disp.c`.
 - **Secondary 0.96" ST7735** (160x80, SPI4) — an onboard debug/status screen (`st7735_status.c`), fully independent of the main dashboard's CubeMX config; its SPI/GPIO setup is hand-written directly via HAL rather than through the `.ioc`, specifically so it never touches the main project's peripheral config.
