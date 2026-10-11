@@ -96,7 +96,7 @@ static void reset(void)
 {
     reset_mocks();
     s_spi_err = 0; s_err_streak = 0; s_need_repaint = false; s_recover_cnt = 0;
-    s_reinit_pending = false; s_dma_fallback = 0; s_dma_busy = false; s_disp = NULL;
+    s_reinit_pending = false; s_err_seq = 0; s_dma_fallback = 0; s_dma_busy = false; s_disp = NULL;
     memset(&s_svc, 0, sizeof s_svc);
     lv_port_disp_init();
     swreset_cnt = 0;                       /* count inits after boot from here */
@@ -294,6 +294,29 @@ static void t_oversized_area_dropped(void)
     CHECK(dma_started == 0 && s_spi_err == 1 && flush_ready_cnt == 1);
 }
 
+/* Review C5-SW-01: once the DIAG counter s_spi_err saturates, new SPI
+ * failures must still reach the recovery decisions. */
+static void t_saturated_init_failure(void)
+{
+    s_spi_err = 0xFFFFu;
+    s_reinit_pending = true;
+    s_need_repaint = true;
+    fail_cmd = 0x11;                               /* SLEEP OUT fails on the retry */
+    now_ms += 2000u;
+    lv_port_disp_service();
+    CHECK(s_reinit_pending);                       /* retry still owed */
+    CHECK(s_need_repaint);                         /* and the service keeps running */
+}
+
+static void t_saturated_window_failure(void)
+{
+    s_spi_err = 0xFFFFu;
+    fail_cmd = 0x2B;                               /* PASET fails */
+    flush(320, 40);
+    CHECK(dma_started == 0);                       /* no pixels into a wrong GRAM window */
+    CHECK(s_need_repaint);
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -311,6 +334,8 @@ int main(void)
         { "window_fail_drops_area",     t_window_fail_drops_area },
         { "missed_dma_irq",             t_missed_dma_irq },
         { "oversized_area_dropped",     t_oversized_area_dropped },
+        { "saturated_init_failure",     t_saturated_init_failure },
+        { "saturated_window_failure",   t_saturated_window_failure },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

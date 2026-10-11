@@ -74,6 +74,10 @@ static inline void dc_data(void) { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GP
 #define LCD_CMD_TIMEOUT_MS   10u    /* commands / parameters: a few bytes          */
 #define LCD_BULK_TIMEOUT_MS 100u    /* a full area: ~17 ms at 18.75 MHz            */
 static volatile uint16_t s_spi_err;
+/* The same events, unsaturated, for the "did this step hit an error?" checks
+ * below. Not s_spi_err: it stops at 0xFFFF, and a before/after comparison of a
+ * stuck counter would call a failed window or init good (review C5-SW-01). */
+static volatile uint32_t s_err_seq;
 
 /* Recovery. A lost area is not a finished repaint: flush_ready() has to be
  * called anyway (LVGL would wait forever), but the panel's GRAM keeps the old
@@ -111,6 +115,7 @@ uint16_t lv_port_disp_dma_fallbacks(void) { return s_dma_fallback; }
 static void spi_err(void)
 {
     if (s_spi_err < 0xFFFFu) s_spi_err++;
+    s_err_seq++;
     if (s_err_streak < 0xFFFFu) s_err_streak++;
     if (s_err_streak >= LCD_RECOVER_STREAK) s_reinit_pending = true;
     s_need_repaint = true;
@@ -292,10 +297,10 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
     /* The DMA reads RAM, not the D-cache. */
     SCB_CleanDCache_by_Addr((uint32_t *)tx_buf, (int32_t)((n + 31u) & ~31u));
 
-    uint16_t e0 = s_spi_err;
+    uint32_t e0 = s_err_seq;
     lcd_set_window((uint16_t)area->x1, (uint16_t)area->y1,
                     (uint16_t)area->x2, (uint16_t)area->y2);
-    if (s_spi_err != e0) {
+    if (s_err_seq != e0) {
         /* The window did not land: the pixels would be written wherever the
          * panel's address pointer happens to be. Drop the area; the service
          * repaints it. */
@@ -379,6 +384,7 @@ void lv_port_disp_init(void)
     lv_tick_set_cb(osKernelGetTickCount);
 
     spi2_dma_init();
+    uint32_t e0 = s_err_seq;
     ili9488_init_sequence();
 
     lv_display_t *disp = lv_display_create(LCD_H_RES, LCD_V_RES);
@@ -390,7 +396,7 @@ void lv_port_disp_init(void)
      * have the first service call re-init it (then retried every
      * LCD_RECOVER_GAP_MS while it keeps failing), not only repaint. The first
      * screen's good DMA areas do not cancel that. */
-    if (s_spi_err != 0u) s_reinit_pending = true;
+    if (s_err_seq != e0) s_reinit_pending = true;
 }
 
 #if FAULT_TEST == 3
@@ -422,12 +428,12 @@ void lv_port_disp_service(void)
         dma_wait();                  /* nothing of ours left on the wire     */
         HAL_SPI_Abort(&hspi2);
         cs_high();
-        uint16_t e0 = s_spi_err;
+        uint32_t e0 = s_err_seq;
         ili9488_init_sequence();
         if (s_recover_cnt < 0xFFFFu) s_recover_cnt++;
         /* A re-init that itself hit errors did not take: it stays owed, is
          * tried again after the gap, and the screen is repaired meanwhile. */
-        s_reinit_pending = (s_spi_err != e0);
+        s_reinit_pending = (s_err_seq != e0);
         if (!s_reinit_pending) s_err_streak = 0u;
     }
     /* Stay pending while a re-init is still owed (it failed, or the gap has
