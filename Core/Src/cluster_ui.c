@@ -622,7 +622,9 @@ void cluster_ui_set_page(uint8_t p)
     s_page = p;
     /* Sniffing costs the OBD poller its bus access, so it is tied to the page
      * being visible: you cannot leave it running by accident. */
-    can_sniff_set_active(p == PAGE_SNIFF);
+    /* If the wide filter is refused the page still opens, but says so
+     * (NOT LISTENING) and refresh() retries; see can_sniff_set_active(). */
+    (void)can_sniff_set_active(p == PAGE_SNIFF);
     for (int i = 0; i < PAGE_COUNT; i++) {
         if (i == p) lv_obj_clear_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
         else        lv_obj_add_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
@@ -754,6 +756,12 @@ void cluster_ui_refresh(void)
     s_now = HAL_GetTick();
     /* Leave SNIFF by itself once the selector goes into R/D (see sniff_allowed). */
     if (s_page == PAGE_SNIFF && !sniff_allowed()) cluster_ui_set_page(0);
+    /* On SNIFF but not listening (wide filter refused): try again once a
+     * second, so the page converges on the state it shows. */
+    if (s_page == PAGE_SNIFF && !can_sniff_is_active()) {
+        static uint32_t t_retry;
+        if (s_now - t_retry >= 1000u) { t_retry = s_now; (void)can_sniff_set_active(true); }
+    }
     /* The selector broadcast has its own freshness; a stale one is "--",
      * and so is the gear number in D. */
     bool sel_ok = live && obd_sel_fresh(&d, s_now);
@@ -867,6 +875,10 @@ void cluster_ui_refresh(void)
         o += lv_snprintf(db + o, sizeof db - o, "OILP %s  22/%s 2C/%s AA/%s  RAW %s",
                          OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE],
                          n22, n2c, naa, raw);
+        /* WIDE: SNIFF is off but the narrow filter could not be restored yet
+         * (retried every 100 ms): the whole bus is coming in. */
+        if (can_sniff_restore_pending() && o < (int)sizeof db)
+            o += lv_snprintf(db + o, sizeof db - o, " WIDE");
         /* CAP: transactions cut by the total limit (endless NRC 0x78). */
         if (h.txn_capped && o < (int)sizeof db)
             o += lv_snprintf(db + o, sizeof db - o, " CAP%u", (unsigned)h.txn_capped);
@@ -890,19 +902,23 @@ void cluster_ui_refresh(void)
          * bus asleep (procedural, not a bug); BOFF/EP/LOST = a real fault. */
         obd_health_t h;
         obd_can_health(&h);
-        /* FILTER ERR: the wide acceptance filter was refused, so nothing is
-         * being sniffed (and OBD polling was left running). */
-        bool ferr = can_sniff_filter_error();
+        /* NOT LISTENING: the wide acceptance filter was refused, so nothing
+         * is being sniffed and OBD polling keeps running (retried 1/s above).
+         * The page must not look like a quiet bus. */
+        bool listening = can_sniff_is_active();
         char sb[64];
         /* POLL: the FDCAN RX interrupt could not be enabled, frames are
          * drained from the loop (the old, overflow-prone behaviour). */
-        lv_snprintf(sb, sizeof sb, "%s%s%u fps  IDS %u  %s L%u",
-                    ferr ? "FILTER ERR " : "", h.rx_irq ? "" : "POLL ",
-                    (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
-                    h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
-                    (unsigned)h.rx_lost);
+        if (!listening)
+            lv_snprintf(sb, sizeof sb, "FILTER ERR: NOT LISTENING");
+        else
+            lv_snprintf(sb, sizeof sb, "%s%u fps  IDS %u  %s L%u",
+                        h.rx_irq ? "" : "POLL ",
+                        (unsigned)can_sniff_fps(), (unsigned)can_sniff_id_count(),
+                        h.bus_off ? "BUSOFF" : (h.err_passive ? "ERRPASS" : "ok"),
+                        (unsigned)h.rx_lost);
         ui_text(ui.sn_stat, sb);
-        ui_text_color(ui.sn_stat, (h.bus_off || ferr) ? C_CRIT
+        ui_text_color(ui.sn_stat, (h.bus_off || !listening) ? C_CRIT
                                   : (can_sniff_fps() ? C_OK : C_WARN));
 
         /* STATE: low-cardinality bytes with their distinct value set. The

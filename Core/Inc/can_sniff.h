@@ -45,16 +45,31 @@ typedef struct {
     uint32_t age_ms;
 } sniff_mover_t;
 
+#define SNIFF_RESTORE_RETRY_MS 100u  /* pace of narrow-filter restore retries */
+
 /* Enable/disable listening. Enabling widens the FDCAN acceptance filter to the
  * whole standard-ID space and clears the table; disabling restores the narrow
  * OBD-only filter. Not free: the wide filter lets ordinary bus traffic compete
- * for the same RX FIFO the OBD replies use, so this must not stay on. */
-void can_sniff_set_active(bool on);
+ * for the same RX FIFO the OBD replies use, so this must not stay on.
+ * Returns true when the requested state is in force. Enabling fails if the
+ * wide filter is refused (the sniffer stays off). Disabling always stops the
+ * sniffer — OBD polling resumes — but if the narrow filter is refused the wide
+ * one stays in hardware: then it is "restore pending", retried by
+ * can_sniff_service(), and false is returned. */
+bool can_sniff_set_active(bool on);
 bool can_sniff_is_active(void);
 bool can_sniff_filter_error(void);   /* the LAST acceptance-filter switch was refused */
 
+/* Call from the loop: retries a refused narrow-filter restore every
+ * SNIFF_RESTORE_RETRY_MS until it sticks. Cheap when nothing is pending. */
+void can_sniff_service(void);
+/* The wide filter is still installed although SNIFF is off: normal OBD
+ * polling runs with the whole bus coming in (degraded; shown on DIAG). */
+bool can_sniff_restore_pending(void);
+
 /* Feed one received frame: every accepted standard data frame, from the RX
- * drain, with its receive time (HAL tick). Ignored unless active. */
+ * drain, with its receive time (HAL tick). Ignored unless active. Ages and
+ * the "most recent" ranking are wrap-safe (by age, not by raw stamp). */
 void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len, uint32_t rx_ms);
 
 /* Bytes whose distinct-value set is small enough to be a selector/state signal

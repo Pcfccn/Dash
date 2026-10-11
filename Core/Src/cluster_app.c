@@ -6,6 +6,7 @@
 #include "fdcan_obd.h"
 #include "cluster_ui.h"
 #include "cluster_config.h"   /* OBD_DEMO */
+#include "can_sniff.h"        /* can_sniff_service */
 
 void cluster_app_init(FDCAN_HandleTypeDef *hfdcan) {
     cluster_ui_build();         /* create the 3 pages + alert strip on the active screen */
@@ -21,6 +22,7 @@ void cluster_app_run(void) {
 #else
     static uint32_t t_poll = 0, t_wdg = 0;
     obd_rx_poll();                                                     /* drain RX every call */
+    can_sniff_service();                     /* retry a refused narrow-filter restore */
     if (now - t_poll >= 25)   { t_poll = now; obd_poll_tick(); }        /* ~40 Hz requests */
     if (now - t_wdg  >= 1000) { t_wdg  = now; obd_watchdog_tick_1hz(); }
 #endif

@@ -50,6 +50,9 @@ static uint32_t   fps_t0;
 /* State of the last switch, not a history: a later successful switch clears
  * it, so "FILTER ERR" on SNIFF means the filter in force now is the wrong one. */
 static bool filter_err;
+/* SNIFF was left but the narrow filter was refused: the wide one is still in
+ * hardware. Kept apart from `active` (the page/sniffer state) and retried. */
+static bool restore_pending;
 
 static bool apply_filter(bool promiscuous)
 {
@@ -88,23 +91,38 @@ uint16_t can_sniff_fps(void)
 /* If the wide filter cannot be installed, sniffing stays off: the page would
  * otherwise sit on an empty table while OBD polling is paused for nothing.
  * Leaving is always honoured (OBD polling resumes); if the narrow filter
- * cannot be restored, the extra frames only reach can_sniff_feed, which
- * ignores them while inactive. */
-void can_sniff_set_active(bool on)
+ * cannot be restored, the restore is retried from can_sniff_service() — the
+ * extra frames meanwhile only load the RX path (can_sniff_feed ignores them
+ * while inactive). */
+bool can_sniff_set_active(bool on)
 {
-    if (on == active) return;
     if (on) {
+        if (active) return true;
         can_sniff_reset();
-        if (!apply_filter(true)) return;
+        if (!apply_filter(true)) return false;
+        restore_pending = false;             /* the wide filter is wanted now */
         active = true;
-    } else {
-        active = false;
-        (void)apply_filter(false);
+        return true;
     }
+    if (!active) return !restore_pending;    /* the loop retries a restore */
+    active = false;
+    restore_pending = !apply_filter(false);
+    return !restore_pending;
 }
 
-bool can_sniff_is_active(void)    { return active; }
-bool can_sniff_filter_error(void) { return filter_err; }
+void can_sniff_service(void)
+{
+    static uint32_t t_last;
+    if (!restore_pending || active) return;
+    uint32_t now = HAL_GetTick();
+    if (now - t_last < SNIFF_RESTORE_RETRY_MS) return;
+    t_last = now;
+    if (apply_filter(false)) restore_pending = false;
+}
+
+bool can_sniff_is_active(void)       { return active; }
+bool can_sniff_filter_error(void)    { return filter_err; }
+bool can_sniff_restore_pending(void) { return restore_pending; }
 
 uint8_t  can_sniff_id_count(void)    { return n_ids; }
 
@@ -171,8 +189,8 @@ uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max)
 
     for (uint8_t slot = 0; slot < max; slot++) {
         const sniff_id_t *best_e = NULL;
-        uint8_t  best_b  = 0;
-        uint32_t best_ms = 0;
+        uint8_t  best_b   = 0;
+        uint32_t best_age = 0;
 
         for (uint8_t i = 0; i < n_ids; i++) {
             const sniff_id_t *e = &tbl[i];
@@ -180,13 +198,16 @@ uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max)
                 if (e->nvals[b] < 2u) continue;                 /* never moved   */
                 if (e->nvals[b] >= SNIFF_DISTINCT_MAX) continue;/* saturated=noise*/
                 if (e->changes[b] == 0u) continue;
-                uint32_t ms = e->last_ms[b];
-                if (ms <= best_ms) continue;
+                /* Youngest first, by AGE: comparing raw stamps put a change from
+                 * before the 32-bit tick wrap above a newer one, and skipped a
+                 * change stamped at tick 0. */
+                uint32_t age = now - e->last_ms[b];
+                if (best_e != NULL && age >= best_age) continue;
                 bool taken = false;
                 for (uint8_t k = 0; k < n; k++)
                     if (out[k].id == e->id && out[k].byte_idx == b) { taken = true; break; }
                 if (taken) continue;
-                best_e = e; best_b = b; best_ms = ms;
+                best_e = e; best_b = b; best_age = age;
             }
         }
         if (best_e == NULL) break;
@@ -197,7 +218,7 @@ uint8_t can_sniff_candidates(sniff_cand_t *out, uint8_t max)
         for (uint8_t k = 0; k < best_e->nvals[best_b]; k++)
             out[n].vals[k] = best_e->vals[best_b][k];
         out[n].changes  = best_e->changes[best_b];
-        out[n].age_ms   = now - best_ms;
+        out[n].age_ms   = best_age;
         n++;
     }
     return n;
