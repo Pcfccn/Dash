@@ -17,6 +17,7 @@
  */
 
 #include "st7735_status.h"
+#include "app_main.h"   /* BACKLIGHT_ACTIVE_LOW: which backlight hardware this image is for */
 #include "main.h"   /* STM32 HAL + GPIO */
 #include "lvgl.h"
 #include "src/drivers/display/st7735/lv_st7735.h"
@@ -232,7 +233,14 @@ void st7735_status_init(void)
     lv_obj_set_style_text_color(bl_cap, lv_color_hex(0xffc033), 0);
     lv_obj_set_width(bl_cap, ST_HOR_RES);                            /* full panel width, so it centers/ */
     lv_obj_set_style_text_align(bl_cap, LV_TEXT_ALIGN_CENTER, 0);    /* wraps instead of clipping off-screen */
+    /* Second line on the inverted-driver image only: an image built for the
+     * other hardware shows 100 % as a dark main panel, and this screen has
+     * its own backlight, so here is where the mix-up can still be read. */
+#if BACKLIGHT_ACTIVE_LOW
     lv_label_set_text(bl_cap, "BRIGHTNESS");
+#else
+    lv_label_set_text(bl_cap, "BRIGHTNESS\nBL INVERT");
+#endif
     lv_obj_align(bl_cap, LV_ALIGN_CENTER, 0, -30);
 
     bl_val = lv_label_create(bl_panel);

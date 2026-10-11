@@ -24,10 +24,8 @@
  * hardware switch-over: the default 1 matches today's direct-drive wiring, and
  * an image built with it on the 2N7000 board turns the backlight OFF at 100 %.
  * Build the new board's image with `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0`
- * (review C5-HW-04). */
-#ifndef BACKLIGHT_ACTIVE_LOW
-#define BACKLIGHT_ACTIVE_LOW 1
-#endif
+ * (review C5-HW-04). BACKLIGHT_ACTIVE_LOW itself, with its 0/1 check, lives in
+ * app_main.h so the status screen can show the variant. */
 #define BACKLIGHT_BOOT_PCT   100u    /* full brightness at boot (PA8 held LOW on the direct drive) */
 
 /* KEY (PC13) gestures: short press = page/step, 3 s hold = toggle backlight mode. */
