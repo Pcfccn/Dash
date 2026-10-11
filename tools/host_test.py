@@ -52,9 +52,12 @@ def main():
     failed = []
     for t in TESTS:
         exe = OUT / (t.stem + (".exe" if os.name == "nt" else ""))
+        # A test may bring its own mocks in tests/host/mock_<name>/ (e.g. the
+        # display test's SPI/DMA HAL and LVGL); they shadow the shared ones.
+        own = ROOT / "tests" / "host" / ("mock_" + t.stem[len("test_"):])
+        incs = ([f"-I{own}"] if own.is_dir() else []) +                [f"-I{ROOT / 'tests/host/mock'}", f"-I{ROOT / 'Core/Inc'}"]
         cmd = [*cc, "-std=gnu11", "-g", "-O1", "-Wall", "-Wextra", *san,
-               f"-I{ROOT / 'tests/host/mock'}", f"-I{ROOT / 'Core/Inc'}",
-               str(t), "-o", str(exe), "-lm"]
+               *incs, str(t), "-o", str(exe), "-lm"]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
             print(f"BUILD FAILED: {t.name}\n{r.stderr}")

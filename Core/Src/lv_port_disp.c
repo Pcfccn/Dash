@@ -394,20 +394,25 @@ void lv_port_disp_inject_errors(void)
 }
 #endif
 
+/* Service pacing. File scope, not function statics, so the host tests
+ * (tests/host/test_lv_port_disp.c) can reset it between cases. */
+static struct {
+    uint32_t t_repaint, t_recover;
+    bool     recovered_once;
+} s_svc;
+
 void lv_port_disp_service(void)
 {
-    static uint32_t t_repaint, t_recover;
-    static bool     recovered_once;
     if (s_disp == NULL || !s_need_repaint) return;
     uint32_t now = HAL_GetTick();
-    if (now - t_repaint < LCD_REPAINT_GAP_MS) return;
-    t_repaint = now;
+    if (now - s_svc.t_repaint < LCD_REPAINT_GAP_MS) return;
+    s_svc.t_repaint = now;
 
     bool reinit_failed = false;
     if (s_err_streak >= LCD_RECOVER_STREAK &&
-        (!recovered_once || now - t_recover >= LCD_RECOVER_GAP_MS)) {
-        recovered_once = true;
-        t_recover = now;
+        (!s_svc.recovered_once || now - s_svc.t_recover >= LCD_RECOVER_GAP_MS)) {
+        s_svc.recovered_once = true;
+        s_svc.t_recover = now;
         dma_wait();                  /* nothing of ours left on the wire     */
         HAL_SPI_Abort(&hspi2);
         cs_high();
@@ -419,6 +424,9 @@ void lv_port_disp_service(void)
         reinit_failed  = (s_spi_err != e0);
         s_err_streak   = reinit_failed ? LCD_RECOVER_STREAK : 0u;
     }
-    s_need_repaint = reinit_failed;
+    /* Stay pending while a re-init is still owed (it failed, or the gap has
+     * not passed yet): clearing it on a repaint-only pass meant the service
+     * never ran again, so a failed re-init was never retried. */
+    s_need_repaint = reinit_failed || s_err_streak >= LCD_RECOVER_STREAK;
     lv_obj_invalidate(lv_display_get_screen_active(s_disp));
 }

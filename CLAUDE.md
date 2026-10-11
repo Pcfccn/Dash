@@ -38,7 +38,7 @@ Peripheral/pin config lives in `Dash.ioc` — regenerating code from it via Cube
 
 Flash/debug config is in `Dash.launch` (ST-LINK GDB server, configured in CubeIDE).
 
-Host-side unit tests live in `tests/host/`: they `#include` the real `Core/Src/fdcan_obd.c` against a mocked HAL (`tests/host/mock/`) and cover frame validation, ISO-TP, reply ownership, TX errors and MIL freshness. Run them with `python tools/host_test.py` (gcc/clang, or `pip install ziglang`); UBSan is always on, ASan off Windows. When you change `fdcan_obd.c`, run them and add a case for the change. Nothing else (UI, LVGL, drivers) has tests.
+Host-side unit tests live in `tests/host/`: they `#include` the real `Core/Src/fdcan_obd.c` against a mocked HAL (`tests/host/mock/`) and cover frame validation, ISO-TP, reply ownership, TX errors and MIL freshness. Run them with `python tools/host_test.py` (gcc/clang, or `pip install ziglang`); UBSan is always on, ASan off Windows. When you change `fdcan_obd.c`, run them and add a case for the change. `test_oilp_dpid.c` reruns that suite as the `OILP_DPID_ENABLE 1` experiment build. `test_can_sniff.c` tests the real `can_sniff.c`, and `test_lv_port_disp.c` the real display driver by fault injection into a mocked SPI/DMA HAL and LVGL (its own mocks in `tests/host/mock_lv_port_disp/`; `host_test.py` adds `tests/host/mock_<name>/` ahead of the shared mocks for `test_<name>.c`). The UI pages (`cluster_ui.c`) and the ST7735 driver have no tests; their decisions live in `cluster_policy.h`, which is tested.
 
 ## Architecture
 
