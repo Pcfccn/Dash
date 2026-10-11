@@ -259,6 +259,15 @@ static bool arrived_in_time(uint32_t deadline) {
     return (int32_t)(rx_ms_cur - await_start) >= 0 && (int32_t)(rx_ms_cur - deadline) < 0;
 }
 
+/* Past the hard total limit (OBD_TXN_MAX_MS from the request) by receive
+ * time? The NRC-0x78 extension is clamped to it, but a multi-frame transfer
+ * runs on its own per-frame N_Cr deadline, so its Consecutive Frames check
+ * this too. Interrupt timestamps only, as arrived_in_time(); in the polled
+ * fallback obd_poll_tick() enforces the cap by processing time. */
+static bool past_txn_cap(void) {
+    return rx_irq && (int32_t)(rx_ms_cur - (await_start + OBD_TXN_MAX_MS)) >= 0;
+}
+
 /* `complete`: p is a whole reply (SF, or a reassembled transfer). A First
  * Frame shows only its first bytes, so there a mode-01 reply only has to start
  * with a requested PID; the full check runs once the transfer is complete. */
@@ -819,8 +828,16 @@ void obd_rx_poll(void) {
              * on the First Frame, so need bounds the copy. */
             uint16_t need = (uint16_t)(itp_len - itp_got);
             if (need > 7u) need = 7u;
-            if (!arrived_in_time(itp_deadline) ||            /* N_Cr exceeded */
-                (d[0] & 0x0F) != itp_next_seq || (uint16_t)(dlc - 1u) < need) {
+            if (past_txn_cap()) {                            /* total limit    */
+                if (txn_cap_cnt < 0xFFFFu) txn_cap_cnt++;    /* once: it closes */
+                txn_failed();
+                continue;
+            }
+            if (!arrived_in_time(itp_deadline)) {            /* N_Cr exceeded:  */
+                txn_failed();                                /* late, not bad   */
+                continue;
+            }
+            if ((d[0] & 0x0F) != itp_next_seq || (uint16_t)(dlc - 1u) < need) {
                 rx_bad();
                 txn_failed();
                 continue;

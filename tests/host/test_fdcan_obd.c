@@ -1167,6 +1167,63 @@ static void t_summary_needs_complete_data(void)
     CHECK(!policy_shown(&g_obd, M_BATTERY, now_ms));
 }
 
+/* --- Stage C3 review ------------------------------------------------------- */
+/* C3-01: the 10 s total cap also binds an ISO-TP transfer. Pending replies
+ * push the deadline to the cap; a First Frame just before it starts a
+ * transfer whose last CF lands after it. That CF must not complete the
+ * transaction (it did: EGT decoded, slot closed, cap never counted). */
+static void cap_scenario(uint32_t start, uint32_t ff_at, uint32_t cf_at)
+{
+    irq_mode();
+    now_ms = start;
+    static const uint8_t egt = 0x78;
+    CHECK(req_mode01(&egt, 1));
+    static const uint32_t pend[] = { 100u, 4900u, 8900u };
+    for (int i = 0; i < 3; i++) {
+        now_ms = start + pend[i];
+        PUSH(0x7E8, 8, 0x03, 0x7F, 0x01, 0x78, 0x00, 0x00, 0x00, 0x00);
+        FDCAN1_IT0_IRQHandler();
+        obd_rx_poll(); obd_poll_tick();
+    }
+    now_ms = start + ff_at;
+    PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, 0x01, 0x0B, 0xB8, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    obd_rx_poll(); obd_poll_tick();
+    CHECK(itp_active);                                   /* FF in time: accepted */
+    now_ms = start + cf_at;
+    PUSH(0x7E8, 8, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    obd_rx_poll();
+}
+
+static void t_c3_01_cf_after_cap_rejected(void)
+{
+    cap_scenario(1000u, 9900u, 10200u);
+    CHECK(isnan(g_obd.egt));                             /* not completed */
+    CHECK(!itp_active);
+    CHECK(!(await_resp_id == OBD_RESP_ECM && await_sid == 0x01 && await_key == 0x78));
+    CHECK(txn_cap_cnt == 1);                             /* counted once */
+    obd_poll_tick();
+    CHECK(txn_cap_cnt == 1);
+    CHECK(rx_bad_cnt == 0);                              /* late is not malformed */
+}
+
+static void t_c3_01_cf_before_cap_completes(void)
+{
+    cap_scenario(1000u, 9000u, 9900u);
+    CHECK(near(g_obd.egt, 260.0f));
+    CHECK(await_resp_id == 0 && txn_cap_cnt == 0);
+}
+
+static void t_c3_01_cap_across_wrap(void)
+{
+    cap_scenario(0xFFFFE000u, 9900u, 10200u);            /* cap lands past 0 */
+    CHECK(isnan(g_obd.egt) && txn_cap_cnt == 1);
+    reset();
+    cap_scenario(0xFFFFE000u, 9000u, 9900u);
+    CHECK(near(g_obd.egt, 260.0f) && txn_cap_cnt == 0);
+}
+
 /* --- Stage C2 deep-audit addendum ------------------------------------------ */
 /* MIL / DTC count expire by time too: with polling paused (SNIFF) no attempt
  * fails, so the attempt counter alone kept a "MIL OFF" valid forever. */
@@ -1424,6 +1481,9 @@ int main(void)
         { "tick_wraparound",            t_tick_wraparound },
         { "d01_sniff_sees_every_frame", t_d01_sniff_sees_every_frame },
         { "d06_sniff_gets_rx_time",     t_d06_sniff_gets_rx_time },
+        { "c3_01_cf_after_cap_rejected",t_c3_01_cf_after_cap_rejected },
+        { "c3_01_cf_before_cap_ok",     t_c3_01_cf_before_cap_completes },
+        { "c3_01_cap_across_wrap",      t_c3_01_cap_across_wrap },
         { "mil_expires_by_time",        t_mil_expires_by_time },
         { "d02_oilp_ff_clears_value",   t_d02_oilp_ff_clears_value },
         { "d03_nrc78_total_cap",        t_d03_nrc78_total_cap },
