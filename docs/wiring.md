@@ -41,12 +41,14 @@ Present on the core board per the vendor schematic/examples, not currently touch
 
 | Peripheral | Bus / pins | Vendor example |
 |---|---|---|
-| 8MB SPI NOR flash | SPI1 — SCK=PB3, MISO=PB4, MOSI=PD7 | `06-SPIFlash_Test` |
+| 8MB SPI NOR flash | SPI1 — SCK=PB3, MISO=PB4, MOSI=PD7, **CS=PD6** | `06-SPIFlash_Test` |
 | 8MB QSPI NOR flash | QUADSPI — CLK=PB2, NCS=PB6, IO0=PD11, IO1=PD12, IO2=PE2, IO3=PD13 | `02-ExtMem_Boot` |
-| MicroSD (TF card) | SDMMC1 — D0..D3=PC8..PC11 (4-bit), + CLK/CMD | `04-SD_Test` |
-| 8-bit DVP camera port | DCMI | `05-DCMI_UVC`, `08-DCMI2LCD` |
+| MicroSD (TF card) | SDMMC1 — D0..D3=PC8..PC11 (4-bit), CLK=PC12, CMD=PD2, **card detect=PD4** | `04-SD_Test` |
+| 8-bit DVP camera port | DCMI — HSYNC=PA4, PIXCLK=PA6, VSYNC=PB7, D0..D7 on PC6, PC7, PE0, PE1, PE4, PD3, PE5, PE6; SCCB = I2C1 PB8/PB9 | `05-DCMI_UVC`, `08-DCMI2LCD` |
 
-None of these pins conflict with anything this project uses (SPI2 for the main display, SPI4 for the status display, FDCAN1 for the OBD bus, TIM1 for backlight PWM, PC13/PE3 for KEY/LED).
+None of these pins conflict with anything this project uses (SPI2 for the main display, SPI4 for the status display, FDCAN1 for the OBD bus, TIM1 for backlight PWM, PC13/PE3 for KEY/LED). The CS and card-detect pins and the DCMI list are from the [Zephyr](https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/weact/mini_stm32h743/mini_stm32h743.dts) and [MicroPython](https://github.com/micropython/micropython/tree/master/ports/stm32/boards/WEACTSTUDIO_MINI_STM32H743) board definitions, which agree; confirm against the WeAct schematic before wiring to them.
+
+**Planned inputs (not in the firmware yet, [build-hardware.md](future/build-hardware.md) §6c):** buttons PE7 / PE8 / PE9, day/night (parking lights) PE15, GPS on USART2 PA2/PA3. Not PD3–PD6 as first planned: PD6 is the SPI flash CS (needed for the odometer), PD4 the SD card detect, PD3 a camera data line (review C4-HW-01).
 
 ## What this project adds beyond the core board
 
