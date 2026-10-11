@@ -1,45 +1,45 @@
 # Graph Report - Dash  (2026-10-11)
 
 ## Corpus Check
-- 63 files · ~778,347 words
+- 63 files · ~779,773 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: (none) 5, .ld 2, .ioc 1)
 
 ## Summary
-- 808 nodes · 1685 edges · 40 communities (35 shown, 5 thin omitted)
-- Extraction: 73% EXTRACTED · 27% INFERRED · 0% AMBIGUOUS · INFERRED: 459 edges (avg confidence: 0.87)
+- 811 nodes · 1694 edges · 40 communities (36 shown, 4 thin omitted)
+- Extraction: 73% EXTRACTED · 27% INFERRED · 0% AMBIGUOUS · INFERRED: 464 edges (avg confidence: 0.88)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b4d7fe41`
+- Built from commit: `c44ff048`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - In-vehicle install — from bench demo to a live car
 - Чистовая сборка: из макетки в устройство
-- fault.c
+- main.c
 - cluster_ui.c
 - test_lv_port_disp.c
 - Colorado 2.8 Diesel Cluster v2 Mockup
-- Hardware reference — WeAct MiniSTM32H743
+- fault.c
 - fdcan_obd.c
 - main.h
 - SNIFF page (STATE + ANALOG)
 - obd_rx_poll
 - test_fdcan_obd.c
 - stdint
-- app_main.c
 - Architecture
+- obd_is_fresh
 - Сессия 2026-07-24, утро (~10:19–10:20) — расшифровка фото
+- stm32h7xx_it.c
 - obd_poll_tick
-- req_oilp
 - FDCAN1_IT0_IRQHandler
 - stm32h7xx_hal_conf.h
 - Свой одометр по GPS и расход топлива
 - build.py
-- st7735_status.c
-- AppMain_Run
+- freertos.c
+- tim.c
 - REVIEW.md
 - test_can_sniff.c
 - CLAUDE.md
@@ -52,8 +52,8 @@
 - HAL_GPIO_Init
 - Экран: качество картинки и скорость
 - Oil pressure: where it comes from, and how to check it
-- stm32h7xx_hal_timebase_tim.c
-- req_mode22
+- MX_SPI2_Init
+- fault_record
 
 ## God Nodes (most connected - your core abstractions)
 1. `obd_rx_poll()` - 88 edges
@@ -61,22 +61,22 @@
 3. `obd_poll_tick()` - 35 edges
 4. `Architecture` - 28 edges
 5. `near()` - 25 edges
-6. `req_mode01()` - 20 edges
-7. `lv_port_disp_service()` - 20 edges
-8. `Этап 0 дисплея (`b7f9470`) — что смотреть ревьюеру` - 19 edges
-9. `disp_flush_cb()` - 18 edges
+6. `lv_port_disp_service()` - 21 edges
+7. `req_mode01()` - 20 edges
+8. `disp_flush_cb()` - 19 edges
+9. `Этап 0 дисплея (`b7f9470`) — что смотреть ревьюеру` - 19 edges
 10. `AppMain_Run()` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `5. Known gaps for a "complete" in-car build` --references--> `backlight_set()`  [INFERRED]
   docs/vehicle-install.md → Core/Src/app_main.c
-- `Backlight control module` --references--> `backlight_set()`  [INFERRED]
-  docs/wiring.md → Core/Src/app_main.c
-- `User button "KEY" (PC13)` --references--> `key_button_init()`  [INFERRED]
-  docs/wiring.md → Core/Src/app_main.c
+- `Подсветка: драйвер затвора` --references--> `AppMain_Init()`  [INFERRED]
+  docs/future/build-hardware.md → Core/Src/app_main.c
 - `Изменения в прошивке` --references--> `obd_rx_poll()`  [INFERRED]
   docs/future/gps-performance-meter.md → Core/Src/fdcan_obd.c
 - `Ключевые соглашения (их легко сломать)` --references--> `obd_rx_poll()`  [INFERRED]
+  docs/REVIEW.md → Core/Src/fdcan_obd.c
+- `Поток управления` --references--> `obd_rx_poll()`  [INFERRED]
   docs/REVIEW.md → Core/Src/fdcan_obd.c
 
 ## Import Cycles
@@ -86,7 +86,7 @@
 - **Three-Page Cluster Navigation (Drive/DPF/Diag)** — design_diesel_cluster_v2_3_drive_page, design_diesel_cluster_v2_3_dpf_page, design_diesel_cluster_v2_3_diag_page, design_diesel_cluster_v2_3_tab_switcher [EXTRACTED 1.00]
 - **Glanceable Diesel-Health Signature Elements** — design_diesel_cluster_v2_3_systems_rail, design_diesel_cluster_v2_3_calibration_eyebrow, design_diesel_cluster_v2_3_state_colour_encoding, design_diesel_cluster_v2_3_ili9488_constraints [INFERRED 0.75]
 
-## Communities (40 total, 5 thin omitted)
+## Communities (40 total, 4 thin omitted)
 
 ### Community 0 - "In-vehicle install — from bench demo to a live car"
 Cohesion: 0.22
@@ -96,65 +96,69 @@ Nodes (9): 1. Powering the board in the car, 3. What the firmware sends, 4. Brin
 Cohesion: 0.06
 Nodes (32): 1. Что не так с макетом, 2. Выбранная схема (вариант A) и что потом, 3. Схема узлов (вариант A), 4. Корпус и установка, 5. Порядок сборки и проверки, 6. Стоимость варианта A, 6a. Если бюджет позволяет (было в первой версии, ~$100–150), 6b. Заказ на LCSC (проверено по API LCSC 2026-10-11) (+24 more)
 
-### Community 2 - "fault.c"
-Cohesion: 0.05
-Nodes (43): app_main, fault_init(), fault_record(), fault_reset_abnormal(), fault_reset_streak(), fault_reset_text(), fault_wdg_kick(), fault_wdg_run_mode() (+35 more)
+### Community 2 - "main.c"
+Cohesion: 0.22
+Nodes (11): FDCAN_HandleTypeDef, HAL_FDCAN_MspDeInit(), HAL_FDCAN_MspInit(), MX_FDCAN1_Init(), TIM_HandleTypeDef, Error_Handler(), HAL_TIM_PeriodElapsedCallback(), main() (+3 more)
 
 ### Community 3 - "cluster_ui.c"
 Cohesion: 0.07
-Nodes (67): Hardware notes worth knowing before touching related code, metric_key_t, metric_state_t, metric_state(), build_diag(), build_drive(), build_sniff(), build_strip() (+59 more)
+Nodes (66): Hardware notes worth knowing before touching related code, build_diag(), build_drive(), build_sniff(), build_strip(), lv_obj_t, metric_key_t, metric_state_t (+58 more)
 
 ### Community 4 - "test_lv_port_disp.c"
 Cohesion: 0.05
-Nodes (76): lv_area_t, lv_display_t, SPI_HandleTypeDef, cs_high(), cs_low(), dc_cmd(), dc_data(), disp_flush_cb() (+68 more)
+Nodes (79): lv_area_t, lv_display_t, SPI_HandleTypeDef, cs_high(), cs_low(), dc_cmd(), dc_data(), disp_flush_cb() (+71 more)
 
 ### Community 5 - "Colorado 2.8 Diesel Cluster v2 Mockup"
 Cohesion: 0.22
 Nodes (13): Calibration Eyebrow, Colorado 2.8 Diesel Cluster v2 Mockup, Holden Colorado RG 2.8 E98 ECM, DIAG Page, DPF Page, DPF Soot / Regeneration Monitoring, DRIVE Page, ECU Instrument Direction (+5 more)
 
-### Community 6 - "Hardware reference — WeAct MiniSTM32H743"
-Cohesion: 0.15
-Nodes (13): heartbeat_led_tick(), Backlight control module, Boot / programming, CAN transceiver module, Core board, External modules (as purchased), Hardware reference — WeAct MiniSTM32H743, Main 4" display module (+5 more)
+### Community 6 - "fault.c"
+Cohesion: 0.25
+Nodes (10): fault_init(), fault_reset_abnormal(), fault_reset_streak(), fault_reset_text(), fault_wdg_kick(), fault_wdg_run_mode(), fault_wdg_start_boot(), rec_set_streak() (+2 more)
 
 ### Community 7 - "fdcan_obd.c"
 Cohesion: 0.10
-Nodes (36): cluster_app_run(), obd_on_update(), arrived_in_time(), HAL_StatusTypeDef, metric_key_t, can_send(), cfg_ok(), decode_mode01() (+28 more)
+Nodes (37): cluster_app_run(), obd_on_update(), arrived_in_time(), HAL_StatusTypeDef, can_send(), cfg_ok(), decode_mode01(), decode_mode22() (+29 more)
+
+### Community 8 - "main.h"
+Cohesion: 0.15
+Nodes (4): HAL_StatusTypeDef, HAL_InitTick(), stm32h7xx_hal, stm32h7xx_hal_tim
 
 ### Community 9 - "SNIFF page (STATE + ANALOG)"
 Cohesion: 0.10
 Nodes (19): DIAG page, DPF page, DRIVE page, SNIFF page (STATE + ANALOG), Сессия 2026-07-23, утро (~10:10) — расшифровка фото, Фото 10 (628) — двигатель не запущен, Фото 11 (629), Фото 12 (630) — двигатель заглушен, WARN (+11 more)
 
 ### Community 10 - "obd_rx_poll"
-Cohesion: 0.11
-Nodes (29): obd_is_fresh(), obd_rx_poll(), obd_sel_fresh(), oilp_standstill(), near(), sniff_saw(), t_boost_needs_baro_and_follows_map(), t_d01_sniff_sees_every_frame() (+21 more)
+Cohesion: 0.10
+Nodes (37): obd_rx_poll(), req_mode01(), egt_request(), near(), t_cf_empty_rejected(), t_cf_other_sender_ignored(), t_cf_short_rejected(), t_cf_wrong_sequence() (+29 more)
 
 ### Community 11 - "test_fdcan_obd.c"
-Cohesion: 0.12
-Nodes (18): IRQn_Type, egt_request(), HAL_NVIC_DisableIRQ(), HAL_NVIC_EnableIRQ(), HAL_NVIC_SetPriority(), main(), push_frame(), reset() (+10 more)
-
-### Community 13 - "app_main.c"
 Cohesion: 0.14
-Nodes (16): can_sniff, cluster_app, cluster_ui, app_loop_max_ms(), AppMain_Init(), backlight_set(), heartbeat_led_init(), key_button_init() (+8 more)
+Nodes (14): IRQn_Type, cap_scenario(), HAL_NVIC_DisableIRQ(), HAL_NVIC_EnableIRQ(), HAL_NVIC_SetPriority(), main(), push_frame(), reset() (+6 more)
 
-### Community 14 - "Architecture"
-Cohesion: 0.21
-Nodes (20): Architecture, metric_key_t, obd_data_t, policy_complete(), policy_ecm_fresh(), policy_fresh(), policy_shown(), policy_sniff_allowed() (+12 more)
+### Community 12 - "stdint"
+Cohesion: 0.15
+Nodes (5): metric_key_t, metric_state_t, metric_state(), stdbool, stdint
+
+### Community 13 - "Architecture"
+Cohesion: 0.05
+Nodes (66): can_sniff, Architecture, cluster_app, cluster_ui, metric_key_t, obd_data_t, policy_complete(), policy_ecm_fresh() (+58 more)
+
+### Community 14 - "obd_is_fresh"
+Cohesion: 0.20
+Nodes (12): metric_key_t, obd_data_t, obd_is_fresh(), obd_mil_fresh(), obd_sel_fresh(), t_boost_needs_baro_and_follows_map(), t_decode_stamps_fresh(), t_delayed_frame_keeps_rx_time() (+4 more)
 
 ### Community 15 - "Сессия 2026-07-24, утро (~10:19–10:20) — расшифровка фото"
 Cohesion: 0.11
 Nodes (17): 1. OIL P нестабильна — приоритет высокий, 2. DPF данные нестабильны, 3. DPF page WARN при dP=NaN, 4. BATT 11.9V — WARN alert, DIAG page, DPF page, DRIVE page, SNIFF page (+9 more)
 
-### Community 16 - "obd_poll_tick"
-Cohesion: 0.14
-Nodes (20): obd_poll_tick(), req_mode01(), cap_scenario(), t_c3_01_cf_after_cap_rejected(), t_c3_01_cf_before_cap_completes(), t_foreign_ff_gets_no_fc(), t_foreign_sf_keeps_slot(), t_interleaved_cf_clears_new_pending() (+12 more)
-
-### Community 17 - "req_oilp"
-Cohesion: 0.19
-Nodes (14): req_oilp(), last_tx_is(), park(), t_oilp_22_refused_then_dpid(), t_oilp_22_silent_falls_back(), t_oilp_2c_refused_ends_search(), t_oilp_busy_nrc_retried(), t_oilp_define_capped() (+6 more)
+### Community 17 - "obd_poll_tick"
+Cohesion: 0.11
+Nodes (27): obd_poll_tick(), req_mode22(), req_oilp(), last_tx_is(), park(), t_d03_nrc78_within_cap_completes(), t_mil_goes_stale(), t_mil_invalid_after_three_misses() (+19 more)
 
 ### Community 18 - "FDCAN1_IT0_IRQHandler"
 Cohesion: 0.27
-Nodes (13): FDCAN1_IT0_IRQHandler(), obd_can_health(), obd_health_t, irq_mode(), t_d05_arrival_check_across_wrap(), t_d05_late_arrival_is_not_an_answer(), t_d06_sniff_gets_rx_time(), t_delayed_frame_across_wrap() (+5 more)
+Nodes (12): FDCAN1_IT0_IRQHandler(), obd_can_health(), obd_health_t, irq_mode(), t_d03_nrc78_total_cap(), t_d05_arrival_check_across_wrap(), t_d06_sniff_gets_rx_time(), t_delayed_frame_across_wrap() (+4 more)
 
 ### Community 19 - "stm32h7xx_hal_conf.h"
 Cohesion: 0.03
@@ -168,13 +172,13 @@ Nodes (11): 1. Что показываем, 2. Пробег: откуда бра
 Cohesion: 0.15
 Nodes (20): argparse, concurrent_futures, importlib_util, os, pathlib, re, shutil, subprocess (+12 more)
 
-### Community 23 - "st7735_status.c"
-Cohesion: 0.30
-Nodes (14): lv_display_t, st7735_status_init(), st7735_status_spi_errors(), st_cs_high(), st_cs_low(), st_dc_cmd(), st_dc_data(), st_hw_init() (+6 more)
+### Community 23 - "freertos.c"
+Cohesion: 0.25
+Nodes (4): app_main, MX_FREERTOS_Init(), main, task
 
-### Community 24 - "AppMain_Run"
-Cohesion: 0.22
-Nodes (9): AppMain_Run(), loop_time_tick(), cluster_ui_get_page(), fault_selftest(), StartDefaultTask(), st7735_status_backlight(), st7735_status_key_dbg(), st7735_status_set() (+1 more)
+### Community 24 - "tim.c"
+Cohesion: 0.43
+Nodes (6): TIM_HandleTypeDef, HAL_TIM_MspPostInit(), HAL_TIM_PWM_MspDeInit(), HAL_TIM_PWM_MspInit(), MX_TIM1_Init(), tim
 
 ### Community 27 - "test_can_sniff.c"
 Cohesion: 0.10
@@ -220,28 +224,28 @@ Nodes (14): 2. Время передачи кадра, 3. Этап 0: без п�
 Cohesion: 0.25
 Nodes (6): Check on the car, DIAG, bottom readout (line 3), How the firmware asks (`fdcan_obd.c`, "oil pressure"), Oil pressure: where it comes from, and how to check it, The source, What the old candidates were
 
-### Community 38 - "stm32h7xx_hal_timebase_tim.c"
-Cohesion: 0.33
-Nodes (3): HAL_StatusTypeDef, HAL_InitTick(), stm32h7xx_hal_tim
-
-### Community 39 - "req_mode22"
+### Community 38 - "MX_SPI2_Init"
 Cohesion: 0.40
-Nodes (5): req_mode22(), t_d03_nrc78_total_cap(), t_d03_nrc78_within_cap_completes(), t_nrc78_keeps_slot(), t_pending_replaced_before_timeout()
+Nodes (5): SPI_HandleTypeDef, HAL_SPI_MspDeInit(), HAL_SPI_MspInit(), MX_SPI2_Init(), spi
+
+### Community 39 - "fault_record"
+Cohesion: 0.40
+Nodes (5): fault_record(), vApplicationStackOverflowHook(), HardFault_Handler(), fault_code_t, TaskHandle_t
 
 ## Knowledge Gaps
-- **141 isolated node(s):** `What this is`, `Git workflow: commit and push automatically`, `Use graphify before and after non-trivial changes`, `graphify`, `Фото 7 (625) — двигатель работает, RPM=1056` (+136 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 284 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **140 isolated node(s):** `What this is`, `Git workflow: commit and push automatically`, `Use graphify before and after non-trivial changes`, `graphify`, `Фото 7 (625) — двигатель работает, RPM=1056` (+135 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 283 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `obd_rx_poll()` connect `obd_rx_poll` to `obd_init`, `cluster_ui.c`, `fdcan_obd.c`, `req_mode22`, `test_fdcan_obd.c`, `Architecture`, `obd_poll_tick`, `req_oilp`, `FDCAN1_IT0_IRQHandler`, `test_can_sniff.c`, `GPS-скорость и замер разгона («свой Dragy»)`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Why does `cluster_ui_refresh()` connect `cluster_ui.c` to `test_lv_port_disp.c`, `fdcan_obd.c`, `obd_rx_poll`, `app_main.c`, `Architecture`, `FDCAN1_IT0_IRQHandler`, `st7735_status.c`, `test_can_sniff.c`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
-- **Why does `Dash — обзор проекта для ревью` connect `cluster_ui.c` to `REVIEW.md`?**
-  _High betweenness centrality (0.079) - this node is a cross-community bridge._
+- **Why does `obd_rx_poll()` connect `obd_rx_poll` to `obd_init`, `cluster_ui.c`, `fdcan_obd.c`, `test_fdcan_obd.c`, `Architecture`, `obd_is_fresh`, `obd_poll_tick`, `FDCAN1_IT0_IRQHandler`, `test_can_sniff.c`, `GPS-скорость и замер разгона («свой Dragy»)`?**
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
+- **Why does `Architecture` connect `Architecture` to `obd_init`, `main.c`, `cluster_ui.c`, `test_lv_port_disp.c`, `fault.c`, `fdcan_obd.c`, `obd_rx_poll`, `obd_is_fresh`, `obd_poll_tick`, `FDCAN1_IT0_IRQHandler`, `test_can_sniff.c`, `CLAUDE.md`?**
+  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+- **Why does `cluster_ui_refresh()` connect `cluster_ui.c` to `test_lv_port_disp.c`, `fdcan_obd.c`, `stdint`, `Architecture`, `obd_is_fresh`, `FDCAN1_IT0_IRQHandler`, `test_can_sniff.c`?**
+  _High betweenness centrality (0.082) - this node is a cross-community bridge._
 - **Are the 74 inferred relationships involving `obd_rx_poll()` (e.g. with `Architecture` and `cluster_app_run()`) actually correct?**
   _`obd_rx_poll()` has 74 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 27 inferred relationships involving `cluster_ui_refresh()` (e.g. with `Architecture` and `Hardware notes worth knowing before touching related code`) actually correct?**

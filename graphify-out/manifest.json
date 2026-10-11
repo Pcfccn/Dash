@@ -90,9 +90,9 @@
     "semantic_hash": "5025ea19ecb95acc84b17dcc17d3ebab"
   },
   "Core/Src/app_main.c": {
-    "mtime": 1791620130.9757526,
-    "seen": 1791698891.2263582,
-    "ast_hash": "b5fa477ed8414bdcfefbb8a15ccaf891",
+    "mtime": 1791699921.308902,
+    "seen": 1791700338.6011055,
+    "ast_hash": "2292933d5586f5b5d10cfc86c77b7a1c",
     "semantic_hash": ""
   },
   "Core/Src/cluster_app.c": {
@@ -132,9 +132,9 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1791698238.8843977,
-    "seen": 1791698891.226365,
-    "ast_hash": "57a32d775a1c63071b4d57e6ded35b12",
+    "mtime": 1791699665.8383408,
+    "seen": 1791700338.6011126,
+    "ast_hash": "e3f4599a61d97f41c3a52a57adaaa337",
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
@@ -186,9 +186,9 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1791698308.247874,
-    "seen": 1791698891.2263775,
-    "ast_hash": "8a8281bd7b5e0f27304f728aa1bfca11",
+    "mtime": 1791700257.4003842,
+    "seen": 1791700338.6011274,
+    "ast_hash": "6f43dd0f036c37c74ea0209a101d63c3",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -798,9 +798,9 @@
     "semantic_hash": ""
   },
   "docs/REVIEW.md": {
-    "mtime": 1791698787.3646398,
-    "seen": 1791698891.2263856,
-    "ast_hash": "e428e3c2a6fdcf9bd47e4ed794a96296",
+    "mtime": 1791700261.6213892,
+    "seen": 1791700338.6011367,
+    "ast_hash": "d8d3fcc1dfc772db93c52f05a336bd94",
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
@@ -840,9 +840,9 @@
     "semantic_hash": ""
   },
   "tests/host/test_lv_port_disp.c": {
-    "mtime": 1791698252.8812904,
-    "seen": 1791698891.2263746,
-    "ast_hash": "8a799f2a05c2131623715261adffa6fd",
+    "mtime": 1791699665.8399813,
+    "seen": 1791700338.601124,
+    "ast_hash": "0f52f10e9d46f4d097c43014753bba3f",
     "semantic_hash": ""
   },
   "tests/host/test_oilp_dpid.c": {
@@ -852,15 +852,15 @@
     "semantic_hash": ""
   },
   "docs/future/build-hardware.md": {
-    "mtime": 1791698861.7485595,
-    "seen": 1791698891.2263873,
-    "ast_hash": "7aa49fb7f0c612bd83cb668108ca044b",
+    "mtime": 1791700208.630945,
+    "seen": 1791700338.6011386,
+    "ast_hash": "9d77417c402966c752a48ec5c354f782",
     "semantic_hash": ""
   },
   "docs/future/gps-odometer-fuel.md": {
-    "mtime": 1791698732.3451614,
-    "seen": 1791698891.2263887,
-    "ast_hash": "0eb4871a6e9f256877fb304dfd190da5",
+    "mtime": 1791700208.6498542,
+    "seen": 1791700338.60114,
+    "ast_hash": "a4b190c24bcbf11c4f1111dd126882a8",
     "semantic_hash": ""
   }
 }
