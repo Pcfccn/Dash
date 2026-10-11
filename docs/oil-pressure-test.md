@@ -66,11 +66,16 @@ tester on the port may define the same DPID number with something else.
 Both are gone from the firmware (filters and DIAG fields); filter 2 now takes
 `0x5E8`.
 
-## DIAG line 2
+## DIAG, bottom readout (line 3)
 
 ```
-OILP AA  22/31 2C/-- AA/--  RAW 4B
+NRC 22/31 LOOP 140 Q12
+LOST 0 BAD 0 TXF 0
+OILP AA 22/31 2C/-- AA/-- RAW 4B
 ```
+
+If a display SPI error has been seen, line 3 leads with it and the probe
+shortens to path + raw: `SPI 3/0 R1 F0 OILP AA RAW 4B`.
 
 - `OILP 22 | 2C | AA | NONE` — the current step: reading with `$22`, about to
   define with `$2C`, reading the packet with `$AA`, or no source.
@@ -78,7 +83,7 @@ OILP AA  22/31 2C/-- AA/--  RAW 4B
   working `AA` is the expected picture if `$22` is refused.
 - `RAW 4B` — last raw byte (hex). `4B` = 75 × 4 kPa = 3.0 bar.
 
-The **OIL P** tile on DRIVE shows the value in bar, in neutral blue: it is
+The **OIL P ?** tile on DRIVE (the `?` stays until `OILP_VALIDATED 1`) shows the value in bar, in neutral blue: it is
 **never a warning colour while `OILP_VALIDATED` is 0** (the default — the
 byte is the ECM's value as received, but its meaning and scaling on this
 engine are not yet confirmed). After validation it is judged only with the

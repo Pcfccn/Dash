@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
+#include <stdarg.h>
 
 /* ---- palette (from the HTML :root) --------------------------------------- */
 /* Palette brightened for the ILI9488 SPI panel: dark background kept for
@@ -373,7 +374,10 @@ static void build_drive(void)
     lv_obj_set_style_pad_all(grid, 0, 0);
     lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
 
-    static const char *NAMES[4] = { "COOLANT", "OIL", "ATF", "OIL P" };
+    /* "OIL P ?": the source (PID 0xA22C) is not yet validated on this engine
+     * (OILP_VALIDATED 0) — the number is information, not a checked reading. */
+    static const char *NAMES[4] = { "COOLANT", "OIL", "ATF",
+                                    OILP_VALIDATED ? "OIL P" : "OIL P ?" };
     static const char *UNITS[4] = { DEG "C",   DEG "C", DEG "C", "bar" };
     const int ch = 149;                                 /* cell height */
     const int cx[4] = { 0, 160, 0, 160 };
@@ -490,12 +494,12 @@ static void build_diag(void)
         lv_obj_set_pos(lv_obj_get_parent(ui.st_val[i]), 0, 20);
     }
 
-    /* Workbench readout (two lines) in the gap above the pager, not part of
-     * the design: line 1 = last NRC, bus counters and LOOP time; line 2 = the
-     * oil-pressure source probe. Filled in cluster_ui_refresh(). */
+    /* Workbench readout (three lines) in the gap between the cards (end at
+     * 380) and the pager (432), not part of the design: 3 x 15 px + 2 x 1 px
+     * from 382 ends at 429. Filled in cluster_ui_refresh(). */
     ui.did_dbg = mk_label(pg, "", F12, C_FAINT);
-    lv_obj_set_pos(ui.did_dbg, 10, 388);
-    lv_obj_set_style_text_line_space(ui.did_dbg, 4, 0);
+    lv_obj_set_pos(ui.did_dbg, 10, 382);
+    lv_obj_set_style_text_line_space(ui.did_dbg, 1, 0);
 
     mk_pager(pg, 1);
 }
@@ -686,6 +690,22 @@ static void ui_border_color(lv_obj_t *o, lv_color_t c)
     lv_obj_set_style_border_color(o, c, 0);
 }
 
+/* Append a formatted piece to a fixed buffer, never past its end. Adding
+ * lv_snprintf()'s return value (the length it WANTED) to the offset used to
+ * push the offset beyond the buffer once one field was cut, which then
+ * silently dropped every later field — the error counters first. */
+static void cat(char *b, size_t n, size_t *o, const char *fmt, ...)
+{
+    if (*o + 1u >= n) return;
+    va_list ap;
+    va_start(ap, fmt);
+    int w = lv_vsnprintf(b + *o, n - *o, fmt, ap);
+    va_end(ap);
+    if (w < 0) return;
+    *o += (size_t)w;
+    if (*o >= n) *o = n - 1u;
+}
+
 /* HAL tick of the refresh in progress, for the freshness checks. */
 static uint32_t s_now;
 
@@ -841,55 +861,58 @@ void cluster_ui_refresh(void)
     for (int i = 0; i < 4; i++)
         set_metric(ui.st_val[i], NULL, NULL, STAT_M[i], &d, live);
 
-    {   /* Workbench readout. Line 1: last negative response, RX FIFO overflow
-         *         events, frames dropped as malformed, TX failures, and LOOP =
-         *         the longest superloop period over the last second in ms (how
-         *         long the display path stalls OBD), Q = the most frames ever
-         *         waiting in the 256-deep RX ring (the measured margin).
-         * Line 2: how oil pressure (PID 0xA22C) is being read — path 22 or
-         *         2C/AA, NONE once the ECM refused both — the last NRC of each
-         *         service, and the last raw byte (A x 4 kPa)
-         *         (docs/oil-pressure-test.md). */
-        char db[96];
-        char nrc[16];
+    {   /* Workbench readout, three lines, each at most ~40 characters in
+         * the worst case so it fits the 300 px label (montserrat 12 ~7 px a
+         * glyph). Composed with cat(), which never steps past the buffer.
+         * Line 1: last negative response; LOOP = the longest superloop period
+         *         over the last second in ms (how long the display path
+         *         stalls OBD, shown up to 9999); Q = the most frames ever
+         *         waiting in the 256-deep RX ring; then, only when non-zero,
+         *         CAP (transactions cut by the 10 s total limit) and WIDE
+         *         (SNIFF is off but the narrow filter is not restored yet).
+         * Line 2: RX FIFO/ring loss, frames dropped as malformed, TX refusals.
+         * Line 3: the oil-pressure probe (PID 0xA22C) — path 22 / 2C / AA /
+         *         NONE, the last NRC of each service, the last raw byte
+         *         (A x 4 kPa); docs/oil-pressure-test.md. If a display SPI
+         *         error was ever seen, it leads this line instead (main/status
+         *         errors, panel re-inits, DMA fallbacks; each up to 9999) and
+         *         the probe shortens to path + raw. */
+        char db[160];
+        size_t o = 0;
+        char nrc[8] = "--";
         if (d.last_nrc_sid)
             lv_snprintf(nrc, sizeof nrc, "%02X/%02X",
                         (unsigned)d.last_nrc_sid, (unsigned)d.last_nrc);
-        else
-            lv_snprintf(nrc, sizeof nrc, "--");
         obd_health_t h;
         obd_can_health(&h);
-        int o = lv_snprintf(db, sizeof db, "NRC %s LOST %u BAD %u TXF %u LOOP %u Q%u\n",
-                            nrc, (unsigned)h.rx_lost, (unsigned)h.rx_bad,
-                            (unsigned)h.tx_fail, (unsigned)app_loop_max_ms(),
-                            (unsigned)h.rx_hwm);
+        uint32_t loop = app_loop_max_ms();
+        cat(db, sizeof db, &o, "NRC %s LOOP %u Q%u", nrc,
+            (unsigned)(loop > 9999u ? 9999u : loop), (unsigned)h.rx_hwm);
+        if (h.txn_capped)             cat(db, sizeof db, &o, " CAP%u", (unsigned)h.txn_capped);
+        if (can_sniff_restore_pending()) cat(db, sizeof db, &o, " WIDE");
+        cat(db, sizeof db, &o, "\nLOST %u BAD %u TXF %u\n",
+            (unsigned)h.rx_lost, (unsigned)h.rx_bad, (unsigned)h.tx_fail);
 
         static const char *const OILP_PATH[] = { "22", "2C", "AA", "NONE" };
         obd_oilp_probe_t op;
         obd_oilp_probe(&op);
+        const char *path = OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE];
         char n22[4] = "--", n2c[4] = "--", naa[4] = "--", raw[4] = "--";
         if (op.nrc22) lv_snprintf(n22, sizeof n22, "%02X", (unsigned)op.nrc22);
         if (op.nrc2c) lv_snprintf(n2c, sizeof n2c, "%02X", (unsigned)op.nrc2c);
         if (op.nrcaa) lv_snprintf(naa, sizeof naa, "%02X", (unsigned)op.nrcaa);
         if (op.have_raw) lv_snprintf(raw, sizeof raw, "%02X", (unsigned)op.raw);
-        o += lv_snprintf(db + o, sizeof db - o, "OILP %s  22/%s 2C/%s AA/%s  RAW %s",
-                         OILP_PATH[op.mode <= OILP_NONE ? op.mode : OILP_NONE],
-                         n22, n2c, naa, raw);
-        /* WIDE: SNIFF is off but the narrow filter could not be restored yet
-         * (retried every 100 ms): the whole bus is coming in. */
-        if (can_sniff_restore_pending() && o < (int)sizeof db)
-            o += lv_snprintf(db + o, sizeof db - o, " WIDE");
-        /* CAP: transactions cut by the total limit (endless NRC 0x78). */
-        if (h.txn_capped && o < (int)sizeof db)
-            o += lv_snprintf(db + o, sizeof db - o, " CAP%u", (unsigned)h.txn_capped);
-        /* Aborted display SPI transfers (main / status screen) and main-panel
-         * re-inits: only shown when something went wrong, so the line stays
-         * short normally. */
-        uint16_t se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
-        uint16_t fb = lv_port_disp_dma_fallbacks();
-        if ((se || se4 || fb) && o < (int)sizeof db)
-            lv_snprintf(db + o, sizeof db - o, " SPI %u/%u R%u F%u", (unsigned)se, (unsigned)se4,
-                        (unsigned)lv_port_disp_recoveries(), (unsigned)fb);
+        unsigned se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
+        unsigned fb = lv_port_disp_dma_fallbacks(), rc = lv_port_disp_recoveries();
+        if (se || se4 || fb) {
+            #define C4(v) ((v) > 9999u ? 9999u : (v))
+            cat(db, sizeof db, &o, "SPI %u/%u R%u F%u OILP %s RAW %s",
+                C4(se), C4(se4), C4(rc), C4(fb), path, raw);
+            #undef C4
+        } else {
+            cat(db, sizeof db, &o, "OILP %s 22/%s 2C/%s AA/%s RAW %s",
+                path, n22, n2c, naa, raw);
+        }
         ui_text(ui.did_dbg, db);
     }
 
