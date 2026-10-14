@@ -163,6 +163,7 @@ static void reset(void)
     rx_bad_cnt = 0; tx_fail_cnt = 0; mil_miss = 0;
     last_map_kpa = NAN; baro_kpa = NAN; map_upd_ms = 0;
     memset(&oilp, 0, sizeof oilp);                /* back to OILP_VIA22 */
+    memset(&pidsup, 0, sizeof pidsup);            /* PID support probe from the start */
     filter_status = HAL_OK; start_status = HAL_OK;
     notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
     nvic_on = false;
@@ -1404,6 +1405,92 @@ static void t_sniff_pauses_polling(void)
     CHECK(tx_n == 1);
 }
 
+/* ---- PID support maps ----------------------------------------------------
+ * The scheduler is run with only the map requests answered (from ps_maps),
+ * everything else left to time out. */
+static uint32_t ps_maps[7];
+static int      ps_answer_upto;      /* maps with index below this are answered */
+static int      ps_req[7];           /* map requests seen, per index            */
+static void ps_run(int iters, uint32_t step_ms)
+{
+    for (int i = 0; i < iters; i++) {
+        tx_n = 0;
+        now_ms += step_ms;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[1] != 0x01 || q[0] != 2 || !pidsup_is_map(q[2])) continue;
+            int r = q[2] / 0x20;
+            ps_req[r]++;
+            if (r < ps_answer_upto) {
+                uint32_t m = ps_maps[r];
+                PUSH(0x7E8, 8, 0x06, 0x41, q[2], (uint8_t)(m >> 24), (uint8_t)(m >> 16),
+                     (uint8_t)(m >> 8), (uint8_t)m, 0x00);
+            }
+        }
+        obd_rx_poll();
+    }
+}
+
+/* Each advertised map is read once, in order; the chain ends where the last
+ * map's bit 0 says there is no next one. */
+static void t_pidsup_reads_advertised_chain(void)
+{
+    memset(ps_req, 0, sizeof ps_req);
+    ps_maps[0] = 0xBE3EB813u;         /* 0x0C (bit 20) yes; bit 0: 0x20 map exists  */
+    ps_maps[1] = 0x80018001u;         /* bit 0: 0x40 map exists                     */
+    ps_maps[2] = 0x40000004u;         /* 0x5E (bit 2) yes, 0x5D no; no 0x60 map     */
+    ps_answer_upto = 7;
+    ps_run(3000, 10);
+    CHECK(ps_req[0] == 1 && ps_req[1] == 1 && ps_req[2] == 1);
+    CHECK(ps_req[3] == 0);                         /* 0x60 never advertised       */
+    obd_pid_support_t ps;
+    obd_pid_support(&ps);
+    CHECK(ps.have == 0x07 && ps.done && !ps.gave_up);
+    CHECK(ps.mask[0] == 0xBE3EB813u && ps.mask[2] == 0x40000004u);
+    CHECK(obd_pid_supported(0x0C) == 1);
+    CHECK(obd_pid_supported(0x5E) == 1);
+    CHECK(obd_pid_supported(0x5D) == 0);
+    CHECK(obd_pid_supported(0x61) == 0);           /* range not advertised: no    */
+}
+
+/* An ECM that never answers is asked PIDSUP_TRIES times, then left alone; its
+ * PIDs stay unknown, not "unsupported". */
+static void t_pidsup_gives_up_unanswered(void)
+{
+    memset(ps_req, 0, sizeof ps_req);
+    ps_answer_upto = 0;
+    ps_run(12000, 10);                             /* 120 s */
+    CHECK(ps_req[0] == (int)PIDSUP_TRIES);
+    obd_pid_support_t ps;
+    obd_pid_support(&ps);
+    CHECK(ps.done && ps.gave_up && ps.have == 0);
+    CHECK(obd_pid_supported(0x0C) == -1);
+}
+
+/* An unanswered map request is repeated no sooner than PIDSUP_RETRY_MS. */
+static void t_pidsup_retry_waits(void)
+{
+    uint32_t t0 = now_ms;
+    CHECK(req_pidsup(t0));
+    txn_failed();                                  /* no answer                   */
+    CHECK(!req_pidsup(t0 + PIDSUP_RETRY_MS - 1u)); /* too early                   */
+    CHECK(req_pidsup(t0 + PIDSUP_RETRY_MS));
+    CHECK(pidsup.tries == 2u);
+}
+
+/* A map in any ECM reply counts (another tester asking), and the 4-byte map
+ * length is known, so the reply decodes without a BAD. */
+static void t_pidsup_map_from_any_reply(void)
+{
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x20, 0x80, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(rx_bad_cnt == 0);
+    CHECK(obd_pid_supported(0x21) == 1);
+    CHECK(obd_pid_supported(0x22) == 0);
+    CHECK(obd_pid_supported(0x0C) == -1);          /* map 0x00 not read yet       */
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -1491,6 +1578,10 @@ int main(void)
         { "d04_grouped_reply_must_cover",t_d04_grouped_reply_must_cover },
         { "d05_late_arrival_not_answer",t_d05_late_arrival_is_not_an_answer },
         { "d05_arrival_check_wrap",     t_d05_arrival_check_across_wrap },
+        { "pidsup_reads_advertised",    t_pidsup_reads_advertised_chain },
+        { "pidsup_gives_up_unanswered", t_pidsup_gives_up_unanswered },
+        { "pidsup_retry_waits",         t_pidsup_retry_waits },
+        { "pidsup_map_from_any_reply",  t_pidsup_map_from_any_reply },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

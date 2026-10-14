@@ -706,6 +706,15 @@ static void cat(char *b, size_t n, size_t *o, const char *fmt, ...)
     if (*o >= n) *o = n - 1u;
 }
 
+/* 8 hex digits of a PID support map, or "--------" while it is not read. */
+static void hex8(char out[9], uint32_t v, bool have)
+{
+    static const char H[] = "0123456789ABCDEF";
+    if (!have) { memcpy(out, "--------", 9); return; }
+    for (int i = 7; i >= 0; i--) { out[i] = H[v & 15u]; v >>= 4; }
+    out[8] = '\0';
+}
+
 /* HAL tick of the refresh in progress, for the freshness checks. */
 static uint32_t s_now;
 
@@ -876,7 +885,12 @@ void cluster_ui_refresh(void)
          *         (A x 4 kPa); docs/oil-pressure-test.md. If a display SPI
          *         error was ever seen, it leads this line instead (main/status
          *         errors, panel re-inits, DMA fallbacks; each up to 9999) and
-         *         the probe shortens to path + raw. */
+         *         the probe shortens to path + raw.
+         *         Line 3 rotates every 4 s with two more views: the PID support
+         *         maps (mode 01 PIDs 00/20/40, then 60/80/A0; 8 hex digits each,
+         *         "--------" = not read) and whether engine fuel rate 0x5E is
+         *         supported (+ yes, - no, ? unknown). One photo of each settles
+         *         what this ECM offers for fuel consumption. */
         char db[160];
         size_t o = 0;
         char nrc[8] = "--";
@@ -904,7 +918,22 @@ void cluster_ui_refresh(void)
         if (op.have_raw) lv_snprintf(raw, sizeof raw, "%02X", (unsigned)op.raw);
         unsigned se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
         unsigned fb = lv_port_disp_dma_fallbacks(), rc = lv_port_disp_recoveries();
-        if (se || se4 || fb) {
+        unsigned l3 = (unsigned)((s_now / 4000u) % 3u);
+        if (l3 != 0u) {
+            obd_pid_support_t ps;
+            obd_pid_support(&ps);
+            uint8_t r0 = (l3 == 1u) ? 0u : 3u;
+            char m[3][9];
+            for (uint8_t j = 0; j < 3u; j++)
+                hex8(m[j], ps.mask[r0 + j], ((ps.have >> (r0 + j)) & 1u) != 0u);
+            if (l3 == 1u) {
+                cat(db, sizeof db, &o, "PID 00:%s 20:%s 40:%s", m[0], m[1], m[2]);
+            } else {
+                int8_t f = obd_pid_supported(0x5E);
+                cat(db, sizeof db, &o, "60:%s 80:%s A0:%s 5E%c", m[0], m[1], m[2],
+                    f > 0 ? '+' : (f == 0 ? '-' : '?'));
+            }
+        } else if (se || se4 || fb) {
             #define C4(v) ((v) > 9999u ? 9999u : (v))
             cat(db, sizeof db, &o, "SPI %u/%u R%u F%u OILP %s RAW %s",
                 C4(se), C4(se4), C4(rc), C4(fb), path, raw);

@@ -102,4 +102,16 @@ typedef struct {
 } obd_oilp_probe_t;
 void obd_oilp_probe(obd_oilp_probe_t *p);
 
+/* PID support maps, mode 01 PIDs 0x00, 0x20 ... 0xC0 (SAE J1979), read once
+ * per power-up: mask[r] bit 31 = PID 0x20*r+1 ... bit 0 = PID 0x20*r+0x20. */
+typedef struct {
+    uint32_t mask[7];
+    uint8_t  have;              /* bit r: mask[r] read                          */
+    bool     done;              /* nothing more will be asked                   */
+    bool     gave_up;           /* ... because the ECM stopped answering        */
+} obd_pid_support_t;
+void obd_pid_support(obd_pid_support_t *ps);
+/* 1 supported, 0 not, -1 unknown (its map not read). */
+int8_t obd_pid_supported(uint8_t pid);
+
 #endif /* FDCAN_OBD_H */

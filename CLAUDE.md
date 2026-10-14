@@ -68,6 +68,8 @@ What this truck actually answers, verified in-vehicle (don't re-derive it by gue
 
 Note a grouped mode-01 request drops unsupported PIDs from the reply instead of returning a negative response, so a missing value there is not an error and produces no NRC.
 
+The ECM's own PID support maps (mode 01 PIDs `0x00`, `0x20` … `0xC0`) are read once per power-up in the slow slot (`req_pidsup()`; only advertised maps, retried every 5 s, given up after 6 unanswered) and shown on DIAG line 3, which rotates every 4 s (oil probe → maps 00/20/40 → maps 60/80/A0 + `5E±`). Use `obd_pid_supported()` before relying on a new mode-01 PID; maps from another tester's reply count too.
+
 **`fdcan_obd.c`/`.h`** implements the actual OBD-II protocol over FDCAN1 (H743 uses FDCAN, not bxCAN, but this project speaks classic CAN 2.0 frames at 500kbps, not CAN-FD). RX is **interrupt-driven**: `FDCAN1_IT0_IRQHandler` (defined in `fdcan_obd.c`, not `stm32h7xx_it.c` — enabling the FDCAN interrupt in CubeMX would duplicate it) copies every frame from the 16-deep hardware FIFO into a 256-entry ring (7 KB), stamping each with its receive time; `obd_rx_poll()` does all validation and decoding from that ring in the loop. If the notification cannot be enabled, `obd_rx_poll()` drains the FIFO itself (SNIFF shows `POLL`). Ring drops count into `LOST` on DIAG, its deepest fill into `Q`. Live decoded values land in the global `g_obd` (`obd_data_t`), which both displays read from.
 
 These conventions in the OBD path matter and are easy to break:

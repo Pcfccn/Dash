@@ -388,6 +388,81 @@ static bool req_oilp(void) {
     }
 }
 
+/* ---- PID support maps (mode 01 PIDs 0x00, 0x20, ... 0xC0) --------------
+ * Each answers a 32-bit map of which of the next 32 PIDs the ECM supports
+ * (SAE J1979: data byte A bit 7 = base+1 ... byte D bit 0 = base+0x20, which
+ * in turn says whether the next map exists). Read once per power-up, one map
+ * per slow-band slot, so DIAG can show what this E98 offers — fuel rate 0x5E /
+ * 0x9D / 0xA2 decides how fuel consumption can be measured
+ * (docs/future/gps-odometer-fuel.md). Only advertised maps are asked for. An
+ * unanswered request is repeated after PIDSUP_RETRY_MS (the ECM may still be
+ * asleep at ACC) and the probe gives up after PIDSUP_TRIES requests in a row
+ * without a map. A map in another tester's reply is taken as well. */
+#define PIDSUP_N        7u
+#define PIDSUP_RETRY_MS 5000u
+#define PIDSUP_TRIES    6u
+static struct {
+    uint32_t mask[PIDSUP_N];
+    uint8_t  have;              /* bit r: mask[r] (PIDs 0x20*r+1 ...) read   */
+    uint8_t  tries;             /* requests since the last map arrived        */
+    bool     done;              /* nothing more to ask                        */
+    bool     gave_up;           /* ... because the ECM stopped answering      */
+    uint32_t retry_at;          /* no request before this HAL tick            */
+} pidsup;
+
+static bool pidsup_is_map(uint8_t pid) { return (pid & 0x1Fu) == 0u && pid <= 0xC0u; }
+
+/* Lowest map not read yet, if the previous one advertises it. */
+static bool pidsup_next(uint8_t *base) {
+    for (uint8_t r = 0; r < PIDSUP_N; r++) {
+        if (pidsup.have & (1u << r)) continue;
+        if (r > 0u && !(pidsup.mask[r - 1u] & 1u)) break;   /* not advertised */
+        *base = (uint8_t)(r * 0x20u);
+        return true;
+    }
+    pidsup.done = true;
+    return false;
+}
+
+/* One map request if one is due. False when nothing was sent: the slot then
+ * goes to the medium / fast bands as usual. */
+static bool req_pidsup(uint32_t now) {
+    uint8_t base;
+    if (pidsup.done || (int32_t)(now - pidsup.retry_at) < 0 || !pidsup_next(&base)) return false;
+    if (pidsup.tries >= PIDSUP_TRIES) { pidsup.done = pidsup.gave_up = true; return false; }
+    pidsup.tries++;
+    pidsup.retry_at = now + PIDSUP_RETRY_MS;
+    return req_mode01(&base, 1);
+}
+
+static void pidsup_store(uint8_t base, const uint8_t *v) {
+    if (!pidsup_is_map(base)) return;
+    uint8_t r = (uint8_t)(base / 0x20u);
+    uint32_t m = ((uint32_t)v[0] << 24) | ((uint32_t)v[1] << 16) | ((uint32_t)v[2] << 8) | v[3];
+    if (!(pidsup.have & (1u << r)) || pidsup.mask[r] != m) {
+        pidsup.mask[r] = m;
+        pidsup.have |= (uint8_t)(1u << r);
+        obd_on_update();
+    }
+    pidsup.tries    = 0u;
+    pidsup.retry_at = HAL_GetTick();     /* the next map without waiting */
+}
+
+void obd_pid_support(obd_pid_support_t *ps) {
+    for (uint8_t r = 0; r < PIDSUP_N; r++) ps->mask[r] = pidsup.mask[r];
+    ps->have = pidsup.have; ps->done = pidsup.done; ps->gave_up = pidsup.gave_up;
+}
+
+int8_t obd_pid_supported(uint8_t pid) {
+    if (pid == 0u) return 1;
+    uint8_t r = (uint8_t)((pid - 1u) / 0x20u);
+    if (r >= PIDSUP_N) return -1;
+    if (pidsup.have & (1u << r))
+        return (pidsup.mask[r] >> (31u - ((pid - 1u) % 0x20u))) & 1u ? 1 : 0;
+    /* Not read: "no" only when the chain ended before it on its own. */
+    return (pidsup.done && !pidsup.gave_up) ? 0 : -1;
+}
+
 /* Flow Control: clear-to-send, no block, no separation */
 static bool send_flow_control(uint32_t resp_id) {
     uint8_t d[8] = { 0x30, 0x00, 0x00, 0,0,0,0,0 };
@@ -462,6 +537,8 @@ static int8_t mode01_len(uint8_t pid) {
         case 0x0F: case 0x33: case 0x5C:            return 1;
         case 0x0C: case 0x23: case 0x42:            return 2;
         case 0x01:                                  return 4;
+        case 0x00: case 0x20: case 0x40: case 0x60:
+        case 0x80: case 0xA0: case 0xC0:            return 4;   /* support maps */
         case 0x78:                                  return 9;
         default:                                    return -1;
     }
@@ -507,6 +584,8 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
              * Reading the mask as the high byte desynchronises everything. */
             case 0x78: set_m(M_EGT, &g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
             case 0x42: set_m(M_BATTERY, &g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
+            case 0x00: case 0x20: case 0x40: case 0x60:
+            case 0x80: case 0xA0: case 0xC0: pidsup_store(p[i], v);          break;
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
                        g_obd.dtc_count = v[0] & 0x7F;
                        g_obd.mil_valid = true; g_obd.mil_upd_ms = rx_ms_cur;
@@ -1013,6 +1092,8 @@ void obd_poll_tick(void) {
     bool fast = false;
     if (sched.tick % SLOW_DIV == 0u) {
         req_mode22(OBD_REQ_ECM, 0x1154);                    /* engine oil temp      */
+    } else if (sched.tick % SLOW_DIV == SLOW_DIV / 2u && req_pidsup(HAL_GetTick())) {
+        /* one PID support map per slow slot until all are read */
     } else if (sched.tick % MED_DIV == 0u) {
         switch (sched.med_idx % N_MED) {
             case 0: req_mode01(misc,  sizeof misc);          break; /* rail, batt       */

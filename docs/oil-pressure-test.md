@@ -77,6 +77,12 @@ OILP AA 22/31 2C/-- AA/-- RAW 4B
 If a display SPI error has been seen, line 3 leads with it and the probe
 shortens to path + raw: `SPI 3/0 R1 F0 OILP AA RAW 4B`.
 
+Line 3 rotates every 4 s: this probe view, then the PID support maps —
+`PID 00:BE3EB813 20:A005B011 40:FED08000`, then
+`60:........ 80:........ A0:........ 5E+` (`--------` = not read; `5E` =
+engine fuel rate, `+` yes / `-` no / `?` unknown). Wait up to 12 s for the
+view you need.
+
 - `OILP 22 | 2C | AA | NONE` — the current step: reading with `$22`, about to
   define with `$2C`, reading the packet with `$AA`, or no source.
 - `22/31 2C/-- AA/--` — last NRC per service (`--` = none seen). `22/31` with a
