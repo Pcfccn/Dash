@@ -829,62 +829,107 @@
 <text x="115.6" y="524.9" font-size="9" fill="#c0392b">P2.38 PE15 габариты</text>
 <text x="115.6" y="565.6" font-size="9" fill="#e67e22">P2.41 3V3 · 42 5V</text>
 <text x="115.6" y="585.9" font-size="9" fill="#000">P2.43 GND · 44 GND</text>
-<rect x="493.0" y="131.7" width="40.0" height="261.4" rx="3" fill="#3a8f3a" fill-opacity="0.85" stroke="#1d5a1d"/>
-<rect x="510.5" y="153.2" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="159.2" font-size="10" fill="#1a1a1a">X5.1 VCC 3V3</text>
-<rect x="510.5" y="183.7" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="189.7" font-size="10" fill="#1a1a1a">X5.2 GND</text>
-<rect x="510.5" y="214.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="220.1" font-size="10" fill="#1a1a1a">X5.3 CS</text>
-<rect x="510.5" y="244.6" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="250.6" font-size="10" fill="#1a1a1a">X5.4 RST</text>
-<rect x="510.5" y="275.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="281.1" font-size="10" fill="#1a1a1a">X5.5 DC</text>
-<rect x="510.5" y="305.6" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="311.6" font-size="10" fill="#1a1a1a">X5.6 SDI</text>
-<rect x="510.5" y="336.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="342.1" font-size="10" fill="#1a1a1a">X5.7 SCK</text>
-<rect x="510.5" y="366.5" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="372.5" font-size="10" fill="#1a1a1a">X5.8 LED</text>
-<text x="513.0" y="126.9" font-size="12" font-weight="bold" fill="#16a085" text-anchor="middle">X5</text>
-<rect x="493.0" y="416.2" width="40.0" height="200.4" rx="3" fill="#3a8f3a" fill-opacity="0.85" stroke="#1d5a1d"/>
-<rect x="510.5" y="437.7" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="443.7" font-size="10" fill="#1a1a1a">X4.1 ▶</text>
-<rect x="510.5" y="468.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="474.1" font-size="10" fill="#1a1a1a">X4.2 ●</text>
-<rect x="510.5" y="498.6" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="504.6" font-size="10" fill="#1a1a1a">X4.3 ◀</text>
-<rect x="510.5" y="529.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="535.1" font-size="10" fill="#1a1a1a">X4.4 GND</text>
-<rect x="510.5" y="559.6" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="565.6" font-size="10" fill="#1a1a1a">X4.5 ILL+</text>
-<rect x="510.5" y="590.1" width="5" height="5" fill="#f1c40f"/>
-<text x="538.6" y="596.1" font-size="10" fill="#1a1a1a">X4.6 запас</text>
-<text x="513.0" y="411.4" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">X4</text>
-<rect x="82.6" y="684.3" width="78.5" height="40.0" rx="3" fill="#3a8f3a" fill-opacity="0.85" stroke="#1d5a1d"/>
-<rect x="104.1" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="106.6" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 106.6 741.5)">X1.1 +12</text>
-<rect x="134.6" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="137.1" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 137.1 741.5)">X1.2 GND</text>
-<text x="78.6" y="708.3" font-size="12" font-weight="bold" fill="#e74c3c" text-anchor="end">X1</text>
-<rect x="184.2" y="684.3" width="139.4" height="40.0" rx="3" fill="#3a8f3a" fill-opacity="0.85" stroke="#1d5a1d"/>
-<rect x="205.7" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="208.2" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 208.2 741.5)">X3.1 3V3</text>
-<rect x="236.2" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="238.7" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 238.7 741.5)">X3.2 GND</text>
-<rect x="266.7" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="269.2" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 269.2 741.5)">X3.3 TX</text>
-<rect x="297.2" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="299.7" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 299.7 741.5)">X3.4 RX</text>
-<text x="180.2" y="708.3" font-size="12" font-weight="bold" fill="#2980b9" text-anchor="end">X3</text>
-<rect x="346.8" y="684.3" width="109.0" height="40.0" rx="3" fill="#3a8f3a" fill-opacity="0.85" stroke="#1d5a1d"/>
-<rect x="368.3" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="370.8" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 370.8 741.5)">X2.1 CAN-H</text>
-<rect x="398.8" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="401.3" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 401.3 741.5)">X2.2 CAN-L</text>
-<rect x="429.3" y="701.8" width="5" height="5" fill="#f1c40f"/>
-<text x="431.8" y="741.5" font-size="9" fill="#1a1a1a" text-anchor="middle" transform="rotate(35 431.8 741.5)">X2.3 GND</text>
-<text x="342.8" y="708.3" font-size="12" font-weight="bold" fill="#8e44ad" text-anchor="end">X2</text>
+<rect x="505.4" y="132.2" width="88.8" height="250.2" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="505.4" y="132.2" width="56.0" height="250.2" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="533.4" y1="150.6" x2="533.4" y2="155.7" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="148.6" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="155.7" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="159.2" font-size="10" fill="#1a1a1a">X5.1 VCC 3V3</text>
+<line x1="533.4" y1="181.1" x2="533.4" y2="176.0" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="179.1" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="176.0" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="179.5" font-size="10" fill="#1a1a1a">X5.2 GND</text>
+<line x1="533.4" y1="211.6" x2="533.4" y2="216.6" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="209.6" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="216.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="220.1" font-size="10" fill="#1a1a1a">X5.3 CS</text>
+<line x1="533.4" y1="242.0" x2="533.4" y2="237.0" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="240.0" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="237.0" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="240.5" font-size="10" fill="#1a1a1a">X5.4 RST</text>
+<line x1="533.4" y1="272.5" x2="533.4" y2="277.6" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="270.5" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="277.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="281.1" font-size="10" fill="#1a1a1a">X5.5 DC</text>
+<line x1="533.4" y1="303.0" x2="533.4" y2="297.9" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="301.0" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="297.9" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="301.4" font-size="10" fill="#1a1a1a">X5.6 SDI</text>
+<line x1="533.4" y1="333.5" x2="533.4" y2="338.6" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="331.5" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="338.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="342.1" font-size="10" fill="#1a1a1a">X5.7 SCK</text>
+<line x1="533.4" y1="364.0" x2="533.4" y2="358.9" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="362.0" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="358.9" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="362.4" font-size="10" fill="#1a1a1a">X5.8 LED</text>
+<text x="533.4" y="126.2" font-size="12" font-weight="bold" fill="#16a085" text-anchor="middle">X5</text>
+<rect x="505.4" y="416.6" width="88.8" height="189.3" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="505.4" y="416.6" width="56.0" height="189.3" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="533.4" y1="435.1" x2="533.4" y2="440.2" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="433.1" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="440.2" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="443.7" font-size="10" fill="#1a1a1a">X4.1 ▶</text>
+<line x1="533.4" y1="465.6" x2="533.4" y2="460.5" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="463.6" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="460.5" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="464.0" font-size="10" fill="#1a1a1a">X4.2 ●</text>
+<line x1="533.4" y1="496.0" x2="533.4" y2="501.1" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="494.0" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="501.1" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="504.6" font-size="10" fill="#1a1a1a">X4.3 ◀</text>
+<line x1="533.4" y1="526.5" x2="533.4" y2="521.4" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="524.5" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="521.4" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="524.9" font-size="10" fill="#1a1a1a">X4.4 GND</text>
+<line x1="533.4" y1="557.0" x2="533.4" y2="562.1" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="555.0" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="562.1" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="565.6" font-size="10" fill="#1a1a1a">X4.5 ILL+</text>
+<line x1="533.4" y1="587.5" x2="533.4" y2="582.4" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="585.5" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="582.4" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="585.9" font-size="10" fill="#1a1a1a">X4.6 запас</text>
+<text x="533.4" y="410.6" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">X4</text>
+<rect x="103.4" y="696.6" width="67.4" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="103.4" y="696.6" width="67.4" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="121.9" y1="724.6" x2="127.0" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="119.9" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="127.0" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="152.4" y1="724.6" x2="147.3" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="150.4" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="147.3" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="98.4" y="728.6" font-size="12" font-weight="bold" fill="#e74c3c" text-anchor="end">X1</text>
+<text x="137.1" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 +12 · 2 GND</text>
+<rect x="205.0" y="696.6" width="128.3" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="205.0" y="696.6" width="128.3" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="223.5" y1="724.6" x2="228.6" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="221.5" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="228.6" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="254.0" y1="724.6" x2="248.9" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="252.0" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="248.9" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="284.4" y1="724.6" x2="289.5" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="282.4" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="289.5" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="314.9" y1="724.6" x2="309.8" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="312.9" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="309.8" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="200.0" y="728.6" font-size="12" font-weight="bold" fill="#2980b9" text-anchor="end">X3</text>
+<text x="269.2" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 3V3 · 2 GND · 3 TX · 4 RX</text>
+<rect x="367.6" y="696.6" width="97.8" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="367.6" y="696.6" width="97.8" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="386.0" y1="724.6" x2="391.1" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="384.0" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="391.1" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="416.5" y1="724.6" x2="411.4" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="414.5" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="411.4" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<line x1="447.0" y1="724.6" x2="452.1" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="445.0" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="452.1" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="362.6" y="728.6" font-size="12" font-weight="bold" fill="#8e44ad" text-anchor="end">X2</text>
+<text x="416.5" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 CAN-H · 2 CAN-L · 3 GND</text>
 <rect x="427.8" y="151.7" width="69.0" height="129.9" rx="4" fill="#d35400" fill-opacity="0.15" stroke="#d35400" stroke-width="1.5"/>
 <text x="432.8" y="165.7" font-size="10" fill="#d35400">Подсветка</text>
 <text x="432.8" y="177.7" font-size="10" fill="#d35400">2N7000</text>
@@ -906,22 +951,26 @@
 <rect x="163.6" y="639.4" width="211.2" height="40.5" rx="4" fill="#e74c3c" fill-opacity="0.15" stroke="#e74c3c" stroke-width="1.5"/>
 <text x="168.6" y="653.4" font-size="10" fill="#e74c3c">TVS 1.5KE20A: полоска (катод) к X1.1 +12, к входу PD65W</text>
 <text x="187.9" y="157.7" font-size="1" fill="#fff"> </text>
-<text x="670.0" y="80" font-size="13" fill="#222" font-weight="bold">Гнёзда под WeAct</text>
-<text x="670.0" y="98" font-size="13" fill="#333">Из двух 1×40 (C9811): 2 полоски по 20 (выводы 5–44)</text>
-<text x="670.0" y="116" font-size="13" fill="#333">(P1) и 2 по 19 (P2, выводы 7–44). Красный пунктир —</text>
-<text x="670.0" y="134" font-size="13" fill="#333">без гнёзд: GND / 5V / 3V3 есть ниже (P2.41–44).</text>
-<text x="670.0" y="170" font-size="13" fill="#222" font-weight="bold">Клеммники 3.81 мм на сетке 2.54</text>
-<text x="670.0" y="188" font-size="13" fill="#333">Каждый 2-й вывод — в отверстие; остальные подогнуть</text>
-<text x="670.0" y="206" font-size="13" fill="#333">плоскогубцами на 1.27 мм к соседнему отверстию.</text>
-<text x="670.0" y="224" font-size="13" fill="#333">Сторона с винтами — к краю платы, провода наружу.</text>
-<text x="670.0" y="260" font-size="13" fill="#222" font-weight="bold">Вне платы (в коробке, на скотче VHB)</text>
-<text x="670.0" y="278" font-size="13" fill="#333">PD65W: вход ← X1 через TVS; USB-C → WeAct.</text>
-<text x="670.0" y="296" font-size="13" fill="#333">SN65HVD230: 3V3, GND, TX←PD1, RX→PD0, CANH/L → X2.</text>
-<text x="670.0" y="314" font-size="13" fill="#333">Si4599: исток 5V (P2.42), затвор ← драйвер, сток → X5.8.</text>
-<text x="670.0" y="332" font-size="13" fill="#333">GPS — на своей плате под стеклом, кабель → X3.</text>
-<text x="670.0" y="368" font-size="13" fill="#222" font-weight="bold">Перед пайкой</text>
-<text x="670.0" y="386" font-size="13" fill="#333">Сверить с шелкографией WeAct: P1.1 = GND, P1.2 = 5V,</text>
-<text x="670.0" y="404" font-size="13" fill="#333">P2.1 = GND, P2.2 = 3V3 (схема V12). Ряды: у P1 нечётные</text>
-<text x="670.0" y="422" font-size="13" fill="#333">снаружи, у P2 — внутри (вид сверху).</text>
-<text x="670.0" y="440" font-size="13" fill="#333">Полный список проводов — carrier-board.md.</text>
+<text x="710.0" y="80" font-size="13" fill="#222" font-weight="bold">Гнёзда под WeAct</text>
+<text x="710.0" y="98" font-size="13" fill="#333">Из двух 1×40 (C9811): 2 полоски по 20 (выводы 5–44)</text>
+<text x="710.0" y="116" font-size="13" fill="#333">(P1) и 2 по 19 (P2, выводы 7–44). Красный пунктир —</text>
+<text x="710.0" y="134" font-size="13" fill="#333">без гнёзд: GND / 5V / 3V3 есть ниже (P2.41–44).</text>
+<text x="710.0" y="170" font-size="13" fill="#222" font-weight="bold">Клеммники 3.81 мм на сетке 2.54</text>
+<text x="710.0" y="188" font-size="13" fill="#333">Каждый вывод — ступенькой 0.6 мм (■ → ●): пары 1–2,</text>
+<text x="710.0" y="206" font-size="13" fill="#333">3–4, 5–6, 7–8 навстречу друг другу; занято 1, 2, 4, 5,</text>
+<text x="710.0" y="224" font-size="13" fill="#333">7, 8, 10, 11-е отверстие ряда. Вывод 0.8 × 0.8 мм: если</text>
+<text x="710.0" y="242" font-size="13" fill="#333">не входит в отверстие — рассверлить до Ø1.4.</text>
+<text x="710.0" y="260" font-size="13" fill="#333">Пунктир — вилка (11.1 мм), висит выше 10 мм.</text>
+<text x="710.0" y="278" font-size="13" fill="#333">Провода из вилки выходят вверх: плата на гайке M3</text>
+<text x="710.0" y="296" font-size="13" fill="#333">(2.4 мм), не на стойках 8 мм — иначе не влезет по высоте.</text>
+<text x="710.0" y="332" font-size="13" fill="#222" font-weight="bold">Вне платы (в коробке, на скотче VHB)</text>
+<text x="710.0" y="350" font-size="13" fill="#333">PD65W: вход ← X1 через TVS; USB-C → WeAct.</text>
+<text x="710.0" y="368" font-size="13" fill="#333">SN65HVD230: 3V3, GND, TX←PD1, RX→PD0, CANH/L → X2.</text>
+<text x="710.0" y="386" font-size="13" fill="#333">Si4599: исток 5V (P2.42), затвор ← драйвер, сток → X5.8.</text>
+<text x="710.0" y="404" font-size="13" fill="#333">GPS — на своей плате под стеклом, кабель → X3.</text>
+<text x="710.0" y="440" font-size="13" fill="#222" font-weight="bold">Перед пайкой</text>
+<text x="710.0" y="458" font-size="13" fill="#333">Сверить с шелкографией WeAct: P1.1 = GND, P1.2 = 5V,</text>
+<text x="710.0" y="476" font-size="13" fill="#333">P2.1 = GND, P2.2 = 3V3 (схема V12). Ряды: у P1 нечётные</text>
+<text x="710.0" y="494" font-size="13" fill="#333">снаружи, у P2 — внутри (вид сверху).</text>
+<text x="710.0" y="512" font-size="13" fill="#333">Полный список проводов — carrier-board.md.</text>
 </svg>
