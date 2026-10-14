@@ -18,6 +18,7 @@
 #include "cluster_ui.h"
 #include "cluster_config.h"
 #include "fdcan_obd.h"
+#include "gps.h"
 #include "cluster_policy.h"   /* shown / SNIFF gate / summary decisions */
 #include "can_sniff.h"
 #include "fault.h"
@@ -879,7 +880,9 @@ void cluster_ui_refresh(void)
          *         waiting in the 256-deep RX ring; then, only when non-zero,
          *         CAP (transactions cut by the 10 s total limit) and WIDE
          *         (SNIFF is off but the narrow filter is not restored yet).
-         * Line 2: RX FIFO/ring loss, frames dropped as malformed, TX refusals.
+         * Line 2: RX FIFO/ring loss, frames dropped as malformed, TX refusals,
+         *         then GPS: - none found, ? searching, V<sats> running without
+         *         a fix, <sats>/<km/h> with a fresh fix.
          * Line 3: the oil-pressure probe (PID 0xA22C) — path 22 / 2C / AA /
          *         NONE, the last NRC of each service, the last raw byte
          *         (A x 4 kPa); docs/oil-pressure-test.md. If a display SPI
@@ -904,8 +907,18 @@ void cluster_ui_refresh(void)
             (unsigned)(loop > 9999u ? 9999u : loop), (unsigned)h.rx_hwm);
         if (h.txn_capped)             cat(db, sizeof db, &o, " CAP%u", (unsigned)h.txn_capped);
         if (can_sniff_restore_pending()) cat(db, sizeof db, &o, " WIDE");
-        cat(db, sizeof db, &o, "\nLOST %u BAD %u TXF %u\n",
-            (unsigned)h.rx_lost, (unsigned)h.rx_bad, (unsigned)h.tx_fail);
+        char gt[16];
+        const gps_state_t *gs = gps_state();
+        if (gs->link == GPS_LINK_ABSENT)   lv_snprintf(gt, sizeof gt, "-");
+        else if (gs->link != GPS_LINK_RUN) lv_snprintf(gt, sizeof gt, "?");
+        else if (!gps_fix_fresh(s_now) || isnan(gs->fix.speed_kmh))
+            lv_snprintf(gt, sizeof gt, "V%u", (unsigned)gs->fix.sats);
+        else {
+            unsigned v10 = (unsigned)(gs->fix.speed_kmh * 10.0f + 0.5f);
+            lv_snprintf(gt, sizeof gt, "%u/%u.%u", (unsigned)gs->fix.sats, v10 / 10u, v10 % 10u);
+        }
+        cat(db, sizeof db, &o, "\nLOST %u BAD %u TXF %u GPS %s\n",
+            (unsigned)h.rx_lost, (unsigned)h.rx_bad, (unsigned)h.tx_fail, gt);
 
         static const char *const OILP_PATH[] = { "22", "2C", "AA", "NONE" };
         obd_oilp_probe_t op;
