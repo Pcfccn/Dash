@@ -314,13 +314,23 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
     lv_unlock();
 }
 
-void st7735_status_backlight(uint8_t mode, uint8_t pct)
+void st7735_status_backlight(uint8_t mode, uint8_t pct, bool night)
 {
+    static int8_t cap_night = -1;     /* caption shown: -1 none yet, 0 DAY, 1 NIGHT */
     if (status_disp == NULL) {
         return;
     }
     lv_lock();
     if (mode) {
+        /* which profile the buttons are editing; set only on a change */
+        if (cap_night != (int8_t)night) {
+            cap_night = (int8_t)night;
+#if BACKLIGHT_ACTIVE_LOW
+            lv_label_set_text(bl_cap, night ? "NIGHT" : "DAY");
+#else
+            lv_label_set_text(bl_cap, night ? "NIGHT\nBL INVERT" : "DAY\nBL INVERT");
+#endif
+        }
         lv_label_set_text_fmt(bl_val, "%u%%", (unsigned)pct);
         lv_obj_clear_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);   /* overlay on top */
     } else {

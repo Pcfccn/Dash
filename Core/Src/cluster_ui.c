@@ -652,6 +652,14 @@ void cluster_ui_next_page(void)
     cluster_ui_set_page(next);
 }
 
+void cluster_ui_prev_page(void)
+{
+    uint8_t prev = (uint8_t)((s_page + PAGE_COUNT - 1u) % PAGE_COUNT);
+    if (prev == PAGE_SNIFF && !sniff_allowed())                  /* skip to DIAG */
+        prev = (uint8_t)((PAGE_SNIFF + PAGE_COUNT - 1u) % PAGE_COUNT);
+    cluster_ui_set_page(prev);
+}
+
 uint8_t cluster_ui_get_page(void)
 {
     return s_page;

@@ -1,6 +1,7 @@
 #ifndef ST7735_STATUS_H
 #define ST7735_STATUS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /* Small on-board 0.96" ST7735 (160x80) status display on the WeAct
@@ -27,11 +28,12 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_
  * Lets us see whether the page button is wired/seen. */
 void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt);
 
-/* Backlight overlay: when the KEY gesture puts us in brightness-control mode,
- * show the current backlight level big on the small screen; hide it otherwise.
- *   mode: 0 = pages mode (hide overlay), 1 = brightness mode (show "BL xx%")
- *   pct : current backlight duty in % */
-void st7735_status_backlight(uint8_t mode, uint8_t pct);
+/* Backlight overlay: in brightness mode (▶ / KEY held 3 s) show the level big
+ * on the small screen, captioned with the profile being edited; hidden otherwise.
+ *   mode : 0 = pages mode (hide overlay), 1 = brightness mode
+ *   pct  : current backlight duty in %
+ *   night: the night profile is active (parking lights on) */
+void st7735_status_backlight(uint8_t mode, uint8_t pct, bool night);
 uint16_t st7735_status_spi_errors(void);  /* aborted SPI4 transfers since boot */
 
 #endif /* ST7735_STATUS_H */

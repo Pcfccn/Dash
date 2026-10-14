@@ -10,7 +10,8 @@
 void cluster_ui_build(void);        /* create all widgets (call after lv_init) */
 void cluster_ui_refresh(void);      /* push g_obd -> widgets (main ctx, ~20Hz) */
 void cluster_ui_set_page(uint8_t p);/* 0=DRIVE 1=DIAG 2=SNIFF                    */
-void cluster_ui_next_page(void);    /* wheel/EXTI button -> cycle pages         */
+void cluster_ui_next_page(void);    /* ▶ / KEY -> next page                     */
+void cluster_ui_prev_page(void);    /* ◀ -> previous page                        */
 uint8_t cluster_ui_get_page(void);  /* current page index (for diagnostics)     */
 
 #endif /* CLUSTER_UI_H */

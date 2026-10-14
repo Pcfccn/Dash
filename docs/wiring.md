@@ -48,7 +48,7 @@ Present on the core board per the vendor schematic/examples, not currently touch
 
 None of these pins conflict with anything this project uses (SPI2 for the main display, SPI4 for the status display, FDCAN1 for the OBD bus, TIM1 for backlight PWM, PC13/PE3 for KEY/LED). The CS and card-detect pins and the DCMI list are from the [Zephyr](https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/weact/mini_stm32h743/mini_stm32h743.dts) and [MicroPython](https://github.com/micropython/micropython/tree/master/ports/stm32/boards/WEACTSTUDIO_MINI_STM32H743) board definitions, which agree; confirm against the WeAct schematic before wiring to them.
 
-**GPS — in the firmware (`gps_hw.c`):** USART2, PA2 = TX → module RX, PA3 = RX ← module TX (AF7, RX pulled up), module powered from 3V3. **Planned inputs (not in the firmware yet, [build-hardware.md](future/build-hardware.md) §6c):** buttons PE7 / PE8 / PE9, day/night (parking lights) PE15. Not PD3–PD6 as first planned: PD6 is the SPI flash CS (needed for the odometer), PD4 the SD card detect, PD3 a camera data line (review C4-HW-01).
+**GPS — in the firmware (`gps_hw.c`):** USART2, PA2 = TX → module RX, PA3 = RX ← module TX (AF7, RX pulled up), module powered from 3V3. **Buttons and day/night — in the firmware (`app_main.c`, `input.c`; hardware [build-hardware.md](future/build-hardware.md) §6c):** ▶ PE7, ● PE8, ◀ PE9 (to ground, pull-up, LOW = pressed, EXTI9_5), parking lights PE15 (LOW = on, sampled). Not PD3–PD6 as first planned: PD6 is the SPI flash CS (needed for the odometer), PD4 the SD card detect, PD3 a camera data line (review C4-HW-01).
 
 ## What this project adds beyond the core board
 
