@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
-    "mtime": 1791506977.799649,
-    "seen": 1791698891.22635,
-    "ast_hash": "540e6744ac1a2ffb20ccdfc95ac14cb3",
+    "mtime": 1791960773.7645836,
+    "seen": 1791961824.4622092,
+    "ast_hash": "e2afad43472b3b596c39bb00cfb4737c",
     "semantic_hash": ""
   },
   "Core/Inc/fdcan.h": {
@@ -36,9 +36,9 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1791633999.5352283,
-    "seen": 1791698891.2263525,
-    "ast_hash": "b5e1c4f1b949e6e3e3c1d215ab45693b",
+    "mtime": 1791957671.396659,
+    "seen": 1791961824.462219,
+    "ast_hash": "c81303adbeb1be93e920fd82a442230e",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -66,9 +66,9 @@
     "semantic_hash": "2443c5137e947dae3a19adc90035e222"
   },
   "Core/Inc/st7735_status.h": {
-    "mtime": 1791619881.1464212,
-    "seen": 1791698891.2263558,
-    "ast_hash": "6c7299acfb90de216e125fdf71e66c1c",
+    "mtime": 1791960805.4926324,
+    "seen": 1791961824.4622374,
+    "ast_hash": "adbb837d6fcbe55833f9fb2a9a7acc10",
     "semantic_hash": ""
   },
   "Core/Inc/stm32h7xx_hal_conf.h": {
@@ -90,9 +90,9 @@
     "semantic_hash": "5025ea19ecb95acc84b17dcc17d3ebab"
   },
   "Core/Src/app_main.c": {
-    "mtime": 1791701152.904825,
-    "seen": 1791701441.996952,
-    "ast_hash": "d9448020d54fcafd77f670a4b85dcfa8",
+    "mtime": 1791960752.0720534,
+    "seen": 1791961824.4622493,
+    "ast_hash": "d07bdf63fd47e7cfd90e565d5d6da282",
     "semantic_hash": ""
   },
   "Core/Src/cluster_app.c": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1791696929.3885274,
-    "seen": 1791698891.2263608,
-    "ast_hash": "4360bbb72b09f86f45c716805513c9dc",
+    "mtime": 1791960772.6911445,
+    "seen": 1791961824.462256,
+    "ast_hash": "04d4efebd6d9230b6ffd19a99dfcc1a4",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1791638587.1558368,
-    "seen": 1791698891.2263634,
-    "ast_hash": "6c0677aacffd0a70ee87906f111f27ee",
+    "mtime": 1791957848.1370213,
+    "seen": 1791961824.462263,
+    "ast_hash": "3b15d304a768a4933cd274a75428fa42",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -150,9 +150,9 @@
     "semantic_hash": ""
   },
   "Core/Src/st7735_status.c": {
-    "mtime": 1791701155.0123806,
-    "seen": 1791701441.996962,
-    "ast_hash": "c36d3187142dccade37606ccb2ffc276",
+    "mtime": 1791960774.8078096,
+    "seen": 1791961824.4622827,
+    "ast_hash": "ec648cdbcd442fb69833c7d23aa65eb5",
     "semantic_hash": ""
   },
   "Core/Src/stm32h7xx_hal_msp.c": {
@@ -186,15 +186,15 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1791701434.1534936,
-    "seen": 1791701441.9969728,
-    "ast_hash": "2633397be8b28c53b84ddcd9520f5555",
+    "mtime": 1791960967.2493196,
+    "seen": 1791961824.462315,
+    "ast_hash": "03886d829de48e5cae3d96ed96505377",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
-    "mtime": 1791698732.3615897,
-    "seen": 1791698891.226392,
-    "ast_hash": "db2c3d9d8b98b2e8a89c6ab233b39f3b",
+    "mtime": 1791960967.2493196,
+    "seen": 1791961824.4623635,
+    "ast_hash": "3b5083045b81cbf5dedde2a8cf192960",
     "semantic_hash": ""
   },
   "Core/Src/montserrat_bold_72.c": {
@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "docs/oil-pressure-test.md": {
-    "mtime": 1791691414.2358353,
-    "seen": 1791698891.2263901,
-    "ast_hash": "e5a7b3245a7ca69e6d98cfbbfc9b61bd",
+    "mtime": 1791959440.6835425,
+    "seen": 1791961824.4623554,
+    "ast_hash": "c1450b387222983c327217509a8dbf82",
     "semantic_hash": ""
   },
   "design/Diesel_Cluster_v2_3.html": {
@@ -780,9 +780,9 @@
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1791638544.792588,
-    "seen": 1791698891.226374,
-    "ast_hash": "a9034ae2d1c5b7ba96e77c6c55b2147a",
+    "mtime": 1791957743.611097,
+    "seen": 1791961824.4623022,
+    "ast_hash": "48f14ae11996e9284eab35b768b8f92c",
     "semantic_hash": ""
   },
   "tools/build.py": {
@@ -852,15 +852,93 @@
     "semantic_hash": ""
   },
   "docs/future/build-hardware.md": {
-    "mtime": 1791701304.2182033,
-    "seen": 1791701441.9969833,
-    "ast_hash": "1e463affcee41fbc497fcf50c59e6625",
+    "mtime": 1791961804.555268,
+    "seen": 1791961824.4623475,
+    "ast_hash": "e0a8aa7f1062ae5c76c9865d670a47d0",
     "semantic_hash": ""
   },
   "docs/future/gps-odometer-fuel.md": {
-    "mtime": 1791700208.6498542,
-    "seen": 1791700338.60114,
-    "ast_hash": "a4b190c24bcbf11c4f1111dd126882a8",
+    "mtime": 1791959440.691407,
+    "seen": 1791961824.4623523,
+    "ast_hash": "9bde8da5759febd5679389048a20d176",
+    "semantic_hash": ""
+  },
+  "Core/Inc/gps.h": {
+    "mtime": 1791959939.3304746,
+    "seen": 1791961824.4622238,
+    "ast_hash": "9ed88d254b61e88291b3665064fee60a",
+    "semantic_hash": ""
+  },
+  "Core/Inc/gps_hw.h": {
+    "mtime": 1791959940.3778653,
+    "seen": 1791961824.4622252,
+    "ast_hash": "bfc02d430c8f99a30258da4b1a915943",
+    "semantic_hash": ""
+  },
+  "Core/Inc/gps_nmea.h": {
+    "mtime": 1791959773.9592054,
+    "seen": 1791961824.4622262,
+    "ast_hash": "c857c5eff7046a6a5fac236f793ef6c5",
+    "semantic_hash": ""
+  },
+  "Core/Inc/input.h": {
+    "mtime": 1791960484.831746,
+    "seen": 1791961824.4622285,
+    "ast_hash": "91059257ea3c7a034787056da1182d4f",
+    "semantic_hash": ""
+  },
+  "Core/Src/gps.c": {
+    "mtime": 1791959951.1501656,
+    "seen": 1791961824.4622686,
+    "ast_hash": "2804407be1b36b61d8ac8b226a158e55",
+    "semantic_hash": ""
+  },
+  "Core/Src/gps_hw.c": {
+    "mtime": 1791960088.2587404,
+    "seen": 1791961824.4622695,
+    "ast_hash": "28f8486af55632775342c613538823dc",
+    "semantic_hash": ""
+  },
+  "Core/Src/gps_nmea.c": {
+    "mtime": 1791959775.0064137,
+    "seen": 1791961824.4622707,
+    "ast_hash": "d5a1c0da06be0dbda10802d2b0215bf2",
+    "semantic_hash": ""
+  },
+  "Core/Src/input.c": {
+    "mtime": 1791960485.8742127,
+    "seen": 1791961824.4622717,
+    "ast_hash": "67469ee69cdf3d6f6cd643c38b7b357c",
+    "semantic_hash": ""
+  },
+  "tests/host/test_gps.c": {
+    "mtime": 1791959996.9168122,
+    "seen": 1791961824.4623032,
+    "ast_hash": "791cd6e3f8bd732fa460f1446598bcf0",
+    "semantic_hash": ""
+  },
+  "tests/host/test_gps_nmea.c": {
+    "mtime": 1791959812.5299025,
+    "seen": 1791961824.462304,
+    "ast_hash": "0b7a012f1750e67cb423b46694bddc7f",
+    "semantic_hash": ""
+  },
+  "tests/host/test_input.c": {
+    "mtime": 1791960593.105761,
+    "seen": 1791961824.4623048,
+    "ast_hash": "e099179397855fbbf489cd317642db7d",
+    "semantic_hash": ""
+  },
+  "docs/future/carrier-board.md": {
+    "mtime": 1791961749.2009292,
+    "seen": 1791961824.4623485,
+    "ast_hash": "6ccd2f74b6bb90e61cd8ecb5b035b0ef",
+    "semantic_hash": ""
+  },
+  "docs/future/carrier-board.svg": {
+    "mtime": 1791961771.2688596,
+    "seen": 1791961824.4624956,
+    "ast_hash": "31337a85db28f5c770a45795a761d392",
     "semantic_hash": ""
   }
 }
