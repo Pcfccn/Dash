@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_main.h"
+#include "fault.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -98,7 +99,15 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  /* No task (FreeRTOS heap too small for its 16 KB stack): nothing would ever
+   * run but the idle task. Record why and stop; the boot IWDG resets the
+   * board (review C7 SW-07). The DIAG page lives in this very task, so the
+   * code is for a debugger (s_rec in .noinit) rather than the screen. */
+  if (defaultTaskHandle == NULL) {
+    fault_record(FAULT_RTOS_INIT);
+    __disable_irq();
+    for (;;) { }
+  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

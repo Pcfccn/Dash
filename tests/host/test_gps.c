@@ -23,7 +23,9 @@ static size_t   wlen;
 static int      bad_cmd_cs;              /* commands with a wrong checksum */
 
 static uint8_t  rxq[8192];
+static uint32_t rxq_at[8192];            /* receive tick of each byte (the IRQ's stamp) */
 static size_t   rx_head, rx_tail;
+static uint32_t line_ms;                 /* stamp of the last line end handed out */
 
 /* the receiver */
 static bool     mod_present;
@@ -34,7 +36,15 @@ static bool     mod_fix;
 
 void     gps_hw_init(uint32_t b)     { uart_baud = b; }
 void     gps_hw_set_baud(uint32_t b) { uart_baud = b; baud_changes++; }
-int      gps_hw_getc(void)           { return rx_head < rx_tail ? rxq[rx_head++] : -1; }
+int      gps_hw_getc(void)
+{
+    if (rx_head >= rx_tail) return -1;
+    uint8_t b = rxq[rx_head];
+    if (b == '\r' || b == '\n') line_ms = rxq_at[rx_head];
+    rx_head++;
+    return b;
+}
+uint32_t gps_hw_line_ms(void)        { return line_ms; }
 uint16_t gps_hw_overruns(void)       { return 0; }
 uint32_t gps_hw_now_ms(void)         { return now_ms; }
 
@@ -61,6 +71,7 @@ static void rx_push(const char *s)
     size_t n = strlen(s);
     if (rx_tail + n > sizeof rxq) { rx_head = rx_tail = 0; }
     memcpy(&rxq[rx_tail], s, n);
+    for (size_t i = 0; i < n; i++) rxq_at[rx_tail + i] = now_ms;
     rx_tail += n;
 }
 
@@ -91,7 +102,7 @@ static void run(uint32_t ms)
 static void reset(void)
 {
     now_ms = 100000; uart_baud = 0; baud_changes = 0;
-    wlen = 0; written[0] = 0; bad_cmd_cs = 0; rx_head = rx_tail = 0;
+    wlen = 0; written[0] = 0; bad_cmd_cs = 0; rx_head = rx_tail = 0; line_ms = 0;
     mod_present = true; mod_baud = 115200; mod_period_ms = 1000; mod_saved = false; mod_fix = true;
     gps_init();
 }
@@ -176,6 +187,26 @@ static void t_fix_fresh_and_decoded(void)
     CHECK(!gps_fix_fresh(now_ms));                  /* old fix not shown        */
 }
 
+/* C7 SW-06: a fix is as old as its sentence's arrival, not its draining. A
+ * loop stalled 1.9 s drains an RMC received at t0: with the drain time it
+ * would stay "fresh" until t0 + 1.9 s + GPS_STALE_MS. */
+static void t_c7_fix_time_is_receive_time(void)
+{
+    reset();
+    run(2000);
+    CHECK(gps_fix_fresh(now_ms));
+    mod_period_ms = 0;
+    uint32_t t0 = now_ms;
+    mod_emit();                                     /* received at t0           */
+    now_ms += 1900;                                 /* loop stuck, not drained  */
+    gps_poll();
+    const gps_state_t *g = gps_state();
+    CHECK(g->fix_ms == t0 && g->rx_ms == t0);
+    CHECK(gps_fix_fresh(t0 + GPS_STALE_MS - 1u));
+    CHECK(!gps_fix_fresh(t0 + GPS_STALE_MS));
+    CHECK(g->link == GPS_LINK_RUN);                 /* 1.9 s < GPS_LOST_MS      */
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -185,6 +216,7 @@ int main(void)
         { "absent_retried_quietly",      t_absent_retried_quietly },
         { "lost_then_regained",          t_lost_then_regained_no_second_save },
         { "fix_fresh_and_decoded",       t_fix_fresh_and_decoded },
+        { "c7_fix_time_is_receive_time", t_c7_fix_time_is_receive_time },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

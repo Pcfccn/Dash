@@ -35,5 +35,11 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt);
  *   night: the night profile is active (parking lights on) */
 void st7735_status_backlight(uint8_t mode, uint8_t pct, bool night);
 uint16_t st7735_status_spi_errors(void);  /* aborted SPI4 transfers since boot */
+uint16_t st7735_status_recoveries(void);  /* SPI4 restarts + full repaints since boot */
+
+/* Call every loop iteration, before lv_timer_handler(): after an SPI4 error
+ * (traffic is held meanwhile) starts SPI4 afresh and repaints the whole
+ * screen, at most once per second. */
+void st7735_status_service(uint32_t now);
 
 #endif /* ST7735_STATUS_H */

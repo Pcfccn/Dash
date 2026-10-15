@@ -1,11 +1,14 @@
 /* ============================================================================
  *  cluster_ui.c — LVGL 9 UI for the auxiliary display (LC100, Colorado 2.8 E98 swap).
  *
- *  Faithful port of the visual reference
- *      reference/diesel_dashboard_320x480_h743_rich.html
+ *  Port of the visual reference
+ *      design/Diesel_Cluster_v2_3.html
  *  to LVGL primitives (containers / labels / bars / arc). Palette, geometry
- *  and typography match the HTML; the SVG line-art icons are represented by
- *  compact text tags (LVGL has no vector-icon set), everything else is 1:1.
+ *  and typography follow the HTML; the SVG line-art icons are represented by
+ *  compact text tags (LVGL has no vector-icon set). Where the firmware
+ *  departs from the mockup on purpose (DRIVE has no eyebrow line, the fourth
+ *  temperature tile is OIL P ? instead of EGT, the PRNDL letter comes from the
+ *  0x1F5 broadcast) is listed in docs/REVIEW.md, review C7.
  *
  *  Layout is absolute-positioned on a 320x480 panel:
  *      y 0..31    alert strip (always visible)
@@ -817,7 +820,7 @@ void cluster_ui_refresh(void)
         case 3:  lv_snprintf(b, sizeof b, "N"); break;
         case 4:  /* D + engaged gear (0x199A) as the design's white letter +
                   * green number; bare "D" until the gear number arrives */
-                 if (d.gear >= 1 && obd_is_fresh(&d, M_GEAR, s_now))
+                 if (d.gear >= 1 && policy_fresh(&d, M_GEAR, s_now))
                      lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
                  else             lv_snprintf(b, sizeof b, "D");
                  break;
@@ -845,7 +848,9 @@ void cluster_ui_refresh(void)
      * MIL and the DTC count both come from PID 0x01. Until it has answered,
      * mil=false / dtc_count=0 are just initial values, so show "--" / NO DATA
      * rather than a reassuring OFF / no-codes. The count is the emission-related
-     * DTC count only (the mode-03 list is not decoded), hence the wording. */
+     * DTC count only (the mode-03 list is not decoded), and from the ECM only
+     * (mode 01 is accepted from 0x7E8 alone): the TCM, ABS and SRS keep their
+     * own codes, so the wording names the source (review C7 CAN-05). */
     bool mil_ok = live && obd_mil_fresh(&d, s_now);
     if (!mil_ok) {
         ui_text(ui.mil_text, "--");
@@ -862,7 +867,7 @@ void cluster_ui_refresh(void)
         ui_border_color(ui.dtc_ring, C_FAINT);
     } else if (d.dtc_count > 0) {
         char mb[40];
-        lv_snprintf(mb, sizeof mb, "%u EMISSION CODE%s",
+        lv_snprintf(mb, sizeof mb, "ECM: %u EMISSION CODE%s",
                     (unsigned)d.dtc_count, d.dtc_count == 1 ? "" : "S");
         ui_text(ui.dtc_msg, mb);
         ui_text_color(ui.dtc_msg, C_WARN);
@@ -870,7 +875,7 @@ void cluster_ui_refresh(void)
         ui_text_color(ui.dtc_ic, C_WARN);
         ui_border_color(ui.dtc_ring, C_WARN);
     } else {
-        ui_text(ui.dtc_msg, "NO EMISSION CODES");
+        ui_text(ui.dtc_msg, "ECM: NO EMISSION CODES");
         ui_text_color(ui.dtc_msg, C_OK);
         ui_text(ui.dtc_ic, LV_SYMBOL_OK);
         ui_text_color(ui.dtc_ic, C_OK);
@@ -1000,16 +1005,14 @@ void cluster_ui_refresh(void)
         sniff_cand_t cs[6];
         uint8_t  nc = can_sniff_candidates(cs, 6);
         char rows[6 * 40 + 2];
-        int  off = 0;
+        size_t off = 0;               /* cat(): a cut row cannot push off past
+                                       * the end (review C7 SW-03)            */
         for (uint8_t i = 0; i < nc; i++) {
-            off += lv_snprintf(rows + off, sizeof rows - off,
-                               "%03X.%u %u ", (unsigned)cs[i].id,
-                               (unsigned)cs[i].byte_idx, (unsigned)cs[i].nvals);
-            for (uint8_t k = 0; k < cs[i].nvals && off < (int)sizeof rows - 4; k++)
-                off += lv_snprintf(rows + off, sizeof rows - off,
-                                   "%02X", (unsigned)cs[i].vals[k]);
-            off += lv_snprintf(rows + off, sizeof rows - off, "\n");
-            if (off >= (int)sizeof rows - 1) break;
+            cat(rows, sizeof rows, &off, "%03X.%u %u ", (unsigned)cs[i].id,
+                (unsigned)cs[i].byte_idx, (unsigned)cs[i].nvals);
+            for (uint8_t k = 0; k < cs[i].nvals; k++)
+                cat(rows, sizeof rows, &off, "%02X", (unsigned)cs[i].vals[k]);
+            cat(rows, sizeof rows, &off, "\n");
         }
         if (nc == 0) lv_snprintf(rows, sizeof rows, "no state bytes yet");
         ui_text(ui.sn_rows, rows);
@@ -1020,15 +1023,11 @@ void cluster_ui_refresh(void)
         sniff_mover_t mv[5];
         uint8_t  nm = can_sniff_movers(mv, 5);
         char arows[5 * 32 + 2];
-        int  aoff = 0;
-        for (uint8_t i = 0; i < nm; i++) {
-            aoff += lv_snprintf(arows + aoff, sizeof arows - aoff,
-                                "%03X.%u  %02X>%02X =%02X\n",
-                                (unsigned)mv[i].id, (unsigned)mv[i].byte_idx,
-                                (unsigned)mv[i].vmin, (unsigned)mv[i].vmax,
-                                (unsigned)mv[i].cur);
-            if (aoff >= (int)sizeof arows - 1) break;
-        }
+        size_t aoff = 0;
+        for (uint8_t i = 0; i < nm; i++)
+            cat(arows, sizeof arows, &aoff, "%03X.%u  %02X>%02X =%02X\n",
+                (unsigned)mv[i].id, (unsigned)mv[i].byte_idx,
+                (unsigned)mv[i].vmin, (unsigned)mv[i].vmax, (unsigned)mv[i].cur);
         if (nm == 0) lv_snprintf(arows, sizeof arows, "no analog bytes yet");
         ui_text(ui.sn_ana, arows);
     }

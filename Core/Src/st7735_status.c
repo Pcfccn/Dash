@@ -54,6 +54,8 @@ static inline void st_cs_high(void) { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_CS_PIN,
 static inline void st_dc_cmd(void)  { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_DC_PIN, GPIO_PIN_RESET); }
 static inline void st_dc_data(void) { HAL_GPIO_WritePin(ST_GPIO_PORT, ST_DC_PIN, GPIO_PIN_SET); }
 
+static bool st_spi_init(void);
+
 static void st_hw_init(void)
 {
     GPIO_InitTypeDef gi = {0};
@@ -80,6 +82,14 @@ static void st_hw_init(void)
     /* backlight ON = LOW (P-FET gate, see schematic note above) */
     HAL_GPIO_WritePin(ST_GPIO_PORT, ST_BL_PIN, GPIO_PIN_RESET);
 
+    if (!st_spi_init()) {
+        Error_Handler();
+    }
+}
+
+/* SPI4 alone, also used to start it from scratch after transfer errors. */
+static bool st_spi_init(void)
+{
     /* SPI4: master, mode 0 (CPOL=0/CPHA=0 -- standard for ST7735), 8-bit MSB.
      * SPI4 kernel clock is APB2 (~112 MHz); /16 -> ~7 MHz, safe and fast enough. */
     hspi4_st.Instance = SPI4;
@@ -97,35 +107,60 @@ static void st_hw_init(void)
     hspi4_st.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi4_st.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
     hspi4_st.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-    if (HAL_SPI_Init(&hspi4_st) != HAL_OK) {
-        Error_Handler();
-    }
+    return HAL_SPI_Init(&hspi4_st) == HAL_OK;
 }
 
 /* Bounded like the main panel's (lv_port_disp.c): a stuck SPI4 aborts and
  * counts instead of hanging the loop. 6400 bytes at ~7 MHz take ~7 ms. */
 #define ST_SPI_TIMEOUT_MS 50u
+/* Repair after transfer errors (review C7 SW-01), at most this often. */
+#define ST_RECOVER_MIN_MS 1000u
+
+/* A failed transfer loses its area, but LVGL has already been told it was
+ * flushed and redraws it only when its content changes. So, as on the main
+ * panel: count every failure in st_err_seq (never saturates; the DIAG counter
+ * st_spi_err stops at 0xFFFF), skip the rest of the traffic while a repair is
+ * owed (one 50 ms timeout per attempt, not one per transfer), and let
+ * st7735_status_service() start SPI4 afresh and repaint the whole screen.
+ * The panel's own controller is not re-initialised: an SPI timeout on our side
+ * does not reset it, and a panel that resets itself (supply dip) gives no
+ * error to see. Before init has finished nothing is skipped, so a glitch in
+ * the start-up commands cannot drop the ones after it. */
 static volatile uint16_t st_spi_err;
+static volatile uint32_t st_err_seq;  /* failed transfers, unsaturated          */
+static uint32_t st_fixed_seq;         /* st_err_seq covered by the last repair  */
+static uint32_t st_fix_ms;            /* tick of the last repair                */
+static uint16_t st_recover_cnt;       /* repairs since boot                     */
+static bool     st_ready;             /* init done                              */
 
 uint16_t st7735_status_spi_errors(void) { return st_spi_err; }
+uint16_t st7735_status_recoveries(void) { return st_recover_cnt; }
 
-static void st_tx(const uint8_t *p, size_t len)
+static bool st_tx(const uint8_t *p, size_t len)
 {
-    if (HAL_SPI_Transmit(&hspi4_st, (uint8_t *)p, (uint16_t)len, ST_SPI_TIMEOUT_MS) != HAL_OK) {
-        HAL_SPI_Abort(&hspi4_st);
-        if (st_spi_err < 0xFFFFu) st_spi_err++;
+    if (HAL_SPI_Transmit(&hspi4_st, (uint8_t *)p, (uint16_t)len, ST_SPI_TIMEOUT_MS) == HAL_OK) {
+        return true;
     }
+    HAL_SPI_Abort(&hspi4_st);
+    if (st_spi_err < 0xFFFFu) st_spi_err++;
+    st_err_seq++;
+    return false;
 }
+
+/* A repair is owed: drop traffic until st7735_status_service() has run. */
+static bool st_broken(void) { return st_ready && st_err_seq != st_fixed_seq; }
 
 /* LVGL calls this to send init/setup commands (DC low = command, DC high = params). */
 static void st_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
                         const uint8_t *param, size_t param_size)
 {
     LV_UNUSED(disp);
+    if (st_broken()) {
+        return;
+    }
     st_cs_low();
     st_dc_cmd();
-    st_tx(cmd, cmd_size);
-    if (param && param_size) {
+    if (st_tx(cmd, cmd_size) && param && param_size) {
         st_dc_data();
         st_tx(param, param_size);
     }
@@ -133,22 +168,45 @@ static void st_send_cmd(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
 }
 
 /* LVGL calls this to push rendered pixels. LVGL stores RGB565 little-endian but
- * the ST7735 wants the high byte first, so swap each pixel's two bytes. */
+ * the ST7735 wants the high byte first, so swap each pixel's two bytes. The
+ * area is always reported flushed, sent or not: the repair repaints it. */
 static void st_send_color(lv_display_t *disp, const uint8_t *cmd, size_t cmd_size,
                           uint8_t *param, size_t param_size)
 {
-    for (size_t i = 0; i + 1 < param_size; i += 2) {
-        uint8_t t = param[i];
-        param[i] = param[i + 1];
-        param[i + 1] = t;
+    if (!st_broken()) {
+        for (size_t i = 0; i + 1 < param_size; i += 2) {
+            uint8_t t = param[i];
+            param[i] = param[i + 1];
+            param[i + 1] = t;
+        }
+        st_cs_low();
+        st_dc_cmd();
+        if (st_tx(cmd, cmd_size)) {
+            st_dc_data();
+            st_tx(param, param_size);
+        }
+        st_cs_high();
     }
-    st_cs_low();
-    st_dc_cmd();
-    st_tx(cmd, cmd_size);
-    st_dc_data();
-    st_tx(param, param_size);
-    st_cs_high();
     lv_display_flush_ready(disp);
+}
+
+void st7735_status_service(uint32_t now)
+{
+    if (status_disp == NULL || st_err_seq == st_fixed_seq) {
+        return;
+    }
+    if (st_recover_cnt != 0u && (now - st_fix_ms) < ST_RECOVER_MIN_MS) {
+        return;
+    }
+    st_fix_ms = now;
+    if (st_recover_cnt < 0xFFFFu) st_recover_cnt++;
+    HAL_SPI_Abort(&hspi4_st);
+    (void)HAL_SPI_DeInit(&hspi4_st);
+    if (!st_spi_init()) {
+        return;                       /* still owed: try again next time */
+    }
+    st_fixed_seq = st_err_seq;
+    lv_obj_invalidate(lv_display_get_screen_active(status_disp));
 }
 
 void st7735_status_init(void)
@@ -254,6 +312,7 @@ void st7735_status_init(void)
     if (prev) {
         lv_display_set_default(prev);   /* keep the 4" dashboard as the default display */
     }
+    st_ready = true;   /* from here a failed transfer holds traffic until repaired */
 }
 
 void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_t link)
@@ -303,11 +362,21 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_
     lv_unlock();
 }
 
+/* Both below are called every 250 ms; like st7735_status_set() they write
+ * only what changed, since every label write is an SPI4 repaint (review C7
+ * SW-02). */
 void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
 {
+    static bool     s_have;
+    static uint8_t  s_page, s_key;
+    static uint32_t s_cnt;
     if (status_disp == NULL) {
         return;
     }
+    if (s_have && page == s_page && key_raw == s_key && key_cnt == s_cnt) {
+        return;
+    }
+    s_have = true; s_page = page; s_key = key_raw; s_cnt = key_cnt;
     lv_lock();
     lv_label_set_text_fmt(lbl_dbg, "P%u KEY%u #%lu",
                           (unsigned)page, (unsigned)key_raw, (unsigned long)key_cnt);
@@ -316,7 +385,9 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
 
 void st7735_status_backlight(uint8_t mode, uint8_t pct, bool night)
 {
-    static int8_t cap_night = -1;     /* caption shown: -1 none yet, 0 DAY, 1 NIGHT */
+    static int8_t  cap_night = -1;    /* caption shown: -1 none yet, 0 DAY, 1 NIGHT */
+    static int16_t s_pct = -1;        /* level shown: -1 none yet                  */
+    static int8_t  s_shown = -1;      /* overlay: -1 unknown, 0 hidden, 1 shown     */
     if (status_disp == NULL) {
         return;
     }
@@ -331,9 +402,16 @@ void st7735_status_backlight(uint8_t mode, uint8_t pct, bool night)
             lv_label_set_text(bl_cap, night ? "NIGHT\nBL INVERT" : "DAY\nBL INVERT");
 #endif
         }
-        lv_label_set_text_fmt(bl_val, "%u%%", (unsigned)pct);
-        lv_obj_clear_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);   /* overlay on top */
-    } else {
+        if (s_pct != (int16_t)pct) {
+            s_pct = (int16_t)pct;
+            lv_label_set_text_fmt(bl_val, "%u%%", (unsigned)pct);
+        }
+        if (s_shown != 1) {
+            s_shown = 1;
+            lv_obj_clear_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);   /* overlay on top */
+        }
+    } else if (s_shown != 0) {
+        s_shown = 0;
         lv_obj_add_flag(bl_panel, LV_OBJ_FLAG_HIDDEN);
     }
     lv_unlock();

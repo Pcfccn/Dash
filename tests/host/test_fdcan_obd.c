@@ -268,6 +268,53 @@ static void t_multiframe_egt_ok(void)
     CHECK(await_resp_id == 0);
 }
 
+/* One complete 0x78 answer: FF + CF, sensor 1 = s1 raw, sensors 2..4 = 0. */
+static void egt_reply(uint8_t mask, uint16_t s1)
+{
+    egt_request();
+    PUSH(0x7E8, 8, 0x10, 0x0B, 0x41, 0x78, mask, (uint8_t)(s1 >> 8), (uint8_t)s1, 0x00);
+    obd_rx_poll();
+    PUSH(0x7E8, 8, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+}
+
+/* C7 CAN-01: sensor 1 counts only with mask bit 0 (SAE J1979). */
+static void t_c7_egt_mask(void)
+{
+    egt_reply(0x00, 3000);                    /* no sensor at all          */
+    CHECK(isnan(g_obd.egt) && g_obd.upd_ms[M_EGT] == 0);
+    egt_reply(0x02, 3000);                    /* sensor 2 only             */
+    CHECK(isnan(g_obd.egt) && g_obd.upd_ms[M_EGT] == 0);
+    egt_reply(0x01, 3000);                    /* sensor 1: 3000/10 - 40    */
+    CHECK(near(g_obd.egt, 260.0f) && g_obd.upd_ms[M_EGT] == now_ms);
+    egt_reply(0x03, 0);                       /* 1 + 2, low end: -40 °C    */
+    CHECK(near(g_obd.egt, -40.0f));
+    egt_reply(0x01, 0xFFFF);                  /* high end: 6513.5 °C       */
+    CHECK(near(g_obd.egt, 6513.5f));
+    now_ms += 100;
+    egt_reply(0x0E, 3000);                    /* sensor 1 gone again       */
+    CHECK(isnan(g_obd.egt));
+    CHECK(g_obd.upd_ms[M_EGT] == now_ms - 100);   /* not restamped          */
+    g_obd.can_ok = true;
+    CHECK(!policy_shown(&g_obd, M_EGT, now_ms));
+}
+
+/* C7 CAN-02: the gear is an int; -1 must not pass for a fresh value while
+ * upd_ms = 0 is still inside metric_stale_ms after boot (now_ms = 1000). */
+static void t_c7_gear_not_fresh_before_reply(void)
+{
+    g_obd.can_ok = true;
+    CHECK(g_obd.gear == -1 && g_obd.upd_ms[M_GEAR] == 0);
+    CHECK(!policy_fresh(&g_obd, M_GEAR, now_ms));
+    CHECK(!policy_shown(&g_obd, M_GEAR, now_ms));
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0x02, 0x00, 0x00, 0x00);   /* gear 2 */
+    obd_rx_poll();
+    CHECK(policy_shown(&g_obd, M_GEAR, now_ms));
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0xFF, 0x00, 0x00, 0x00);   /* raw 0xFF -> -1 */
+    obd_rx_poll();
+    CHECK(g_obd.gear_raw == 0xFF && !policy_fresh(&g_obd, M_GEAR, now_ms));
+}
+
 static void t_ff_too_long_no_fc(void)                                  /* N5 */
 {
     egt_request();
@@ -1582,6 +1629,8 @@ int main(void)
         { "pidsup_gives_up_unanswered", t_pidsup_gives_up_unanswered },
         { "pidsup_retry_waits",         t_pidsup_retry_waits },
         { "pidsup_map_from_any_reply",  t_pidsup_map_from_any_reply },
+        { "c7_egt_mask",                t_c7_egt_mask },
+        { "c7_gear_not_fresh_before",   t_c7_gear_not_fresh_before_reply },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

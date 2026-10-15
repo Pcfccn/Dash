@@ -93,18 +93,22 @@ static void link_step(uint32_t now)
 
 void gps_poll(void)
 {
-    uint32_t now = gps_hw_now_ms();
     int c;
     while ((c = gps_hw_getc()) >= 0) {
         nmea_result_t r = nmea_feed(&parser, &s.fix, (char)c);
         if (r == NMEA_NONE || r == NMEA_BAD) continue;
-        s.rx_ms = now;
+        /* A sentence ends on the line end just read: its receive time (IRQ),
+         * not the drain time, or one that waited out a stall looks fresh
+         * (review C7 SW-06; the same rule as the CAN frames). */
+        uint32_t at = gps_hw_line_ms();
+        s.rx_ms = at;
         heard++;
         if (r == NMEA_RMC) {
             if (rate_cnt < 255u) rate_cnt++;
-            if (s.fix.rmc_fix) s.fix_ms = now;
+            if (s.fix.rmc_fix) s.fix_ms = at;
         }
     }
+    uint32_t now = gps_hw_now_ms();          /* after the drain: no stamp is later */
     s.ok = parser.ok;
     s.bad = parser.bad;
     s.overruns = gps_hw_overruns();

@@ -17,9 +17,14 @@
  *   3 = main-panel SPI errors injected (no reset) -> the panel is re-initialised
  *                               and repainted, at most every 5 s while held;
  *                               DIAG "SPI n/0 Rm" counts it (lv_port_disp.c)
+ *   4 = configASSERT(0)      -> the assert records file + line and stops, then
+ *                               the IWDG resets; DIAG "LAST RESET: ASSERT fault.c:<line>"
  * (Times are nominal: the LSI behind the IWDG is untrimmed.)
  * SET TO 0 BEFORE USING IN THE CAR.                                          */
+#ifndef FAULT_TEST                    /* bench image: tools/build.py -D FAULT_TEST=n */
 #define FAULT_TEST         0
+#endif
+_Static_assert(FAULT_TEST >= 0 && FAULT_TEST <= 4, "FAULT_TEST must be 0..4");
 #define FAULT_TEST_HOLD_MS 10000u
 
 typedef enum {
@@ -27,7 +32,13 @@ typedef enum {
     FAULT_HARDFAULT,
     FAULT_STACK_OVERFLOW,
     FAULT_ERROR_HANDLER,
+    FAULT_ASSERT,             /* configASSERT; file + line kept with it */
+    FAULT_RTOS_INIT,          /* the default task could not be created  */
 } fault_code_t;
+
+/* configASSERT() failed (FreeRTOSConfig.h): record file + line, stop for the
+ * IWDG. Never returns. */
+void        fault_assert_failed(const char *file, int line);
 
 void        fault_init(void);              /* first thing at boot: latch + clear reset cause */
 void        fault_record(fault_code_t c);  /* call right before a fatal stop; survives reset  */

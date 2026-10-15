@@ -18,6 +18,13 @@ typedef struct {
     uint32_t code_inv;       /* ~code: rejects a half-written or random record */
     uint32_t streak;         /* abnormal resets in a row, this one included    */
     uint32_t streak_inv;
+    /* FAULT_ASSERT only: where. The file is the address of its __FILE__
+     * string in flash, valid after the reset as long as the image is the
+     * same; checked against the flash range before it is read. Appended, so
+     * a record left by an older image keeps its other fields in place. */
+    uint32_t aux_file;
+    uint32_t aux_line;
+    uint32_t aux_inv;        /* ~(aux_file ^ aux_line)                          */
 } fault_rec_t;
 static volatile fault_rec_t s_rec __attribute__((section(".noinit")));
 
@@ -35,6 +42,45 @@ static void rec_set_streak(uint32_t n)
 {
     s_rec.streak     = n;
     s_rec.streak_inv = ~n;
+}
+
+/* "ASSERT tasks.c:1234" from the record, or plain "ASSERT" when the location
+ * does not check out. Hand-rolled to keep fault_init() free of printf. */
+static char s_assert_text[40];
+
+static const char *assert_text(void)
+{
+    uint32_t f = s_rec.aux_file, l = s_rec.aux_line;
+    char *o = s_assert_text, *end = s_assert_text + sizeof s_assert_text - 1;
+    for (const char *s = "ASSERT"; *s; ) *o++ = *s++;
+    if (s_rec.aux_inv == ~(f ^ l) && f >= FLASH_BANK1_BASE && f < FLASH_BANK1_BASE + 0x200000u) {
+        const char *p = (const char *)f, *base = p;
+        size_t n = 0;
+        for (; n < 96u && p[n] != '\0'; n++) {
+            if (p[n] < 0x20 || p[n] > 0x7E) return "ASSERT";
+            if (p[n] == '/' || p[n] == '\\') base = p + n + 1;
+        }
+        if (n == 96u) return "ASSERT";
+        *o++ = ' ';
+        while (*base && o < end - 6) *o++ = *base++;
+        char d[10];
+        int k = 0;
+        do { d[k++] = (char)('0' + l % 10u); l /= 10u; } while (l && k < 10);
+        *o++ = ':';
+        while (k && o < end) *o++ = d[--k];
+    }
+    *o = '\0';
+    return s_assert_text;
+}
+
+void fault_assert_failed(const char *file, int line)
+{
+    __disable_irq();                 /* nothing else runs: the IWDG resets us */
+    s_rec.aux_file = (uint32_t)file;
+    s_rec.aux_line = (uint32_t)line;
+    s_rec.aux_inv  = ~(s_rec.aux_file ^ s_rec.aux_line);
+    fault_record(FAULT_ASSERT);
+    for (;;) { }
 }
 
 void fault_init(void)
@@ -56,6 +102,8 @@ void fault_init(void)
     if      (code == FAULT_HARDFAULT)      s_reset_text = "HARDFAULT";
     else if (code == FAULT_STACK_OVERFLOW) s_reset_text = "STACK OVERFLOW";
     else if (code == FAULT_ERROR_HANDLER)  s_reset_text = "HAL ERROR";
+    else if (code == FAULT_ASSERT)         s_reset_text = assert_text();
+    else if (code == FAULT_RTOS_INIT)      s_reset_text = "RTOS INIT";
     else if (rsr & RCC_RSR_IWDG1RSTF)      s_reset_text = "WATCHDOG";
     else {
         s_abnormal = false;
@@ -143,6 +191,8 @@ void fault_selftest(void)
     /* MPU region 0 (main.c MPU_Config) forbids 0x60000000..0xDFFFFFFF; the
      * MemManage fault is not enabled, so it escalates to HardFault. */
     (void)*(volatile uint32_t *)0x60000000u;
+#elif FAULT_TEST == 4
+    configASSERT(0);                 /* FreeRTOSConfig.h -> fault_assert_failed() */
 #endif
 }
 #endif

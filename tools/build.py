@@ -22,6 +22,7 @@ end; vendor warnings (HAL, FreeRTOS, LVGL) are only counted.
 """
 import argparse
 import concurrent.futures
+import hashlib
 import os
 import re
 import shutil
@@ -116,6 +117,16 @@ def up_to_date(src, obj):
     return src.stat().st_mtime <= t
 
 
+def flags_stamp(bindir):
+    """Compiler version + every compile flag. The .d files only know sources
+    and headers, so without this a changed flag or toolchain would leave old
+    objects in place (review C7, build)."""
+    r = subprocess.run([tool(bindir, "gcc"), "--version"], capture_output=True, text=True)
+    ver = (r.stdout.splitlines() or ["?"])[0]
+    blob = "\n".join([ver, " ".join(CFLAGS), " ".join(ASFLAGS)])
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
 def compile_one(bindir, src):
     obj = obj_for(src)
     if up_to_date(src, obj):
@@ -150,6 +161,12 @@ def main():
     if args.clean and OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(exist_ok=True)
+    stamp, want = OUT / "flags.stamp", flags_stamp(bindir)
+    if not stamp.exists() or stamp.read_text().strip() != want:
+        if (OUT / "obj").exists():
+            print("compiler or flags changed since the last build: rebuilding everything")
+            shutil.rmtree(OUT / "obj")
+        stamp.write_text(want + "\n")
 
     srcs = sources()
     failed, core_warn, vendor_warn, built = [], [], 0, 0

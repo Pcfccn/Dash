@@ -580,9 +580,17 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
             case 0x23: set_m(M_RAIL, &g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
             /* Exhaust gas temperature, 9 data bytes: v[0] = supported-sensor bit
-             * mask, then FOUR 2-byte sensors. Sensor 1 is v[1],v[2] as (x/10)-40.
-             * Reading the mask as the high byte desynchronises everything. */
-            case 0x78: set_m(M_EGT, &g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f); break;
+             * mask, then FOUR 2-byte sensors. Sensor 1 is v[1],v[2] as (x/10)-40,
+             * and only exists with mask bit 0 set (SAE J1979, review C7 CAN-01):
+             * without it those bytes are filler, so the value goes back to "never
+             * sent" instead of being decoded or refreshed. Reading the mask as
+             * the high byte desynchronises everything. */
+            case 0x78: if (v[0] & 0x01u) {
+                           set_m(M_EGT, &g_obd.egt, (((v[1] * 256) + v[2]) / 10.0f) - 40.0f);
+                       } else if (!isnan(g_obd.egt)) {
+                           g_obd.egt = NAN; obd_on_update();
+                       }
+                       break;
             case 0x42: set_m(M_BATTERY, &g_obd.battery, ((v[0] * 256) + v[1]) / 1000.0f); break;
             case 0x00: case 0x20: case 0x40: case 0x60:
             case 0x80: case 0xA0: case 0xC0: pidsup_store(p[i], v);          break;

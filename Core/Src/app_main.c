@@ -161,6 +161,18 @@ static bool btn_down(uint8_t b)
     return HAL_GPIO_ReadPin(BTN_PIN[b].port, BTN_PIN[b].pin) == BTN_PIN[b].down;
 }
 
+/* Count and time of the latest press as one pair: read separately, an EXTI
+ * between the two reads paired a new count with the previous press's time
+ * (review C7 SW-04). */
+static void btn_snapshot(uint8_t b, uint8_t *presses, uint32_t *press_t)
+{
+    uint32_t pm = __get_PRIMASK();
+    __disable_irq();
+    *presses = s_presses[b];
+    *press_t = s_press_t[b];
+    __set_PRIMASK(pm);
+}
+
 void EXTI15_10_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
@@ -294,7 +306,10 @@ void AppMain_Run(void)
 
     /* Buttons -> taps / holds -> actions (see the block above btn_tap()). */
     for (uint8_t b = 0; b < B_N; b++) {
-        btn_out_t o = btn_step(&s_btn[b], btn_down(b), s_presses[b], s_press_t[b], t);
+        uint8_t  presses;
+        uint32_t press_t;
+        btn_snapshot(b, &presses, &press_t);
+        btn_out_t o = btn_step(&s_btn[b], btn_down(b), presses, press_t, t);
         for (uint8_t k = 0; k < o.taps; k++) btn_tap(b, t);
         if (o.hold) btn_hold(b, t);
     }
@@ -318,6 +333,7 @@ void AppMain_Run(void)
 #endif
 
     lv_port_disp_service();   /* repaint / re-init the 4" panel after SPI errors */
+    st7735_status_service(t); /* same for the small screen: restart SPI4, repaint */
     lv_timer_handler();   /* LVGL rendering for both displays */
     gps_poll();           /* GPS: drain the UART ring, decode, keep the link     */
     cluster_app_run();    /* OBD-II: RX drain, request scheduler, UI refresh, watchdog */

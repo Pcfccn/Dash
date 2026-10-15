@@ -28,12 +28,18 @@ static inline float policy_value(const volatile obd_data_t *d, metric_key_t k)
         case M_OILP:  return d->oil_press;
         case M_BOOST: return d->boost;   case M_BATTERY: return d->battery;
         case M_IAT:   return d->iat;     case M_LOAD:    return d->load;
-        case M_RAIL:  return d->rail;    case M_GEAR:    return (float)d->gear;
+        case M_RAIL:  return d->rail;
+        /* The gear is an integer: -1 (start-up, or a raw byte >= 0x80) is its
+         * "never sent". Without this, upd_ms = 0 counts as fresh for the first
+         * metric_stale_ms after boot and -1 passed for a value (review C7 CAN-02). */
+        case M_GEAR:  return d->gear < 0 ? NAN : (float)d->gear;
         default:      return NAN;
     }
 }
 
-/* Decoded at least once and recent enough (metric_stale_ms). */
+/* Decoded at least once and recent enough (metric_stale_ms). Floats start as
+ * NaN, so "at least once" is the value's job, not the stamp's: obd_is_fresh()
+ * alone is true for upd_ms = 0 while now < metric_stale_ms. */
 static inline bool policy_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now)
 {
     return !isnan(policy_value(d, k)) && obd_is_fresh(d, k, now);

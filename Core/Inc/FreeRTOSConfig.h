@@ -156,7 +156,13 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 /* USER CODE BEGIN 1 */
-#define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+/* A failed assert records where it was (fault.c) and stops, so the IWDG
+ * reset that follows shows "LAST RESET: ASSERT file:line" on DIAG instead of
+ * a bare WATCHDOG (review C7 SW-08). Never returns. */
+#ifndef __ASSEMBLER__
+void fault_assert_failed(const char *file, int line);
+#endif
+#define configASSERT( x ) if ((x) == 0) { fault_assert_failed(__FILE__, __LINE__); }
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS

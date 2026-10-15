@@ -12,6 +12,7 @@ void     gps_hw_init(uint32_t baud);     /* pins, clock, RX interrupt         */
 void     gps_hw_set_baud(uint32_t baud); /* drops anything half-received      */
 void     gps_hw_write(const char *s);    /* blocking until the last bit left  */
 int      gps_hw_getc(void);              /* next received byte, -1 if none    */
+uint32_t gps_hw_line_ms(void);          /* receive tick of the last '\r'/'\n' gps_hw_getc() returned */
 uint16_t gps_hw_overruns(void);          /* bytes lost (UART or ring)         */
 uint32_t gps_hw_now_ms(void);            /* HAL tick                           */
 
