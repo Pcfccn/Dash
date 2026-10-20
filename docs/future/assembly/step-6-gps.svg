@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="400" viewBox="0 0 1100 400" font-family="DejaVu Sans, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="30" font-size="18" fill="#111" text-anchor="start" font-weight="bold">Шаг 6. GPS: X3 (4 конт.) → плата ATGM336H</text>
+<text x="20" y="52" font-size="12" fill="#555" text-anchor="start" font-weight="normal">TX и RX перекрещиваются: передатчик модуля → вход МК (PA3), выход МК (PA2) → приёмник модуля.</text>
+<text x="40" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">НА ПЛАТЕ</text>
+<text x="640" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">В ЖГУТЕ (вне коробки)</text>
+<rect x="500" y="110" width="56" height="138" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="528" y="92" font-size="14" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X3</text>
+<text x="528" y="105" font-size="10" fill="#1d5a1d" text-anchor="middle" font-weight="normal">клеммник</text>
+<text x="528" y="136" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 3V3</text>
+<text x="528" y="164" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 GND</text>
+<text x="528" y="192" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 TX</text>
+<text x="528" y="220" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 RX</text>
+<rect x="40" y="150" width="176" height="86" rx="6" fill="#e9eef8" stroke="#2b4f86" stroke-width="1.5"/>
+<text x="128.0" y="168" font-size="11" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct (гребёнка)</text>
+<text x="50" y="192" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">PA3</text>
+<text x="202" y="192" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.20</text>
+<circle cx="216" cy="188" r="4" fill="#2b4f86"/>
+<text x="50" y="220" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">PA2</text>
+<text x="202" y="220" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.19</text>
+<circle cx="216" cy="216" r="4" fill="#2b4f86"/>
+<polyline points="300,132 450,132" fill="none" stroke="#d62828" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="300" y="125" font-size="10" fill="#d62828" text-anchor="start" font-weight="bold">шина 3V3</text>
+<polyline points="450,132 500,132" fill="none" stroke="#d62828" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="475" cy="118" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="475" y="122" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">1</text>
+<polyline points="300,160 450,160" fill="none" stroke="#222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="300" y="153" font-size="10" fill="#222" text-anchor="start" font-weight="bold">шина GND</text>
+<polyline points="450,160 500,160" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="475" cy="174" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="475" y="178" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
+<polyline points="216,188 500,188" fill="none" stroke="#1f6fd1" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="380" cy="176" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="380" y="180" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">3</text>
+<text x="240" y="180" font-size="10" fill="#1f6fd1" text-anchor="start" font-weight="normal">вход ←</text>
+<polyline points="216,216 500,216" fill="none" stroke="#9aa4ad" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="380" cy="230" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="380" y="234" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">4</text>
+<text x="240" y="234" font-size="10" fill="#555" text-anchor="start" font-weight="normal">выход →</text>
+<rect x="820" y="92" width="240" height="190" rx="8" fill="#eef5fc" stroke="#1f6fd1" stroke-width="1.5"/>
+<text x="940.0" y="112" font-size="13" fill="#111" text-anchor="middle" font-weight="bold">Плата GPS ATGM336H</text>
+<text x="940.0" y="270" font-size="10" fill="#444" text-anchor="middle" font-weight="normal">под стеклом, антенной вверх</text>
+<circle cx="820" cy="132" r="4" fill="#1f6fd1"/>
+<text x="828" y="136" font-size="11" fill="#222" text-anchor="start" font-weight="normal">VCC — только 3V3!</text>
+<circle cx="820" cy="160" r="4" fill="#1f6fd1"/>
+<text x="828" y="164" font-size="11" fill="#222" text-anchor="start" font-weight="normal">GND</text>
+<circle cx="820" cy="188" r="4" fill="#1f6fd1"/>
+<text x="828" y="192" font-size="11" fill="#222" text-anchor="start" font-weight="normal">TX</text>
+<circle cx="820" cy="216" r="4" fill="#1f6fd1"/>
+<text x="828" y="220" font-size="11" fill="#222" text-anchor="start" font-weight="normal">RX</text>
+<circle cx="820" cy="244" r="4" fill="#1f6fd1"/>
+<text x="828" y="248" font-size="11" fill="#222" text-anchor="start" font-weight="normal">PPS — не нужен</text>
+<polyline points="556,132 700,132 700,132 820,132" fill="none" stroke="#d62828" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="556,160 700,160 700,160 820,160" fill="none" stroke="#222" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="556,188 700,188 700,188 820,188" fill="none" stroke="#1f6fd1" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="556,216 700,216 700,216 820,216" fill="none" stroke="#9aa4ad" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="20" y="320" width="1060" height="56" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
+<text x="32" y="338" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
+<text x="32" y="356" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">Прозвонка: X3.3 ↔ PA3 и X3.4 ↔ PA2. VCC платы GPS звонится с шиной 3V3, а не с 5 В.</text>
+<text x="32" y="373" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">После прошивки: на DIAG «GPS ?» → «V…» → «спутники/скорость». «GPS -» — скорее всего, перепутаны TX и RX.</text>
+</svg>

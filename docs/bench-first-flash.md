@@ -138,7 +138,7 @@ STM32_Programmer_CLI -c port=SWD -w build/Dash.elf -v -rst
 
 ## 5. Когда будет плата-носитель
 
-Что куда подключать — [wiring-overview.svg](future/wiring-overview.svg). Сборка и прозвонка — [carrier-board.md](future/carrier-board.md) §6 и [build-hardware.md](future/build-hardware.md) §5.
+Что куда паять — по шагам: [assembly.md](future/assembly.md); общая картинка — [wiring-overview.svg](future/wiring-overview.svg). Сборка и прозвонка — [carrier-board.md](future/carrier-board.md) §6 и [build-hardware.md](future/build-hardware.md) §5.
 
 Образ — **`ROAD INV`** (`-D BACKLIGHT_ACTIVE_LOW=0`). В первые 10 с ST7735 должен показать `ROAD INV`.
 

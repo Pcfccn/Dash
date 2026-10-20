@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="470" viewBox="0 0 1100 470" font-family="DejaVu Sans, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="30" font-size="18" fill="#111" text-anchor="start" font-weight="bold">Шаг 8. Габариты: X4.5 → BC547 → PE15</text>
+<text x="20" y="52" font-size="12" fill="#555" text-anchor="start" font-weight="normal">Габариты включены → 12 В на ILL+ → BC547 открыт → на PE15 ноль → прошивка включает ночной профиль.</text>
+<text x="20" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">В ЖГУТЕ (вне коробки)</text>
+<text x="420" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">НА ПЛАТЕ</text>
+<rect x="260" y="100" width="56" height="194" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="288" y="82" font-size="14" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X4</text>
+<text x="288" y="95" font-size="10" fill="#1d5a1d" text-anchor="middle" font-weight="normal">клеммник</text>
+<text x="288" y="126" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 ▶</text>
+<text x="288" y="154" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 ●</text>
+<text x="288" y="182" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 ◀</text>
+<text x="288" y="210" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 GND</text>
+<text x="288" y="238" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">5 ILL+</text>
+<text x="288" y="266" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">6 запас</text>
+<rect x="20" y="212" width="190" height="44" rx="6" fill="#fff5f5" stroke="#d62828" stroke-width="1.5"/>
+<text x="30" y="230" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">провод ILL+ / TAIL</text>
+<text x="30" y="245" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">(+12 В при габаритах)</text>
+<polyline points="210,234 260,234" fill="none" stroke="#d62828" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="235" cy="220" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="235" y="224" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">1</text>
+<text x="330" y="126" font-size="10" fill="#aaa" text-anchor="start" font-weight="normal">шаг 7</text>
+<text x="330" y="154" font-size="10" fill="#aaa" text-anchor="start" font-weight="normal">шаг 7</text>
+<text x="330" y="182" font-size="10" fill="#aaa" text-anchor="start" font-weight="normal">шаг 7</text>
+<text x="330" y="210" font-size="10" fill="#aaa" text-anchor="start" font-weight="normal">шаг 7</text>
+<polyline points="316,234 396.0,234" fill="none" stroke="#d62828" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="440.0,234 520,234" fill="none" stroke="#d62828" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="396.0" y="226" width="44" height="16" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.5"/>
+<text x="418.0" y="221" font-size="11" fill="#333" text-anchor="middle" font-weight="bold">47 к</text>
+<circle cx="418" cy="252" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="418" y="256" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
+<circle cx="520" cy="234" r="4" fill="#222"/>
+<text x="524" y="224" font-size="10" fill="#111" text-anchor="start" font-weight="normal">база</text>
+<polyline points="520,234 520,295.0" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="520,339.0 520,400" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="512" y="295.0" width="16" height="44" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.5"/>
+<text x="534" y="321.0" font-size="11" fill="#333" text-anchor="start" font-weight="bold">100 к</text>
+<circle cx="502" cy="320" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="502" y="324" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">3</text>
+<polyline points="520,234 580,234" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="580" cy="234" r="4" fill="#222"/>
+<polyline points="580,234 580,312.0" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="580,322.0 580,400" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="568,312.0 592,312.0" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="568,322.0 592,322.0" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="596" y="321.0" font-size="11" fill="#333" text-anchor="start" font-weight="bold">100 нФ</text>
+<circle cx="562" cy="360" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="562" y="364" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">4</text>
+<polyline points="580,234 670,234" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="670" cy="234" r="4" fill="#222"/>
+<polyline points="670,234 670,299.0" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="670,335.0 670,400" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="661" y="299.0" width="18" height="36" rx="3" fill="#d8d8d8" stroke="#333" stroke-width="1.5"/>
+<rect x="661" y="299.0" width="18" height="8" fill="#555"/>
+<text x="686" y="313.0" font-size="11" fill="#333" text-anchor="start" font-weight="bold">1N4148</text>
+<text x="686" y="328.0" font-size="10" fill="#444" text-anchor="start" font-weight="normal">полоска — вверх,</text>
+<text x="686" y="342.0" font-size="10" fill="#444" text-anchor="start" font-weight="normal">к базе</text>
+<circle cx="652" cy="290" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="652" y="294" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">5</text>
+<path d="M734,150 L734,122 Q734,110 746,110 L774,110 Q786,110 786,122 L786,150 Z" fill="#2d2d2d" stroke="#000"/>
+<text x="760" y="135" font-size="10" fill="#fff" text-anchor="middle" font-weight="bold">BC547</text>
+<polyline points="744,150 744,180" fill="none" stroke="#777" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="737" y="157" width="14" height="15" rx="2" fill="#fff" stroke="#777"/>
+<text x="744" y="169" font-size="10" fill="#111" text-anchor="middle" font-weight="bold">C</text>
+<polyline points="760,150 760,180" fill="none" stroke="#777" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="753" y="157" width="14" height="15" rx="2" fill="#fff" stroke="#777"/>
+<text x="760" y="169" font-size="10" fill="#111" text-anchor="middle" font-weight="bold">B</text>
+<polyline points="776,150 776,180" fill="none" stroke="#777" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="769" y="157" width="14" height="15" rx="2" fill="#fff" stroke="#777"/>
+<text x="776" y="169" font-size="10" fill="#111" text-anchor="middle" font-weight="bold">E</text>
+<polyline points="760,180 760,234 670,234" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="776,180 790,180 790,400" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="806" cy="300" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="806" y="304" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">6</text>
+<polyline points="490,400 820,400" fill="none" stroke="#222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="490" y="393" font-size="10" fill="#222" text-anchor="start" font-weight="bold">шина GND</text>
+<polyline points="744,180 744,186 700,186 700,92 880,92" fill="none" stroke="#6c757d" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="820" cy="92" r="4" fill="#222"/>
+<circle cx="700" cy="140" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="700" y="144" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">7</text>
+<rect x="880" y="54" width="190" height="58" rx="6" fill="#e9eef8" stroke="#2b4f86" stroke-width="1.5"/>
+<text x="975.0" y="72" font-size="11" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct (гребёнка)</text>
+<text x="894" y="96" font-size="11" fill="#203a66" text-anchor="start" font-weight="normal">P2.38</text>
+<text x="1060" y="96" font-size="12" fill="#203a66" text-anchor="end" font-weight="bold">PE15</text>
+<circle cx="880" cy="92" r="4" fill="#2b4f86"/>
+<polyline points="880,92 880,92" fill="none" stroke="#6c757d" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="820,92 820,134.0" fill="none" stroke="#d62828" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="820,178.0 820,220" fill="none" stroke="#d62828" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="812" y="134.0" width="16" height="44" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.5"/>
+<text x="834" y="160.0" font-size="11" fill="#333" text-anchor="start" font-weight="bold">10 к</text>
+<polyline points="812,220 870,220" fill="none" stroke="#d62828" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="876" y="224" font-size="10" fill="#d62828" text-anchor="start" font-weight="bold">шина 3V3</text>
+<circle cx="802" cy="128" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="802" y="132" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">8</text>
+<text x="690" y="150" font-size="10" fill="#444" text-anchor="end" font-weight="normal">плоской стороной к себе,</text>
+<text x="690" y="164" font-size="10" fill="#444" text-anchor="end" font-weight="normal">ножки вниз: C B E</text>
+<rect x="20" y="420" width="1060" height="39" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
+<text x="32" y="438" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
+<text x="32" y="456" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">БП 12 В на X4.5 (минус на GND): на PE15 ~0 В. Без него ~3.3 В. При 9 В — тоже ноль.</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="380" viewBox="0 0 1100 380" font-family="DejaVu Sans, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="30" font-size="18" fill="#111" text-anchor="start" font-weight="bold">Шаг 2. Шины 3V3, GND и 5 В от WeAct</text>
+<text x="20" y="52" font-size="12" fill="#555" text-anchor="start" font-weight="normal">Голый лужёный провод по нижней стороне платы: 3V3 вдоль ряда 24, GND вдоль ряда 25 (carrier-board.svg). Каждая шина — от одной точки.</text>
+<rect x="40" y="90" width="176" height="142" rx="6" fill="#e9eef8" stroke="#2b4f86" stroke-width="1.5"/>
+<text x="128.0" y="108" font-size="11" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct (гребёнка)</text>
+<text x="50" y="132" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">3V3</text>
+<text x="202" y="132" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.41</text>
+<circle cx="216" cy="128" r="4" fill="#2b4f86"/>
+<text x="50" y="160" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">5V</text>
+<text x="202" y="160" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.42</text>
+<circle cx="216" cy="156" r="4" fill="#2b4f86"/>
+<text x="50" y="188" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">GND</text>
+<text x="202" y="188" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.43</text>
+<circle cx="216" cy="184" r="4" fill="#2b4f86"/>
+<text x="50" y="216" font-size="12" fill="#203a66" text-anchor="start" font-weight="bold">GND</text>
+<text x="202" y="216" font-size="11" fill="#203a66" text-anchor="end" font-weight="normal">P2.44</text>
+<circle cx="216" cy="212" r="4" fill="#2b4f86"/>
+<polyline points="216,128 820,128" fill="none" stroke="#d62828" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="216" y="121" font-size="10" fill="#d62828" text-anchor="start" font-weight="bold">шина 3V3</text>
+<circle cx="300" cy="110" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="300" y="114" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">1</text>
+<polyline points="216,156 420,156" fill="none" stroke="#ee8a00" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="430" y="160" font-size="11" fill="#ee8a00" text-anchor="start" font-weight="bold">5 В — только к Si4599 и R1 (шаг 4), больше никуда</text>
+<circle cx="300" cy="140" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="300" y="144" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
+<polyline points="216,184 820,184" fill="none" stroke="#222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="216" y="177" font-size="10" fill="#222" text-anchor="start" font-weight="bold">шина GND</text>
+<circle cx="380" cy="168" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="380" y="172" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">3</text>
+<text x="228" y="216" font-size="10" fill="#555" text-anchor="start" font-weight="normal">P2.44 — запасной GND, можно не трогать</text>
+<text x="830" y="124" font-size="11" fill="#d62828" text-anchor="start" font-weight="normal">→ X5.1 экран, CAN 3V3, X3.1 GPS,</text>
+<text x="830" y="140" font-size="11" fill="#d62828" text-anchor="start" font-weight="normal">   3 × 1 к кнопок, 10 к габаритов</text>
+<text x="830" y="180" font-size="11" fill="#222" text-anchor="start" font-weight="normal">→ X1.2, X2.3, X3.2, X4.4, X5.2, CAN GND,</text>
+<text x="830" y="196" font-size="11" fill="#222" text-anchor="start" font-weight="normal">   2N7000 S, BC547 E, R3, 100 к, 1N4148,</text>
+<text x="830" y="212" font-size="11" fill="#222" text-anchor="start" font-weight="normal">   4 × 100 нФ</text>
+<rect x="20" y="300" width="1060" height="56" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
+<text x="32" y="318" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
+<text x="32" y="336" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">Прозвонка до установки WeAct: 3V3 ↔ GND и 5 В ↔ GND — не звонятся (нет КЗ).</text>
+<text x="32" y="353" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">После установки WeAct от USB: на шине 3V3 — 3.3 В, на 5 В — 5 В.</text>
+</svg>
