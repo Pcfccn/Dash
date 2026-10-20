@@ -77,7 +77,9 @@ _Static_assert(OBD_DEMO == 0 || OBD_DEMO == 1, "OBD_DEMO must be 0 or 1");
 /* OILP_VALIDATED 0: the reading is shown but never coloured as a warning —
  * the scaling and the low thresholds have not been checked on this engine.
  * Set 1 only after docs/oil-pressure-test.md has passed. */
+#ifndef OILP_VALIDATED
 #define OILP_VALIDATED         0
+#endif
 
 /* Vehicle speed: PID 0x0D (A km/h) x this. One-point correction from the
  * 2026-08-23 run (GPS 60 km/h = 67 on screen, ~12 % optimistic). It assumes the

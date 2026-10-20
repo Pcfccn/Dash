@@ -29,6 +29,7 @@
 #include "lv_port_disp.h"     /* SPI error counters for the DIAG readout */
 #include "st7735_status.h"
 #include "fw_info.h"          /* image id + variant at the foot of DIAG */
+#include "alert.h"            /* filtered alarm states                  */
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -766,13 +767,11 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     fmt(b, sizeof b, v, metrics[k].decimals);
     ui_text(val, b);
 
-    metric_state_t s = metric_state(k, v);
-    /* Oil pressure: shown, but never a warning colour until the source and
-     * thresholds are validated on this engine (OILP_VALIDATED); then only
-     * with the engine running — it is ~0 key-on/engine-off and builds while
-     * cranking. It is not on the alert strip either way. */
-    if (k == M_OILP && (!OILP_VALIDATED || !(shown(d, M_RPM, live) && d->rpm >= 400.0f)))
-        s = ST_INFO;
+    /* Judged metrics take their filtered state (alert.c): dwell, hysteresis,
+     * and ST_INFO (neutral) while not judged — battery and oil pressure with
+     * the engine not running, oil pressure until OILP_VALIDATED. It is not
+     * on the alert strip either way. The rest keep their plain state. */
+    metric_state_t s = alert_cfg[k].used ? alerts_state(k) : metric_state(k, v);
     lv_color_t c = state_color(s);
     /* Cold temperature (engine warming up): light blue instead of green. */
     if (s == ST_OK && is_temp(k) && v < 50.0f) c = C_COLD;
@@ -804,6 +803,9 @@ void cluster_ui_refresh(void)
     d.sel_upd_ms = g_obd.sel_upd_ms;
     bool live = d.can_ok;
     s_now = HAL_GetTick();
+    /* Filtered alarm states (dwell, hysteresis, engine-running gate) for
+     * every judged metric, used below for value colours and the strip. */
+    alerts_update(&d, s_now);
     /* Leave SNIFF by itself once the selector goes into R/D (see sniff_allowed). */
     if (s_page == PAGE_SNIFF && !sniff_allowed()) cluster_ui_set_page(0);
     /* On SNIFF but not listening (wide filter refused): try again once a
@@ -845,7 +847,7 @@ void cluster_ui_refresh(void)
     if (shown(&d, M_RPM, live)) { fmt(b, sizeof b, d.rpm, 0); ui_text(ui.rpm_val, b); }
     else        ui_text(ui.rpm_val, "--");
     {   /* RPM stays white, but warns/reds near the redline */
-        metric_state_t rs = shown(&d, M_RPM, live) ? metric_state(M_RPM, d.rpm) : ST_OK;
+        metric_state_t rs = alerts_state(M_RPM);       /* ST_INFO when not shown */
         ui_text_color(ui.rpm_val, (rs >= ST_WARN) ? state_color(rs) : C_TEXT2);
     }
     for (int i = 0; i < 4; i++)
@@ -1056,13 +1058,16 @@ void cluster_ui_refresh(void)
      * metric_state() on NaN would fall through every comparison and report a
      * confident ST_OK, and a PID that reads 0 because it is unsupported must
      * not raise CHECK either. A tag with nothing to judge is drawn neutral,
-     * not as a green "healthy". */
+     * not as a green "healthy" — that includes the battery while the engine
+     * is not running (alert.c judges it only then). States are the filtered
+     * ones: a value at a threshold does not flicker the strip. */
     static const metric_key_t TAG_M[8] = { 0, M_COOL, M_OIL, M_ATF, M_EGT, M_BATTERY, 0, 0 };
     metric_state_t ts[8];
     bool known[8];
     for (int i = 1; i <= 5; i++) {
-        known[i] = shown(&d, TAG_M[i], live);
-        ts[i]    = known[i] ? metric_state(TAG_M[i], mval(&d, TAG_M[i])) : ST_OK;
+        metric_state_t a = alerts_state(TAG_M[i]);
+        known[i] = (a != ST_INFO);
+        ts[i]    = known[i] ? a : ST_OK;
     }
     known[0] = mil_ok; ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
     known[6] = mil_ok; ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
@@ -1125,6 +1130,12 @@ void cluster_ui_refresh(void)
         txt = "NOMINAL"; col = C_OK;
         break;
     }
+#if OBD_DEMO
+    /* A demo image paints believable values: say so where the driver looks. */
+    char dsum[40];
+    lv_snprintf(dsum, sizeof dsum, "DEMO %s", txt);
+    txt = dsum;
+#endif
     ui_text(ui.summary, txt);
     ui_text_color(ui.summary, col);
 
