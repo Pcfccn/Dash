@@ -66,6 +66,22 @@ HAL_StatusTypeDef HAL_FDCAN_Start(FDCAN_HandleTypeDef *h)
 }
 HAL_StatusTypeDef HAL_FDCAN_Stop(FDCAN_HandleTypeDef *h) { h->State = HAL_FDCAN_STATE_READY; return HAL_OK; }
 
+/* TX buffer status: three buffers used in turn, like a TX FIFO. By default a
+ * frame is on the bus at once (TXBTO); tx_hold keeps it pending so a test can
+ * end it with tx_finish(). */
+static FDCAN_GlobalTypeDef fdregs;
+static uint32_t tx_put, tx_latest;
+static bool     tx_hold;
+
+static void tx_finish(uint32_t buf, bool sent)
+{
+    fdregs.TXBRP &= ~buf;
+    if (sent) fdregs.TXBTO |= buf; else fdregs.TXBCF |= buf;
+}
+
+uint32_t HAL_FDCAN_GetLatestTxFifoQRequestBuffer(const FDCAN_HandleTypeDef *h)
+{ (void)h; return tx_latest; }
+
 HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
                                                 FDCAN_TxHeaderTypeDef *tx, uint8_t *data)
 {
@@ -78,6 +94,11 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
     }
 #endif
     if (tx_status != HAL_OK) return tx_status;
+    tx_latest = 1u << (tx_put++ % 3u);
+    fdregs.TXBTO &= ~tx_latest;                 /* a new request resets both */
+    fdregs.TXBCF &= ~tx_latest;
+    fdregs.TXBRP |= tx_latest;
+    if (!tx_hold) tx_finish(tx_latest, true);
     if (tx_n < 64) {
         txlog[tx_n].id = tx->Identifier;
         memcpy(txlog[tx_n].data, data, 8);
@@ -173,6 +194,9 @@ static void reset(void)
     hmock.Init.RxFifo0ElmtsNbr = 16;
     hmock.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
     hmock.State = HAL_FDCAN_STATE_READY;
+    memset(&fdregs, 0, sizeof fdregs);
+    hmock.Instance = &fdregs;
+    tx_put = 0; tx_latest = 0; tx_hold = false; tx_watch = 0; tx_lost_cnt = 0;
     obd_init(&hmock);
 }
 
@@ -313,6 +337,41 @@ static void t_c7_gear_not_fresh_before_reply(void)
     PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0xFF, 0x00, 0x00, 0x00);   /* raw 0xFF -> -1 */
     obd_rx_poll();
     CHECK(g_obd.gear_raw == 0xFF && !policy_fresh(&g_obd, M_GEAR, now_ms));
+}
+
+/* C7 SW-12: one-shot TX. A request cancelled by the controller (lost
+ * arbitration / bus error) counts as TXL once; a sent one does not; a pending
+ * one waits for its outcome. */
+static void t_c7_tx_lost_counted(void)
+{
+    obd_health_t h;
+    egt_request();                                /* sent at once: not lost   */
+    obd_poll_tick();
+    obd_can_health(&h);
+    CHECK(h.tx_lost == 0 && tx_watch == 0);
+    txn_failed();                                 /* free the slot            */
+    tx_hold = true;
+    egt_request();
+    uint32_t b1 = tx_latest;
+    obd_poll_tick();                              /* still pending            */
+    obd_can_health(&h);
+    CHECK(h.tx_lost == 0 && (tx_watch & b1));
+    tx_finish(b1, false);                         /* cancelled: never on the bus */
+    now_ms += 10;
+    obd_poll_tick();
+    obd_can_health(&h);
+    CHECK(h.tx_lost == 1 && tx_watch == 0);
+    obd_poll_tick();                              /* counted once only        */
+    obd_can_health(&h);
+    CHECK(h.tx_lost == 1);
+    txn_failed();
+    egt_request();                                /* outcome read at the next send too */
+    uint32_t b2 = tx_latest;
+    tx_finish(b2, false);
+    txn_failed();
+    egt_request();
+    obd_can_health(&h);
+    CHECK(h.tx_lost == 2);
 }
 
 static void t_ff_too_long_no_fc(void)                                  /* N5 */
@@ -1631,6 +1690,7 @@ int main(void)
         { "pidsup_map_from_any_reply",  t_pidsup_map_from_any_reply },
         { "c7_egt_mask",                t_c7_egt_mask },
         { "c7_gear_not_fresh_before",   t_c7_gear_not_fresh_before_reply },
+        { "c7_tx_lost_counted",         t_c7_tx_lost_counted },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

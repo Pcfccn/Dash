@@ -16,7 +16,11 @@ typedef struct {
     uint32_t StdFiltersNbr, ExtFiltersNbr, RxFifo0ElmtsNbr, RxFifo0ElmtSize;
 } FDCAN_InitTypeDef;
 
+/* Only the TX buffer status registers fdcan_obd.c reads. */
+typedef struct { volatile uint32_t TXBRP, TXBTO, TXBCF; } FDCAN_GlobalTypeDef;
+
 typedef struct {
+    FDCAN_GlobalTypeDef   *Instance;
     FDCAN_InitTypeDef      Init;
     HAL_FDCAN_StateTypeDef State;
 } FDCAN_HandleTypeDef;
@@ -81,6 +85,7 @@ HAL_StatusTypeDef HAL_FDCAN_Start(FDCAN_HandleTypeDef *h);
 HAL_StatusTypeDef HAL_FDCAN_Stop(FDCAN_HandleTypeDef *h);
 HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
                                                 FDCAN_TxHeaderTypeDef *tx, uint8_t *data);
+uint32_t          HAL_FDCAN_GetLatestTxFifoQRequestBuffer(const FDCAN_HandleTypeDef *h);
 uint32_t          HAL_FDCAN_GetRxFifoFillLevel(FDCAN_HandleTypeDef *h, uint32_t fifo);
 HAL_StatusTypeDef HAL_FDCAN_GetRxMessage(FDCAN_HandleTypeDef *h, uint32_t loc,
                                          FDCAN_RxHeaderTypeDef *rh, uint8_t *data);

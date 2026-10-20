@@ -22,8 +22,12 @@
 /* ---- Bench demo -----------------------------------------------------------
  * 1 = inject synthetic test values into g_obd (no CAN needed): all colours,
  *     thresholds and the animated coolant are visible on the desk.
- * 0 = real OBD-II over the bus. SET TO 0 BEFORE USING IN THE CAR.            */
+ * 0 = real OBD-II over the bus. SET TO 0 BEFORE USING IN THE CAR.
+ * A bench image: python tools/build.py -D OBD_DEMO=1 (DIAG then says BENCH DEMO). */
+#ifndef OBD_DEMO
 #define OBD_DEMO 0
+#endif
+_Static_assert(OBD_DEMO == 0 || OBD_DEMO == 1, "OBD_DEMO must be 0 or 1");
 
 /* ---- Bus / addressing ---------------------------------------------------- */
 #define CAN_BITRATE_BPS        500000u

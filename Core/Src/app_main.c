@@ -12,6 +12,7 @@
 #include "gps.h"             /* GPS receiver on USART2 (PA2/PA3) */
 #include "input.h"           /* button gestures, day/night filter */
 #include "can_sniff.h"       /* clean point on the SNIFF page */
+#include "fw_info.h"         /* image variant, shown on the ST7735 at start-up */
 #include <math.h>
 #include <stdbool.h>
 
@@ -266,6 +267,9 @@ void AppMain_Init(void)
     lv_port_disp_init();          /* lv_init + the 4" ILI9488 display (default) */
     cluster_app_init(&hfdcan1);   /* build the 3 pages on the 4" + start OBD-II  */
     st7735_status_init();         /* small status screen on SPI4 (2nd display)   */
+    /* Which image went in, for 10 s: readable even when a wrong backlight
+     * variant keeps the main panel dark (fw_info.h). */
+    st7735_status_note(FW_VARIANT_SHORT, 10000u);
     gps_init();                   /* USART2: listens only; finds the module later */
 
     /* backlight: TIM1_CH1 / PA8 -> Si4599 P-FET gate, per docs/wiring.md */

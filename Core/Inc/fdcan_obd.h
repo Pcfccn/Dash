@@ -80,6 +80,8 @@ typedef struct {
     uint16_t busoff_recover;    /* bus-off recovery attempts                     */
     uint16_t rx_bad;            /* received frames dropped as truncated/malformed */
     uint16_t tx_fail;           /* requests the TX FIFO refused                  */
+    uint16_t tx_lost;           /* sent once, never on the bus (lost arbitration
+                                 * or bus error; no automatic retransmission)   */
     uint16_t start_fail;        /* controller restarts refused (retried)         */
     uint16_t txn_capped;        /* transactions ended by the 10 s total cap       */
 } obd_health_t;

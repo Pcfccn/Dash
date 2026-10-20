@@ -362,6 +362,22 @@ void st7735_status_set(int32_t speed_kmh, int32_t rpm, int32_t batt_dv, st_link_
     lv_unlock();
 }
 
+/* A note owns the bottom (key) line until this tick. */
+static uint32_t st_note_until;
+static bool     st_note_on;
+
+void st7735_status_note(const char *text, uint32_t hold_ms)
+{
+    if (status_disp == NULL) {
+        return;
+    }
+    lv_lock();
+    lv_label_set_text(lbl_dbg, text);
+    lv_unlock();
+    st_note_until = lv_tick_get() + hold_ms;
+    st_note_on = true;
+}
+
 /* Both below are called every 250 ms; like st7735_status_set() they write
  * only what changed, since every label write is an SPI4 repaint (review C7
  * SW-02). */
@@ -372,6 +388,13 @@ void st7735_status_key_dbg(uint8_t page, uint8_t key_raw, uint32_t key_cnt)
     static uint32_t s_cnt;
     if (status_disp == NULL) {
         return;
+    }
+    if (st_note_on) {
+        if ((int32_t)(lv_tick_get() - st_note_until) < 0) {
+            return;                   /* the note is still showing */
+        }
+        st_note_on = false;
+        s_have = false;               /* the key line has to be written again */
     }
     if (s_have && page == s_page && key_raw == s_key && key_cnt == s_cnt) {
         return;

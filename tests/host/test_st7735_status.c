@@ -112,6 +112,7 @@ static void reset(void)
     status_disp = NULL;
     st_spi_err = 0; st_err_seq = 0; st_fixed_seq = 0; st_fix_ms = 0;
     st_recover_cnt = 0; st_ready = false;
+    st_note_on = false; st_note_until = 0;
 }
 
 /* One LVGL flush of a 4-pixel area: window commands, then pixels. */
@@ -271,6 +272,26 @@ static void t_backlight_writes_only_changes(void)
     CHECK(flag_writes == f + 3);
 }
 
+/* The start-up note holds the key line for its time, then the key line is
+ * written again even though its values did not change. */
+static void t_note_holds_key_line(void)
+{
+    st7735_status_init();
+    st7735_status_key_dbg(0, 0, 0);
+    int w = text_writes;
+    st7735_status_note("ROAD", 10000u);
+    CHECK(text_writes == w + 1);
+    now_ms += 9999u;
+    st7735_status_key_dbg(0, 0, 0);
+    st7735_status_key_dbg(1, 1, 1);               /* changes wait too         */
+    CHECK(text_writes == w + 1);
+    now_ms += 1u;
+    st7735_status_key_dbg(1, 1, 1);
+    CHECK(text_writes == w + 2);                  /* back, written once       */
+    st7735_status_key_dbg(1, 1, 1);
+    CHECK(text_writes == w + 2);
+}
+
 int main(void)
 {
     static const struct { const char *name; void (*fn)(void); } tests[] = {
@@ -283,6 +304,7 @@ int main(void)
         { "saturated_counter_repairs",   t_saturated_counter_still_repairs },
         { "key_dbg_only_changes",        t_key_dbg_writes_only_changes },
         { "backlight_only_changes",      t_backlight_writes_only_changes },
+        { "note_holds_key_line",         t_note_holds_key_line },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

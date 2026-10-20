@@ -284,6 +284,27 @@ static bool reply_is_ours(uint32_t resp_id, const uint8_t *p, uint16_t n, bool c
 }
 
 /* =============================== TX ====================================== */
+/* TX is one-shot (AutoRetransmission off, fdcan.c): a frame that loses
+ * arbitration or meets a bus error is not sent again. The controller then
+ * ends its buffer with "cancellation finished" (TXBCF) instead of
+ * "transmission occurred" (TXBTO). Those are counted (TXL on DIAG), so a
+ * request that never left is not mistaken for an ECM that did not answer
+ * (review C7 SW-12). tx_watch = buffers sent whose outcome is not read yet;
+ * read before every send (a buffer's flags reset when it is reused) and on
+ * every scheduler tick. */
+static uint32_t          tx_watch;
+static volatile uint16_t tx_lost_cnt;
+
+static void tx_outcome(void) {
+    if (tx_watch == 0u) return;
+    uint32_t done = tx_watch & ~hfd->Instance->TXBRP;          /* no longer pending */
+    if (done == 0u) return;
+    uint32_t lost = done & hfd->Instance->TXBCF & ~hfd->Instance->TXBTO;
+    for (; lost != 0u; lost &= lost - 1u)
+        if (tx_lost_cnt < 0xFFFFu) tx_lost_cnt++;
+    tx_watch &= ~done;
+}
+
 /* Returns false when the TX FIFO refused the frame (full, or the controller is
  * not started, e.g. mid bus-off recovery): the caller must then not wait for a
  * reply that cannot come. */
@@ -297,10 +318,12 @@ static bool can_send(uint32_t req_id, const uint8_t *data8) {
     tx.BitRateSwitch       = FDCAN_BRS_OFF;
     tx.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
     tx.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
+    tx_outcome();
     if (HAL_FDCAN_AddMessageToTxFifoQ(hfd, &tx, (uint8_t *)data8) != HAL_OK) {
         if (tx_fail_cnt < 0xFFFFu) tx_fail_cnt++;
         return false;
     }
+    tx_watch |= HAL_FDCAN_GetLatestTxFifoQRequestBuffer(hfd);
     return true;
 }
 
@@ -729,6 +752,7 @@ void obd_can_health(obd_health_t *h) {
     h->busoff_recover = busoff_cnt;
     h->rx_bad         = rx_bad_cnt;
     h->tx_fail        = tx_fail_cnt;
+    h->tx_lost        = tx_lost_cnt;
     h->start_fail     = start_fail_cnt;
 }
 
@@ -1084,6 +1108,7 @@ void obd_poll_tick(void) {
     #define MED_DIV  3u   /* fire medium item every 3 ticks */
     #define SLOW_DIV 16u  /* oil-temp DID every 16 ticks    */
 
+    tx_outcome();
     if (can_sniff_is_active()) return;
 
     if (await_resp_id != 0u) {

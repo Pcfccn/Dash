@@ -28,6 +28,7 @@
 #include "app_main.h"         /* app_loop_max_ms() for the DIAG readout */
 #include "lv_port_disp.h"     /* SPI error counters for the DIAG readout */
 #include "st7735_status.h"
+#include "fw_info.h"          /* image id + variant at the foot of DIAG */
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -506,6 +507,14 @@ static void build_diag(void)
     lv_obj_set_style_text_line_space(ui.did_dbg, 1, 0);
 
     mk_pager(pg, 1);
+
+    /* Which image this is (fw_info.h), either side of the page dots: commit
+     * (+ = sources changed since) on the left, variant on the right, amber
+     * for an image that is not for driving. */
+    lv_obj_t *fid = mk_label(pg, FW_ID, F12, C_FAINT);
+    lv_obj_set_pos(fid, 10, 430);
+    lv_obj_t *fvar = mk_label(pg, FW_VARIANT, F12, FW_BENCH ? C_WARN : C_FAINT);
+    lv_obj_align(fvar, LV_ALIGN_TOP_RIGHT, -8, 430);
 }
 
 /* ---------------------------------------------------------------- SNIFF page */
@@ -891,11 +900,14 @@ void cluster_ui_refresh(void)
          *         over the last second in ms (how long the display path
          *         stalls OBD, shown up to 9999); Q = the most frames ever
          *         waiting in the 256-deep RX ring; then, only when non-zero,
-         *         CAP (transactions cut by the 10 s total limit) and WIDE
-         *         (SNIFF is off but the narrow filter is not restored yet).
+         *         CAP (transactions cut by the 10 s total limit), TXL (requests
+         *         sent once and never on the bus: lost arbitration or a bus
+         *         error, no automatic retransmission) and WIDE (SNIFF is off
+         *         but the narrow filter is not restored yet).
          * Line 2: RX FIFO/ring loss, frames dropped as malformed, TX refusals,
          *         then GPS: - none found, ? searching, V<sats> running without
-         *         a fix, <sats>/<km/h> with a fresh fix.
+         *         a fix, <sats>/<km/h> with a fresh fix; O<n> when GPS bytes
+         *         were lost (UART overrun or a full ring).
          * Line 3: the oil-pressure probe (PID 0xA22C) — path 22 / 2C / AA /
          *         NONE, the last NRC of each service, the last raw byte
          *         (A x 4 kPa); docs/oil-pressure-test.md. If a display SPI
@@ -919,6 +931,8 @@ void cluster_ui_refresh(void)
         cat(db, sizeof db, &o, "NRC %s LOOP %u Q%u", nrc,
             (unsigned)(loop > 9999u ? 9999u : loop), (unsigned)h.rx_hwm);
         if (h.txn_capped)             cat(db, sizeof db, &o, " CAP%u", (unsigned)h.txn_capped);
+        if (h.tx_lost)                cat(db, sizeof db, &o, " TXL%u",
+                                          (unsigned)(h.tx_lost > 999u ? 999u : h.tx_lost));
         if (can_sniff_restore_pending()) cat(db, sizeof db, &o, " WIDE");
         char gt[16];
         const gps_state_t *gs = gps_state();
@@ -929,6 +943,11 @@ void cluster_ui_refresh(void)
         else {
             unsigned v10 = (unsigned)(gs->fix.speed_kmh * 10.0f + 0.5f);
             lv_snprintf(gt, sizeof gt, "%u/%u.%u", (unsigned)gs->fix.sats, v10 / 10u, v10 % 10u);
+        }
+        if (gs->overruns) {           /* bytes lost: UART overrun or a full ring */
+            size_t gl = strlen(gt);
+            lv_snprintf(gt + gl, sizeof gt - gl, " O%u",
+                        (unsigned)(gs->overruns > 999u ? 999u : gs->overruns));
         }
         cat(db, sizeof db, &o, "\nLOST %u BAD %u TXF %u GPS %s\n",
             (unsigned)h.rx_lost, (unsigned)h.rx_bad, (unsigned)h.tx_fail, gt);
