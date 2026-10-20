@@ -133,6 +133,15 @@ HAL_StatusTypeDef HAL_FDCAN_GetProtocolStatus(FDCAN_HandleTypeDef *h, FDCAN_Prot
 static int  updates;
 static bool sniff_on;
 void obd_on_update(void) { updates++; }
+
+/* obd_on_stamp(): every call recorded, for the trip statistics hook test. */
+static struct { uint8_t ch; float v; uint32_t t; } stamps[16];
+static int stamp_n;
+void obd_on_stamp(uint8_t ch, float v, uint32_t rx_ms)
+{
+    if (stamp_n < 16) { stamps[stamp_n].ch = ch; stamps[stamp_n].v = v; stamps[stamp_n].t = rx_ms; }
+    stamp_n++;
+}
 /* Records what the sniffer is given, like the real one only while active. */
 static int      sniff_feeds;
 static uint16_t sniff_ids[64];
@@ -1075,6 +1084,33 @@ static void t_delayed_frame_keeps_rx_time(void)
     CHECK(!obd_is_fresh(&g_obd, M_COOL, now_ms));
 }
 
+/* The stats hook gets every decode with the frame's receive time, also an
+ * unchanged value, and the selector / gear / MIL stamps that are not set_m(). */
+static void t_stamp_hook_gets_rx_time(void)
+{
+    irq_mode();
+    stamp_n = 0;
+    uint32_t t0 = now_ms;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* RPM 2000   */
+    PUSH(0x1F5, 8, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00);   /* selector P */
+    FDCAN1_IT0_IRQHandler();
+    now_ms += 700u;                                 /* stall                    */
+    obd_rx_poll();
+    CHECK(stamp_n == 2);
+    CHECK(stamps[0].ch == M_RPM && near(stamps[0].v, 2000.0f) && stamps[0].t == t0);
+    CHECK(stamps[1].ch == OBD_STAMP_SEL && near(stamps[1].v, 1.0f) && stamps[1].t == t0);
+    uint32_t t1 = now_ms;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* same RPM   */
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0x03, 0x00, 0x00, 0x00);   /* gear 3     */
+    PUSH(0x7E8, 8, 0x06, 0x41, 0x01, 0x81, 0x07, 0xE5, 0x00, 0x00);   /* MIL on, 1  */
+    FDCAN1_IT0_IRQHandler();
+    obd_rx_poll();
+    CHECK(stamp_n == 5);
+    CHECK(stamps[2].ch == M_RPM && stamps[2].t == t1);                 /* unchanged: still */
+    CHECK(stamps[3].ch == M_GEAR && near(stamps[3].v, 3.0f));
+    CHECK(stamps[4].ch == OBD_STAMP_MIL && near(stamps[4].v, 1.0f));
+}
+
 static void t_delayed_frame_across_wrap(void)
 {
     irq_mode();
@@ -1691,6 +1727,7 @@ int main(void)
         { "c7_egt_mask",                t_c7_egt_mask },
         { "c7_gear_not_fresh_before",   t_c7_gear_not_fresh_before_reply },
         { "c7_tx_lost_counted",         t_c7_tx_lost_counted },
+        { "stamp_hook_gets_rx_time",    t_stamp_hook_gets_rx_time },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

@@ -13,6 +13,8 @@
 #include "input.h"           /* button gestures, day/night filter */
 #include "can_sniff.h"       /* clean point on the SNIFF page */
 #include "fw_info.h"         /* image variant, shown on the ST7735 at start-up */
+#include "trip_stats.h"      /* STATS page: loop time, reset */
+#include "speed_cal.h"
 #include <math.h>
 #include <stdbool.h>
 
@@ -121,7 +123,11 @@ static void btn_hold(uint8_t b, uint32_t t)
         s_bl_mode = !s_bl_mode;
         s_bl_mode_t = t;
     }
-    /* B_ACTION hold: page reset — nothing to reset yet */
+    /* ● held 2 s on STATS: start the statistics and the speedometer check over. */
+    if (b == B_ACTION && cluster_ui_get_page() == 3u) {
+        trip_stats_reset(t);
+        speed_cal_reset();
+    }
 }
 
 /* On-board WeAct LED on PE3 (active low). Display-independent heartbeat:
@@ -294,6 +300,8 @@ static void loop_time_tick(uint32_t t)
     uint32_t dt = t - prev;
     prev = t;
     if (dt > win_max) win_max = dt;
+    if (dt < t) trip_stats_loop(dt);  /* longest since the stats reset; the first
+                                       * call (prev = 0) would count all of init */
     if (t - win_start >= 1000u) {
         s_loop_max_ms = win_max;
         win_max = 0;

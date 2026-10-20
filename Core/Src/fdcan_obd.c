@@ -498,6 +498,7 @@ static bool send_flow_control(uint32_t resp_id) {
 static void set_m(metric_key_t k, volatile float *dst, float v) {
     g_obd.upd_ms[k] = rx_ms_cur;
     if (*dst != v) { *dst = v; obd_on_update(); }
+    obd_on_stamp((uint8_t)k, v, rx_ms_cur);
 }
 
 bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now) {
@@ -620,7 +621,8 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x01: g_obd.mil = (v[0] & 0x80) != 0;
                        g_obd.dtc_count = v[0] & 0x7F;
                        g_obd.mil_valid = true; g_obd.mil_upd_ms = rx_ms_cur;
-                       mil_miss = 0; obd_on_update(); break;
+                       mil_miss = 0; obd_on_update();
+                       obd_on_stamp(OBD_STAMP_MIL, g_obd.mil ? 1.0f : 0.0f, rx_ms_cur); break;
             default:                                                       break;
         }
     }
@@ -659,6 +661,7 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
             if (g_obd.gear_raw != A) { g_obd.gear_raw = A; obd_on_update(); }
             int8_t g = (int8_t)A;
             if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
+            obd_on_stamp((uint8_t)M_GEAR, (float)g, rx_ms_cur);
             break;
         }
         default: break;
@@ -854,6 +857,7 @@ void obd_rx_poll(void) {
             int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
             g_obd.sel_upd_ms = rx_ms_cur;
             if (g_obd.sel_range != r) { g_obd.sel_range = r; obd_on_update(); }
+            obd_on_stamp(OBD_STAMP_SEL, (float)r, rx_ms_cur);
             continue;
         }
 

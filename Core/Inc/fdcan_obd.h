@@ -70,6 +70,15 @@ bool obd_mil_fresh(const volatile obd_data_t *d, uint32_t now);
 /* Hook implemented by the UI layer: called after a value changes. */
 void obd_on_update(void);
 
+/* Hook implemented by the app (cluster_app.c: trip statistics, speedometer
+ * check): called on every valid decode, also of an unchanged value, with the
+ * frame's receive time. Channel = the metric key, or the two stamps that are
+ * not metrics. */
+#define OBD_STAMP_SEL   ((uint8_t)M_COUNT)          /* selector broadcast 0x1F5 */
+#define OBD_STAMP_MIL   ((uint8_t)(M_COUNT + 1u))   /* PID 0x01 (MIL, DTC count) */
+#define OBD_STAMP_COUNT ((uint8_t)(M_COUNT + 2u))
+void obd_on_stamp(uint8_t ch, float v, uint32_t rx_ms);
+
 /* CAN controller health, for the SNIFF and DIAG pages. Counters saturate. */
 typedef struct {
     bool     bus_off;           /* current fault state                          */

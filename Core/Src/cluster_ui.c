@@ -30,6 +30,8 @@
 #include "st7735_status.h"
 #include "fw_info.h"          /* image id + variant at the foot of DIAG */
 #include "alert.h"            /* filtered alarm states                  */
+#include "trip_stats.h"       /* STATS page                             */
+#include "speed_cal.h"
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -106,12 +108,19 @@ static struct {
 
     /* SNIFF */
     lv_obj_t *sn_stat, *sn_rows, *sn_ana;
+
+    /* STATS */
+    lv_obj_t *st_head;
+    lv_obj_t *st_cell[14][4];       /* N, P95, GAP, MIN..MAX per signal      */
+    lv_obj_t *st_cal[4];            /* speedometer check                      */
 } ui;
 
-/* SNIFF is a workbench page for reverse-engineering unknown CAN IDs.
- * It sits last so DRIVE and DIAG keep their natural order. */
+/* SNIFF is a workbench page for reverse-engineering unknown CAN IDs; it is
+ * skipped while it may not open. STATS (trip statistics, speedometer check)
+ * comes after it, so DRIVE and DIAG keep their natural order. */
 #define PAGE_SNIFF  2
-#define PAGE_COUNT  3
+#define PAGE_STATS  3
+#define PAGE_COUNT  4
 
 static uint8_t s_page = 0;
 
@@ -556,6 +565,52 @@ static void build_sniff(void)
     mk_pager(pg, PAGE_SNIFF);
 }
 
+/* -------------------------------------------------------------- page: STATS */
+/* Since power-up or the last reset (hold ● here): how often each signal
+ * really arrives and what range it covered (trip_stats.c), and the
+ * speedometer against GPS (speed_cal.c). For the first drives: one photo
+ * gives the numbers for metric_stale_ms, the alarm thresholds and
+ * SPEED_GPS_SCALE. */
+static const struct { uint8_t ch; const char *name; uint8_t dec; } ST_ROWS[] = {
+    { M_SPEED, "SPEED", 0 }, { M_RPM, "RPM", 0 },   { M_COOL, "COOL", 0 },  { M_IAT, "IAT", 0 },
+    { M_LOAD, "LOAD", 0 },   { M_BOOST, "BOOST", 1 }, { M_RAIL, "RAIL", 0 }, { M_BATTERY, "BATT", 1 },
+    { M_ATF, "ATF", 0 },     { M_GEAR, "GEAR", 0 },   { M_OIL, "OIL", 0 },   { M_OILP, "OIL P", 1 },
+    { OBD_STAMP_SEL, "SEL", 0 }, { OBD_STAMP_MIL, "MIL", 0 },
+};
+#define ST_NROWS (sizeof ST_ROWS / sizeof ST_ROWS[0])
+_Static_assert(ST_NROWS == sizeof ui.st_cell / sizeof ui.st_cell[0], "STATS rows vs cells");
+static const int ST_COL_X[4] = { 72, 130, 186, 240 };
+
+static void build_stats(void)
+{
+    lv_obj_t *pg = ui.page[PAGE_STATS];
+    lv_obj_t *tb = mk_eyebrow(pg, "STATS");
+    ui.st_head = mk_label(tb, "", F12, C_MUTED);
+    lv_obj_align(ui.st_head, LV_ALIGN_LEFT_MID, 8, 0);
+
+    static const char *const HDR[4] = { "N", "P95", "GAP", "MIN..MAX" };
+    lv_obj_t *h = mk_label(pg, "SIGNAL", F12, C_FAINT);
+    lv_obj_set_pos(h, 8, 34);
+    for (int c = 0; c < 4; c++) {
+        h = mk_label(pg, HDR[c], F12, C_FAINT);
+        lv_obj_set_pos(h, ST_COL_X[c], 34);
+    }
+    for (unsigned r = 0; r < ST_NROWS; r++) {
+        int y = 52 + 19 * (int)r;
+        lv_obj_t *n = mk_label(pg, ST_ROWS[r].name, F12, C_TEXT2);
+        lv_obj_set_pos(n, 8, y);
+        for (int c = 0; c < 4; c++) {
+            ui.st_cell[r][c] = mk_label(pg, "--", F12, C_TEXT);
+            lv_obj_set_pos(ui.st_cell[r][c], ST_COL_X[c], y);
+        }
+    }
+    for (int i = 0; i < 4; i++) {
+        ui.st_cal[i] = mk_label(pg, "", F12, i == 0 ? C_FAINT : C_TEXT2);
+        lv_obj_set_pos(ui.st_cal[i], 8, 328 + 18 * i);
+    }
+    mk_pager(pg, PAGE_STATS);
+}
+
 /* --------------------------------------------------------------- alert strip */
 /* Strip tags, left to right. 1..5 are measured values (TAG_M in refresh). */
 static const char *const TAG_NAME[8] = { "MIL","CLT","OIL","ATF","EGT","BAT","DTC","CAN" };
@@ -609,6 +664,7 @@ void cluster_ui_build(void)
     build_drive();
     build_diag();
     build_sniff();
+    build_stats();
     build_strip(scr);
 
     /* Full-screen alert border: a transparent-centre ring on top of every page,
@@ -661,7 +717,8 @@ static bool sniff_allowed(void)
 void cluster_ui_next_page(void)
 {
     uint8_t next = (uint8_t)((s_page + 1u) % PAGE_COUNT);
-    if (next == PAGE_SNIFF && !sniff_allowed()) next = 0;        /* skip to DRIVE */
+    if (next == PAGE_SNIFF && !sniff_allowed())                  /* skip to STATS */
+        next = (uint8_t)((next + 1u) % PAGE_COUNT);
     cluster_ui_set_page(next);
 }
 
@@ -669,7 +726,7 @@ void cluster_ui_prev_page(void)
 {
     uint8_t prev = (uint8_t)((s_page + PAGE_COUNT - 1u) % PAGE_COUNT);
     if (prev == PAGE_SNIFF && !sniff_allowed())                  /* skip to DIAG */
-        prev = (uint8_t)((PAGE_SNIFF + PAGE_COUNT - 1u) % PAGE_COUNT);
+        prev = (uint8_t)((prev + PAGE_COUNT - 1u) % PAGE_COUNT);
     cluster_ui_set_page(prev);
 }
 
@@ -784,6 +841,98 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
         lv_bar_set_value(bar, pct_of(k, v), LV_ANIM_OFF);
         ui_bg_color(bar, c, LV_PART_INDICATOR);
     }
+}
+
+/* ms as "450", "1.2s", "37s"; UINT32_MAX (beyond the last bucket) as ">15s". */
+static void ms_txt(char *b, size_t n, uint32_t ms)
+{
+    if (ms == UINT32_MAX)   lv_snprintf(b, n, ">15s");
+    else if (ms < 1000u)    lv_snprintf(b, n, "%u", (unsigned)ms);
+    else if (ms < 100000u)  lv_snprintf(b, n, "%u.%us", (unsigned)(ms / 1000u), (unsigned)((ms % 1000u) / 100u));
+    else                    lv_snprintf(b, n, "%us", (unsigned)(ms / 1000u));
+}
+
+/* A factor with `dec` decimals ("0.998", "0.8955"); "--" for NaN. */
+static void k_txt(char *b, size_t n, float k, int dec)
+{
+    if (isnan(k)) { lv_snprintf(b, n, "--"); return; }
+    int scale = (dec == 4) ? 10000 : 1000;
+    int t = iround(k * (float)scale);
+    if (dec == 4) lv_snprintf(b, n, "%d.%04d", t / scale, t % scale);
+    else          lv_snprintf(b, n, "%d.%03d", t / scale, t % scale);
+}
+
+/* STATS: twice a second while it is shown; ui_text() writes only changes. */
+static void refresh_stats(void)
+{
+    static uint32_t t_last;
+    if (s_now - t_last < 500u) return;
+    t_last = s_now;
+    char b[48];
+
+    /* Header: time since the reset, longest loop iteration, and the LVGL heap
+     * (LV_MEM_SIZE) now / at its peak — an exhausted heap is an assert and a
+     * reset loop, so this is the number to watch as pages grow. */
+    lv_mem_monitor_t mm;
+    lv_mem_monitor(&mm);
+    unsigned peak = mm.total_size ? (unsigned)((uint64_t)mm.max_used * 100u / mm.total_size) : 0u;
+    uint32_t up = (s_now - trip_stats_since()) / 1000u;
+    char tm[12];
+    if (up < 3600u) lv_snprintf(tm, sizeof tm, "%u:%02u", (unsigned)(up / 60u), (unsigned)(up % 60u));
+    else            lv_snprintf(tm, sizeof tm, "%uh%02u", (unsigned)(up / 3600u), (unsigned)((up / 60u) % 60u));
+    lv_snprintf(b, sizeof b, "FOR %s  LOOP %u  MEM %u/%u%%", tm, (unsigned)trip_stats_loop_max(),
+                (unsigned)mm.used_pct, peak);
+    ui_text(ui.st_head, b);
+
+    for (unsigned r = 0; r < ST_NROWS; r++) {
+        const ts_channel_t *c = trip_stats_channel(ST_ROWS[r].ch);
+        if (c->n > 99999u) lv_snprintf(b, sizeof b, "%uk", (unsigned)(c->n / 1000u));
+        else               lv_snprintf(b, sizeof b, "%u", (unsigned)c->n);
+        ui_text(ui.st_cell[r][0], b);
+        uint32_t p = trip_stats_p95(ST_ROWS[r].ch);
+        if (p == 0u) lv_snprintf(b, sizeof b, "--"); else ms_txt(b, sizeof b, p);
+        ui_text(ui.st_cell[r][1], b);
+        if (c->n < 2u) lv_snprintf(b, sizeof b, "--"); else ms_txt(b, sizeof b, c->max_gap);
+        ui_text(ui.st_cell[r][2], b);
+        if (isnan(c->vmin)) {
+            lv_snprintf(b, sizeof b, "--");
+        } else {
+            char lo[12], hi[12];
+            fmt(lo, sizeof lo, c->vmin, ST_ROWS[r].dec);
+            fmt(hi, sizeof hi, c->vmax, ST_ROWS[r].dec);
+            lv_snprintf(b, sizeof b, "%s..%s", lo, hi);
+        }
+        ui_text(ui.st_cell[r][3], b);
+    }
+
+    /* Speedometer against GPS: per band, sum(GPS) / sum(shown); 1.000 = right. */
+    static const char *const BAND[SC_BANDS] = { "40-60", "60-80", "80-100", "100+" };
+    ui_text(ui.st_cal[0], "SPEED: GPS / SHOWN, steady, >= 40 km/h");
+    uint32_t nall = 0;
+    for (uint8_t line = 0; line < 2u; line++) {
+        size_t o = 0;
+        b[0] = '\0';
+        for (uint8_t j = 0; j < 2u; j++) {
+            uint8_t bi = (uint8_t)(line * 2u + j);
+            const sc_band_t *sb = speed_cal_band(bi);
+            char k[12];
+            k_txt(k, sizeof k, speed_cal_factor(bi), 3);
+            cat(b, sizeof b, &o, "%s%s %s n%u", j ? "   " : "", BAND[bi], k,
+                (unsigned)(sb->n > 99999u ? 99999u : sb->n));
+            nall += sb->n;
+        }
+        ui_text(ui.st_cal[1 + line], b);
+    }
+    char ka[12], kn[12], kw[12];
+    k_txt(ka, sizeof ka, speed_cal_factor(SC_BANDS), 3);
+    if (nall < 50u) {
+        lv_snprintf(b, sizeof b, "ALL %s n%u  (50+ pairs for a scale)", ka, (unsigned)nall);
+    } else {
+        k_txt(kn, sizeof kn, SPEED_GPS_SCALE, 4);
+        k_txt(kw, sizeof kw, SPEED_GPS_SCALE * speed_cal_factor(SC_BANDS), 4);
+        lv_snprintf(b, sizeof b, "ALL %s  SCALE %s -> %s", ka, kn, kw);
+    }
+    ui_text(ui.st_cal[3], b);
 }
 
 void cluster_ui_refresh(void)
@@ -1052,6 +1201,9 @@ void cluster_ui_refresh(void)
         if (nm == 0) lv_snprintf(arows, sizeof arows, "no analog bytes yet");
         ui_text(ui.sn_ana, arows);
     }
+
+    /* ----- STATS ----- */
+    if (s_page == PAGE_STATS) refresh_stats();
 
     /* ----- alert strip -----
      * A tag only judges a value we actually have and that is recent:
