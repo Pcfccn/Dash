@@ -1,5 +1,5 @@
 {
-  "0": "obd_poll_tick",
+  "0": "obd_rx_poll",
   "1": "Чистовая сборка: из макетки в устройство",
   "2": "Error_Handler",
   "3": "cluster_ui_refresh",
@@ -9,14 +9,14 @@
   "7": "fdcan_obd.c",
   "8": "stm32h7xx_hal_timebase_tim.c",
   "9": "SNIFF page (STATE + ANALOG)",
-  "10": "obd_rx_poll",
+  "10": "test_alert.c",
   "11": "test_fdcan_obd.c",
   "12": "stdint",
   "13": "Architecture",
-  "14": "Глубокий аудит Stage C2 (дополнение, 2026-10-10) — статус",
+  "14": "lv_port_disp.c",
   "15": "Сессия 2026-07-24, утро (~10:19–10:20) — расшифровка фото",
   "16": "stm32h7xx_it.c",
-  "17": "req_oilp",
+  "17": "obd_poll_tick",
   "18": "FDCAN1_IT0_IRQHandler",
   "19": "stm32h7xx_hal_conf.h",
   "20": "stm32h7xx_it.h",
@@ -44,6 +44,10 @@
   "42": "Oil pressure: where it comes from, and how to check it",
   "43": "GM-enhanced DIDs (mode 22) for the Colorado 2.8 / E98",
   "44": "SNIFF capture — selector / PRNDL search",
-  "45": "spi.c",
-  "46": "4. Варианты железа"
+  "45": "lv_port_disp_init",
+  "46": "Первая прошивка stage-c: чек-лист",
+  "47": "HAL_StatusTypeDef",
+  "48": "Статус исправлений (2026-10-09)",
+  "49": "HAL_GPIO_Init",
+  "50": "mock_lv_port_disp/lvgl.h"
 }
