@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="800" viewBox="0 0 1320 800" font-family="DejaVu Sans, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="30" font-size="20" fill="#111" text-anchor="start" font-weight="bold">Жгут Dash: пять веток от коробки</text>
+<text x="20" y="52" font-size="12" fill="#555" text-anchor="start" font-weight="normal">Длины мерить по месту по будущей трассе (шнурком), + 15 см запаса. Исключение — экран: шлейф X5 не длиннее 15–20 см.</text>
+<rect x="520" y="300" width="280" height="170" rx="12" fill="#fbfbf3" stroke="#8a8a5a" stroke-width="2.5"/>
+<text x="660.0" y="360" font-size="16" fill="#6a6a3a" text-anchor="middle" font-weight="bold">Коробка Dash</text>
+<text x="660.0" y="382" font-size="12" fill="#6a6a3a" text-anchor="middle" font-weight="normal">140 × 82 × 38</text>
+<text x="660.0" y="400" font-size="11" fill="#6a6a3a" text-anchor="middle" font-weight="normal">провода — через отверстия</text>
+<text x="660.0" y="414" font-size="11" fill="#6a6a3a" text-anchor="middle" font-weight="normal">в стенке, высоко (25–30 мм от дна)</text>
+<rect x="500.0" y="327.0" width="40" height="26" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="520" y="344" font-size="11" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X1</text>
+<rect x="500.0" y="417.0" width="40" height="26" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="520" y="434" font-size="11" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X2</text>
+<rect x="780.0" y="327.0" width="40" height="26" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="800" y="344" font-size="11" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X5</text>
+<rect x="780.0" y="387.0" width="40" height="26" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="800" y="404" font-size="11" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X3</text>
+<rect x="647.0" y="450.0" width="26" height="40" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="660.0" y="474" font-size="11" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X4</text>
+<rect x="30" y="90" width="250" height="92" rx="8" fill="#fff5f5" stroke="#d62828" stroke-width="1.6"/>
+<text x="40" y="110" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Провод ACC</text>
+<text x="40" y="128" font-size="11" fill="#333" text-anchor="start" font-weight="normal">найти мультиметром:</text>
+<text x="40" y="143" font-size="11" fill="#333" text-anchor="start" font-weight="normal">12 В в ACC и ON, 0 В без ключа</text>
+<text x="40" y="158" font-size="11" fill="#333" text-anchor="start" font-weight="normal">врезка: пайка, без разреза провода</text>
+<rect x="30" y="230" width="250" height="60" rx="8" fill="#f4f4f4" stroke="#222" stroke-width="1.6"/>
+<text x="40" y="250" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Масса кузова</text>
+<text x="40" y="268" font-size="11" fill="#333" text-anchor="start" font-weight="normal">болт на металле, краску зачистить</text>
+<rect x="300" y="142" width="74" height="26" rx="4" fill="#fff" stroke="#d62828" stroke-width="2"/>
+<text x="337" y="160" font-size="12" fill="#d62828" text-anchor="middle" font-weight="bold">2 А</text>
+<text x="337" y="186" font-size="10" fill="#d62828" text-anchor="middle" font-weight="normal">держатель</text>
+<text x="337" y="198" font-size="10" fill="#d62828" text-anchor="middle" font-weight="normal">у врезки</text>
+<line x1="280" y1="155.0" x2="300" y2="155.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="374" y1="155.0" x2="440" y2="155.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="440.0" y1="155" x2="440.0" y2="334" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="440" y1="334.0" x2="500" y2="334.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<text x="452" y="196" font-size="11" fill="#d62828" text-anchor="start" font-weight="bold">X1.1 красный</text>
+<text x="452" y="211" font-size="11" fill="#d62828" text-anchor="start" font-weight="normal">+12 В ACC</text>
+<line x1="280" y1="262.0" x2="420" y2="262.0" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="420.0" y1="262" x2="420.0" y2="346" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="420" y1="346.0" x2="500" y2="346.0" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<text x="300" y="252" font-size="11" fill="#222" text-anchor="start" font-weight="bold">X1.2 чёрный — масса</text>
+<rect x="30" y="420" width="270" height="132" rx="8" fill="#f7f2fc" stroke="#7a4fb0" stroke-width="1.6"/>
+<text x="40" y="440" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Разветвитель OBD2 (Y)</text>
+<text x="40" y="458" font-size="11" fill="#333" text-anchor="start" font-weight="normal">штекер — в разъём OBD машины</text>
+<text x="40" y="473" font-size="11" fill="#333" text-anchor="start" font-weight="normal">гнездо 1 — свободно для сканера</text>
+<text x="40" y="488" font-size="11" fill="#333" text-anchor="start" font-weight="normal">гнездо 2 — Dash: штекер OBD2 «папа»</text>
+<text x="40" y="503" font-size="11" fill="#333" text-anchor="start" font-weight="normal">или хвост разветвителя:</text>
+<text x="40" y="518" font-size="11" fill="#333" text-anchor="start" font-weight="normal">пины 6, 14, 5</text>
+<line x1="300" y1="482.8" x2="450" y2="482.8" stroke="#d9a400" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="300" y1="486.0" x2="450" y2="486.0" stroke="#2a9d3a" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="300" y1="489.2" x2="450" y2="489.2" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="446.8" y1="486" x2="446.8" y2="430" stroke="#d9a400" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="450.0" y1="486" x2="450.0" y2="430" stroke="#2a9d3a" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="453.2" y1="486" x2="453.2" y2="430" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="450" y1="426.8" x2="500" y2="426.8" stroke="#d9a400" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="450" y1="430.0" x2="500" y2="430.0" stroke="#2a9d3a" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="450" y1="433.2" x2="500" y2="433.2" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<text x="30" y="576" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="bold">X2: 3 провода</text>
+<text x="30" y="591" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="normal">X2.1 жёлтый — пин 6 CAN-H</text>
+<text x="30" y="606" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="normal">X2.2 зелёный — пин 14 CAN-L</text>
+<text x="30" y="621" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="normal">X2.3 чёрный — пин 5 земля</text>
+<text x="30" y="636" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="normal">жёлтый и зелёный — витая пара,</text>
+<text x="30" y="651" font-size="11" fill="#7a4fb0" text-anchor="start" font-weight="normal">3–4 витка на 10 см</text>
+<rect x="1010" y="90" width="290" height="110" rx="8" fill="#eefaf6" stroke="#16a085" stroke-width="1.6"/>
+<text x="1020" y="110" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Экран 4" ILI9488</text>
+<text x="1020" y="128" font-size="11" fill="#333" text-anchor="start" font-weight="normal">8 проводов, ≤ 15–20 см (SPI 18.75 МГц)</text>
+<text x="1020" y="143" font-size="11" fill="#333" text-anchor="start" font-weight="normal">коробка — прямо за экраном</text>
+<text x="1020" y="158" font-size="11" fill="#333" text-anchor="start" font-weight="normal">к выводам экрана — пайкой</text>
+<text x="1020" y="173" font-size="11" fill="#333" text-anchor="start" font-weight="normal">+ термоусадка, без разъёма</text>
+<line x1="820" y1="328.8" x2="900" y2="328.8" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="332.0" x2="900" y2="332.0" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="335.2" x2="900" y2="335.2" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="338.4" x2="900" y2="338.4" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="341.6" x2="900" y2="341.6" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="344.8" x2="900" y2="344.8" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="348.0" x2="900" y2="348.0" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="351.2" x2="900" y2="351.2" stroke="#ee8a00" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="888.8" y1="340" x2="888.8" y2="160" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="892.0" y1="340" x2="892.0" y2="160" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="895.2" y1="340" x2="895.2" y2="160" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="898.4" y1="340" x2="898.4" y2="160" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="901.6" y1="340" x2="901.6" y2="160" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="904.8" y1="340" x2="904.8" y2="160" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="908.0" y1="340" x2="908.0" y2="160" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="911.2" y1="340" x2="911.2" y2="160" stroke="#ee8a00" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="148.8" x2="1010" y2="148.8" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="152.0" x2="1010" y2="152.0" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="155.2" x2="1010" y2="155.2" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="158.4" x2="1010" y2="158.4" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="161.6" x2="1010" y2="161.6" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="164.8" x2="1010" y2="164.8" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="168.0" x2="1010" y2="168.0" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="171.2" x2="1010" y2="171.2" stroke="#ee8a00" stroke-width="2.2" stroke-linecap="round"/>
+<text x="735" y="232" font-size="11" fill="#0f5f50" text-anchor="start" font-weight="bold">X5: 8 проводов</text>
+<text x="735" y="247" font-size="11" fill="#0f5f50" text-anchor="start" font-weight="normal">X5.1 VCC … X5.8 LED</text>
+<rect x="1010" y="330" width="290" height="110" rx="8" fill="#eef5fc" stroke="#1f6fd1" stroke-width="1.6"/>
+<text x="1020" y="350" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Плата GPS ATGM336H</text>
+<text x="1020" y="368" font-size="11" fill="#333" text-anchor="start" font-weight="normal">под лобовым стеклом, антенной вверх,</text>
+<text x="1020" y="383" font-size="11" fill="#333" text-anchor="start" font-weight="normal">не под металлом и тонировкой с фольгой</text>
+<text x="1020" y="398" font-size="11" fill="#333" text-anchor="start" font-weight="normal">VCC — только 3V3</text>
+<text x="1020" y="413" font-size="11" fill="#333" text-anchor="start" font-weight="normal">до 1.5 м, подальше от силовых проводов</text>
+<line x1="820" y1="395.2" x2="1010" y2="395.2" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="398.4" x2="1010" y2="398.4" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="401.6" x2="1010" y2="401.6" stroke="#1f6fd1" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="820" y1="404.8" x2="1010" y2="404.8" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<text x="840" y="428" font-size="11" fill="#1f6fd1" text-anchor="start" font-weight="bold">X3: 4 провода</text>
+<text x="840" y="443" font-size="11" fill="#1f6fd1" text-anchor="start" font-weight="normal">1 3V3 · 2 GND · 3 TX · 4 RX</text>
+<rect x="470" y="610" width="380" height="160" rx="8" fill="#f6f7f8" stroke="#6c757d" stroke-width="1.6"/>
+<text x="480" y="630" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Заглушка LC100: 3 кнопки 8 мм (1NO)</text>
+<text x="480" y="648" font-size="11" fill="#333" text-anchor="start" font-weight="normal">контакт 1 кнопок ▶ / ● / ◀ → X4.1 / X4.2 / X4.3</text>
+<text x="480" y="663" font-size="11" fill="#333" text-anchor="start" font-weight="normal">контакт 2 всех трёх — вместе → X4.4 (GND)</text>
+<text x="480" y="678" font-size="11" fill="#333" text-anchor="start" font-weight="normal">кольцо подсветки 12–24 В — НЕ через Dash:</text>
+<text x="480" y="693" font-size="11" fill="#333" text-anchor="start" font-weight="normal">  «+» → ILL+, «−» → ILL− (гаснет реостатом)</text>
+<text x="480" y="708" font-size="11" fill="#333" text-anchor="start" font-weight="normal">  или «−» на массу (всегда ярко)</text>
+<text x="480" y="723" font-size="11" fill="#333" text-anchor="start" font-weight="normal">разъём 6.3 мм 8P у заглушки — по желанию</text>
+<line x1="655.2" y1="490" x2="655.2" y2="610" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="658.4" y1="490" x2="658.4" y2="610" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="661.6" y1="490" x2="661.6" y2="610" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="664.8" y1="490" x2="664.8" y2="610" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
+<text x="674.0" y="548" font-size="11" fill="#6c757d" text-anchor="start" font-weight="bold">X4.1–X4.4: 4 провода к кнопкам</text>
+<rect x="960" y="620" width="340" height="120" rx="8" fill="#fff5f5" stroke="#d62828" stroke-width="1.6"/>
+<text x="970" y="640" font-size="13" fill="#111" text-anchor="start" font-weight="bold">ILL+ (габариты)</text>
+<text x="970" y="658" font-size="11" fill="#333" text-anchor="start" font-weight="normal">12 В при включённых габаритах, при любом</text>
+<text x="970" y="673" font-size="11" fill="#333" text-anchor="start" font-weight="normal">положении реостата (плюс, не ILL−)</text>
+<text x="970" y="688" font-size="11" fill="#333" text-anchor="start" font-weight="normal">удобно взять у разъёма соседней</text>
+<text x="970" y="703" font-size="11" fill="#333" text-anchor="start" font-weight="normal">штатной кнопки с подсветкой</text>
+<line x1="960" y1="680.0" x2="900" y2="680.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900.0" y1="680" x2="900.0" y2="520" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="900" y1="520.0" x2="690.0" y2="520.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="690.0" y1="520" x2="690.0" y2="490" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
+<text x="910" y="506" font-size="11" fill="#d62828" text-anchor="start" font-weight="bold">X4.5 красный — ILL+</text>
+<text x="644.0" y="514" font-size="10" fill="#888" text-anchor="end" font-weight="normal">X4.6 — запас</text>
+</svg>

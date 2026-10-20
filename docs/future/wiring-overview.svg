@@ -71,13 +71,13 @@
 <text x="305" y="493" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">5</text>
 <text x="20" y="568" font-size="10" fill="#555" text-anchor="start" font-weight="normal">CAN-H / CAN-L — витая пара, отвод от разветвителя покороче</text>
 <rect x="20" y="625" width="230" height="150" rx="8" fill="#f6f7f8" stroke="#6c757d" stroke-width="1.5"/>
-<text x="30" y="645" font-size="14" fill="#111" text-anchor="start" font-weight="bold">3 кнопки LC100</text>
-<text x="30" y="663" font-size="11" fill="#333" text-anchor="start" font-weight="normal">momentary, в штатной заглушке</text>
+<text x="30" y="645" font-size="14" fill="#111" text-anchor="start" font-weight="bold">3 кнопки 8 мм (1NO)</text>
+<text x="30" y="663" font-size="11" fill="#333" text-anchor="start" font-weight="normal">в штатной заглушке LC100</text>
 <text x="30" y="678" font-size="11" fill="#333" text-anchor="start" font-weight="normal">контакт 1 каждой → свой провод</text>
 <text x="30" y="693" font-size="11" fill="#333" text-anchor="start" font-weight="normal">контакт 2 всех трёх → общий GND</text>
 <text x="30" y="708" font-size="11" fill="#333" text-anchor="start" font-weight="normal"></text>
-<text x="30" y="723" font-size="11" fill="#333" text-anchor="start" font-weight="normal">подсветка кнопок — от штатной</text>
-<text x="30" y="738" font-size="11" fill="#333" text-anchor="start" font-weight="normal">подсветки приборов, не через Dash</text>
+<text x="30" y="723" font-size="11" fill="#333" text-anchor="start" font-weight="normal">кольцо подсветки 12–24 В — не через</text>
+<text x="30" y="738" font-size="11" fill="#333" text-anchor="start" font-weight="normal">Dash: «+» ILL+, «−» ILL− / масса</text>
 <polyline points="250,675 362,675" fill="none" stroke="#6c757d" stroke-width="2.2" stroke-linejoin="round"/>
 <polyline points="250,697 362,697" fill="none" stroke="#6c757d" stroke-width="2.2" stroke-linejoin="round"/>
 <polyline points="250,719 362,719" fill="none" stroke="#6c757d" stroke-width="2.2" stroke-linejoin="round"/>
