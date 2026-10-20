@@ -53,7 +53,9 @@ metric_state_t alert_step(alert_t *a, const alert_cfg_t *c, metric_key_t k,
                 a->below_t  = now;
             }
             if (now - a->below_t >= c->down_ms) {
-                a->shown    = (r >= ST_WARN) ? r : ST_OK;   /* one step at a time */
+                /* to the level the reading has with that margin: CRIT can
+                 * drop to WARN, or straight to OK when it is well inside */
+                a->shown    = (r >= ST_WARN) ? r : ST_OK;
                 a->below_on = false;
             }
         } else {

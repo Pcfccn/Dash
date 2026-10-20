@@ -94,6 +94,19 @@ static void t_hysteresis_and_steps_down(void)
     CHECK(alerts_state(M_COOL) == ST_OK);
 }
 
+/* Well inside the good band, CRIT goes straight to OK after down_ms. */
+static void t_crit_drops_straight_to_ok(void)
+{
+    put(M_COOL, &d.cool, 108.0f);
+    run(1100);
+    CHECK(alerts_state(M_COOL) == ST_CRIT);
+    put(M_COOL, &d.cool, 88.0f);
+    run(2960);
+    CHECK(alerts_state(M_COOL) == ST_CRIT);
+    run(80);
+    CHECK(alerts_state(M_COOL) == ST_OK);
+}
+
 static void t_dip_does_not_drop_alarm(void)
 {
     put(M_OIL, &d.oil, 125.0f);
@@ -213,6 +226,7 @@ int main(void)
         { "fast_rise_straight_to_crit", t_fast_rise_goes_straight_to_crit },
         { "flicker_never_warns",        t_flicker_at_threshold_never_warns },
         { "hysteresis_steps_down",      t_hysteresis_and_steps_down },
+        { "crit_straight_to_ok",        t_crit_drops_straight_to_ok },
         { "dip_does_not_drop_alarm",    t_dip_does_not_drop_alarm },
         { "rpm_redline_immediate",      t_rpm_redline_is_immediate },
         { "battery_needs_engine",       t_battery_only_with_engine_running },

@@ -10,7 +10,9 @@
  *  - a level is entered only once the raw state has held it for a dwell
  *    (up_crit_ms is the shorter one, so a fast rise goes straight to CRIT);
  *  - it is left only once the reading has been at least `hyst` inside the
- *    better band for down_ms, so a CRIT also stays up at least down_ms;
+ *    better band for down_ms, so a CRIT also stays up at least down_ms; it
+ *    then drops to the level the reading has with that margin (WARN, or OK
+ *    straight away when it is well inside);
  *  - battery and oil pressure are judged only with the engine running (RPM
  *    fresh >= ALERT_RUN_RPM for ALERT_RUN_MS): cranking and key-on / engine-
  *    off readings are expected outside their bands; oil pressure also only
