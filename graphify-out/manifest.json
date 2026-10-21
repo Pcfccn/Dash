@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
-    "mtime": 1791960773.7645836,
-    "seen": 1791961824.4622092,
-    "ast_hash": "e2afad43472b3b596c39bb00cfb4737c",
+    "mtime": 1792470813.8171754,
+    "seen": 1792547245.1451256,
+    "ast_hash": "538c0e3fa0665f0132ae60afd84191e7",
     "semantic_hash": ""
   },
   "Core/Inc/fdcan.h": {
@@ -36,9 +36,9 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1792457362.8027196,
-    "seen": 1792459947.7194912,
-    "ast_hash": "7ca427c2cece33a24d0dd55cd9dae6ec",
+    "mtime": 1792470301.4734943,
+    "seen": 1792547245.1451292,
+    "ast_hash": "2e4cf2c0cdd113b0547f3fee940561d0",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -90,21 +90,21 @@
     "semantic_hash": "5025ea19ecb95acc84b17dcc17d3ebab"
   },
   "Core/Src/app_main.c": {
-    "mtime": 1792457610.5356157,
-    "seen": 1792459947.719506,
-    "ast_hash": "72376a61415a188973a94eeb7faef06e",
+    "mtime": 1792470706.58782,
+    "seen": 1792547245.1451442,
+    "ast_hash": "6259d9a789a9b87ecb6111f80c18d955",
     "semantic_hash": ""
   },
   "Core/Src/cluster_app.c": {
-    "mtime": 1791690231.5529587,
-    "seen": 1791698891.22636,
-    "ast_hash": "78755f620b178600523dd00a032045e6",
+    "mtime": 1792470691.2673364,
+    "seen": 1792547245.1451457,
+    "ast_hash": "d6134fa218c3becd0fbebd79d6a3129b",
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792458463.580042,
-    "seen": 1792459947.7195086,
-    "ast_hash": "5bb23b8dce24f2ed53857190c39f07e1",
+    "mtime": 1792470881.4190438,
+    "seen": 1792547245.1451464,
+    "ast_hash": "976fa24d0ff9071b0df797a19ef97a54",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1792457361.6904483,
-    "seen": 1792459947.7195115,
-    "ast_hash": "bebebe695297cdbbdd99ad7f6a2f208b",
+    "mtime": 1792470305.725552,
+    "seen": 1792547245.1451485,
+    "ast_hash": "4ed7bb09edf58c87ebff21bb1ab10b84",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -186,9 +186,9 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792458853.765587,
-    "seen": 1792459947.7195406,
-    "ast_hash": "e5d41ab4fa27522566af9c417749000f",
+    "mtime": 1792471027.1360793,
+    "seen": 1792547245.1451817,
+    "ast_hash": "c4cbc6bbc1ac957968ec2012ddc5293a",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -780,9 +780,9 @@
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1792457409.767207,
-    "seen": 1792459947.7195332,
-    "ast_hash": "32e78591a90a36610dc034caf0c60e5d",
+    "mtime": 1792470449.21051,
+    "seen": 1792547245.14517,
+    "ast_hash": "0f9f05949555d7c63212f8f11a7a260d",
     "semantic_hash": ""
   },
   "tools/build.py": {
@@ -852,9 +852,9 @@
     "semantic_hash": ""
   },
   "docs/future/build-hardware.md": {
-    "mtime": 1791961804.555268,
-    "seen": 1791961824.4623475,
-    "ast_hash": "e0a8aa7f1062ae5c76c9865d670a47d0",
+    "mtime": 1792462957.4737046,
+    "seen": 1792547245.1451943,
+    "ast_hash": "6c024694862b275200aa546df5b47917",
     "semantic_hash": ""
   },
   "docs/future/gps-odometer-fuel.md": {
@@ -930,15 +930,15 @@
     "semantic_hash": ""
   },
   "docs/future/carrier-board.md": {
-    "mtime": 1791963199.303785,
-    "seen": 1792050942.8998182,
-    "ast_hash": "262b2be7246f303aef51729f2b2ff352",
+    "mtime": 1792540832.9235933,
+    "seen": 1792547245.145195,
+    "ast_hash": "ef8d5e5401d630b3a367593859da1b0d",
     "semantic_hash": ""
   },
   "docs/future/carrier-board.svg": {
-    "mtime": 1791963115.132894,
-    "seen": 1792050942.8998756,
-    "ast_hash": "dad97d07f709cb2100ab27b6ee90d277",
+    "mtime": 1792540582.3560536,
+    "seen": 1792547245.1452518,
+    "ast_hash": "038de1224374a6d8c232cc5e24a119aa",
     "semantic_hash": ""
   },
   "tests/host/mock_st7735_status/lvgl.h": {
@@ -990,9 +990,153 @@
     "semantic_hash": ""
   },
   "docs/bench-first-flash.md": {
-    "mtime": 1792458993.5514178,
-    "seen": 1792459947.719552,
-    "ast_hash": "25d5f2b3ff1b7561b35d6ff55efe62e6",
+    "mtime": 1792471025.009807,
+    "seen": 1792547245.1451917,
+    "ast_hash": "40aa711c1119535c1687c5f8fce634ed",
+    "semantic_hash": ""
+  },
+  "Core/Inc/speed_cal.h": {
+    "mtime": 1792470669.7143943,
+    "seen": 1792547245.1451366,
+    "ast_hash": "123e6b32a6326a7b6e5c32f7ba769bc5",
+    "semantic_hash": ""
+  },
+  "Core/Inc/trip_stats.h": {
+    "mtime": 1792470271.6364517,
+    "seen": 1792547245.145142,
+    "ast_hash": "edeb766141a8554d9a9bf34d049d7cfc",
+    "semantic_hash": ""
+  },
+  "Core/Src/speed_cal.c": {
+    "mtime": 1792470300.402879,
+    "seen": 1792547245.1451561,
+    "ast_hash": "ba9c4ae21b54c2813c2ba8dbab3bf3bb",
+    "semantic_hash": ""
+  },
+  "Core/Src/trip_stats.c": {
+    "mtime": 1792470272.7077165,
+    "seen": 1792547245.1451619,
+    "ast_hash": "d4278c56e7e9590ffc403e4614aa4ad3",
+    "semantic_hash": ""
+  },
+  "tests/host/test_speed_cal.c": {
+    "mtime": 1792470669.7391205,
+    "seen": 1792547245.145174,
+    "ast_hash": "8a1693cba793e5dd506ea21581ed4555",
+    "semantic_hash": ""
+  },
+  "tests/host/test_trip_stats.c": {
+    "mtime": 1792470549.376649,
+    "seen": 1792547245.1451766,
+    "ast_hash": "2ba1507f1fe3c15dbabf3e1bf5acac7b",
+    "semantic_hash": ""
+  },
+  "tools/drawings/assembly_steps.py": {
+    "mtime": 1792547230.302182,
+    "seen": 1792547245.1451778,
+    "ast_hash": "e1233cd146100ebe776951442296316b",
+    "semantic_hash": ""
+  },
+  "tools/drawings/carrier_board.py": {
+    "mtime": 1792547230.3154953,
+    "seen": 1792547245.1451786,
+    "ast_hash": "92ddc4d488498a89dfd63c8fb90adae7",
+    "semantic_hash": ""
+  },
+  "tools/drawings/carrier_template.py": {
+    "mtime": 1792547230.3426805,
+    "seen": 1792547245.1451788,
+    "ast_hash": "44037eaa131aaea6efe2fe0391ad374b",
+    "semantic_hash": ""
+  },
+  "tools/drawings/harness_tree.py": {
+    "mtime": 1792547230.3548903,
+    "seen": 1792547245.1451797,
+    "ast_hash": "f0dcabe0db63114f63db1003b2b2ca88",
+    "semantic_hash": ""
+  },
+  "tools/drawings/wiring_overview.py": {
+    "mtime": 1792547230.3650625,
+    "seen": 1792547245.1451802,
+    "ast_hash": "00e92d9897ce731cce5d6fa5dd7860ee",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly.md": {
+    "mtime": 1792540834.0206914,
+    "seen": 1792547245.1451936,
+    "ast_hash": "74c27996ced4c56c57c063df16f89982",
+    "semantic_hash": ""
+  },
+  "docs/future/harness.md": {
+    "mtime": 1792471300.6447618,
+    "seen": 1792547245.1451976,
+    "ast_hash": "a8b499318377e756eea506f0703ce502",
+    "semantic_hash": ""
+  },
+  "docs/future/carrier-template.pdf": {
+    "mtime": 1792547231.5075765,
+    "seen": 1792547245.1452022,
+    "ast_hash": "51b77df5a4fc86253d8109196ec0ef09",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-1-power.svg": {
+    "mtime": 1792540445.124313,
+    "seen": 1792547245.1452472,
+    "ast_hash": "950f298078778461a083ccd56b398806",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-2-rails.svg": {
+    "mtime": 1792540445.1253202,
+    "seen": 1792547245.145248,
+    "ast_hash": "f2429c1e0f7f2207234ee541a4a688db",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-3-display.svg": {
+    "mtime": 1792540445.1253202,
+    "seen": 1792547245.1452484,
+    "ast_hash": "67a11532a30833198881d30403a60174",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-4-backlight.svg": {
+    "mtime": 1792540445.1263206,
+    "seen": 1792547245.1452491,
+    "ast_hash": "912ffa73c820c3f66b0cf4c521ac33ff",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-5-can.svg": {
+    "mtime": 1792540445.1263206,
+    "seen": 1792547245.1452498,
+    "ast_hash": "7a4e99e2ad67feb2efc720b580744c5c",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-6-gps.svg": {
+    "mtime": 1792540445.1273174,
+    "seen": 1792547245.1452503,
+    "ast_hash": "3558e6393672a4ea3b1bdb262ed84189",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-7-buttons.svg": {
+    "mtime": 1792540445.1283205,
+    "seen": 1792547245.1452508,
+    "ast_hash": "0e874ec5a718eaca6e7d35227333cb7e",
+    "semantic_hash": ""
+  },
+  "docs/future/assembly/step-8-parking-lights.svg": {
+    "mtime": 1792540445.1283205,
+    "seen": 1792547245.1452513,
+    "ast_hash": "d6114674fb56c5b457e7ba16bc0cd4ee",
+    "semantic_hash": ""
+  },
+  "docs/future/harness.svg": {
+    "mtime": 1792540443.45306,
+    "seen": 1792547245.1452525,
+    "ast_hash": "0ea69068b330ac18943bf308dbee3858",
+    "semantic_hash": ""
+  },
+  "docs/future/wiring-overview.svg": {
+    "mtime": 1792540444.0153315,
+    "seen": 1792547245.145253,
+    "ast_hash": "6a8b8d472a99c60396fa4726ea6eb17b",
     "semantic_hash": ""
   }
 }
