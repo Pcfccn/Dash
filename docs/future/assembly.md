@@ -16,7 +16,7 @@
 - **Транзисторы** (2N7000, BC547) нарисованы как держишь в руке: плоской стороной к себе, ножки вниз.
 - **Диоды** — полоска на корпусе там же, где на картинке.
 
-Где что стоит на плате по отверстиям — [carrier-board.svg](carrier-board.svg). Общая картинка всего сразу — [wiring-overview.svg](wiring-overview.svg).
+Где что стоит на плате по отверстиям — [carrier-board.svg](carrier-board.svg), а в натуральную величину, чтобы положить на макетку, — [carrier-template.pdf](carrier-template.pdf). Печатать 100 %, сверить линейку 50 мм. Лист 2 — вид со стороны пайки, с шинами. Общая картинка всего сразу — [wiring-overview.svg](wiring-overview.svg).
 
 **Прошивка для этой платы — `ROAD INV`** (`python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0`): из-за драйвера подсветки на 2N7000 (шаг 4).
 

@@ -158,7 +158,8 @@ def part(c0, r0, w, h, text, color):
         a(f'<text x="{x + 5:.1f}" y="{y + 14 + i*12:.1f}" font-size="10" fill="{color}">{line}</text>')
 part(17, 1, 3, 6, "Подсветка|2N7000|R1 10k→5V|R2 1k←PA8|R3 10k→GND", "#d35400")
 part(17, 9, 3, 5, "Кнопки|3 × 1k→3V3|3 × 100n|→GND", "#c0392b")
-part(17, 16, 3, 7, "Габариты|BC547|47k←ILL+|100k, 100n|1N4148|10k→3V3", "#c0392b")
+# rows 17-23 only: row 24 carries the bare 3V3 bus underneath (row 25 GND)
+part(17, 16, 3, 6, "Габариты|BC547|47k←ILL+|100k, 100n|1N4148|10k→3V3", "#c0392b")
 part(4, 25, 10, 1.6, "TVS 1.5KE20A: полоска (катод) к X1.1 +12, к входу PD65W", "#e74c3c")
 
 a(f'<text x="{hx(5):.1f}" y="{hy(1) + 2:.1f}" font-size="1" fill="#fff"> </text>')
