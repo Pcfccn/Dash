@@ -54,7 +54,7 @@
  * A normal reading, or one nothing judges, is white, the brightest and
  * steadiest colour. A coloured value always means something: cyan = engine
  * cold, yellow = warning, red = critical. Green is kept for small "all good" marks: dots, bars,
- * NOMINAL, READY. */
+ * READY. */
 #define C_SCREEN     lv_color_hex(0x000000)
 #define C_SURFACE    lv_color_hex(0x000000)
 #define C_LINE       lv_color_hex(0x0000c0)   /* card borders, grid, tag underlines */
@@ -786,7 +786,7 @@ static void build_strip(lv_obj_t *scr)
         lv_obj_add_flag(ui.tag[i], LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(ui.tag_ul[i], LV_OBJ_FLAG_HIDDEN);
     }
-    ui.summary = mk_label(ui.strip, "NOMINAL", F12, C_OK);
+    ui.summary = mk_label(ui.strip, "", F12, C_OK);
     lv_obj_align(ui.summary, LV_ALIGN_RIGHT_MID, -8, 0);
 }
 
@@ -1502,7 +1502,8 @@ void cluster_ui_refresh(void)
     /* A tag is drawn only while its system is in alarm (amber / red), packed
      * from the left in strip order: a healthy or unknown tag carries nothing
      * for the driver, and all eight no longer fit side by side anyway. The
-     * summary on the right still says NOMINAL / PARTIAL DATA. Shown / hidden
+     * summary on the right says PARTIAL DATA / NO ECM DATA / the alarm, and
+     * nothing when all is well. Shown / hidden
      * and the positions change only when the set changes: in LVGL 9.3 each
      * flag or position write invalidates even when nothing changed. */
     int worst = ST_OK;
@@ -1569,14 +1570,14 @@ void cluster_ui_refresh(void)
     case SUM_PARTIAL:   /* no alarm among what is known — not "healthy" */
         txt = "PARTIAL DATA"; col = C_MUTED;
         break;
-    default:
-        txt = "NOMINAL"; col = C_OK;
+    default:            /* complete, no alarm: nothing to say (owner's call) */
+        txt = ""; col = C_OK;
         break;
     }
 #if OBD_DEMO
     /* A demo image paints believable values: say so where the driver looks. */
     char dsum[40];
-    lv_snprintf(dsum, sizeof dsum, "DEMO %s", txt);
+    lv_snprintf(dsum, sizeof dsum, txt[0] ? "DEMO %s" : "DEMO", txt);
     txt = dsum;
 #endif
     ui_text(ui.summary, txt);
