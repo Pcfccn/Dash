@@ -64,5 +64,7 @@
   "62": "Жгут: провода от коробки к машине, экрану, кнопкам и GPS",
   "63": "spi.c",
   "64": "HAL_StatusTypeDef",
-  "65": "HAL_GPIO_Init"
+  "65": "HAL_GPIO_Init",
+  "66": "lv_display_get_screen_active",
+  "67": "lv_color_t"
 }

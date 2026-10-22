@@ -1,11 +1,11 @@
 {
   "Core/Inc/FreeRTOSConfig.h": {
-    "mtime": 1792624978.5842915,
+    "mtime": 1792627719.857801,
     "ast_hash": "39bea86cf0846d287787aa1fd1cb722c",
     "semantic_hash": ""
   },
   "Core/Inc/app_main.h": {
-    "mtime": 1792624978.5862937,
+    "mtime": 1792627719.8591604,
     "ast_hash": "2dccaa892edf53034fd446257dfb62be",
     "semantic_hash": ""
   },
@@ -15,13 +15,13 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_config.h": {
-    "mtime": 1792624978.5882907,
+    "mtime": 1792627719.8641806,
     "ast_hash": "16ad96252606cf2965217b1db3f56789",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
-    "mtime": 1792624978.5902915,
-    "ast_hash": "d79f83892991e57efc1023794bc1fe16",
+    "mtime": 1792643605.141631,
+    "ast_hash": "0b82790a91eee25af9ceb088e1b79192",
     "semantic_hash": ""
   },
   "Core/Inc/fdcan.h": {
@@ -30,7 +30,7 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1792624978.5922904,
+    "mtime": 1792627719.867703,
     "ast_hash": "2e4cf2c0cdd113b0547f3fee940561d0",
     "semantic_hash": ""
   },
@@ -40,7 +40,7 @@
     "semantic_hash": "8f8f0410e0509c4b0ca7724d68ae503b"
   },
   "Core/Inc/lv_port_disp.h": {
-    "mtime": 1792624978.5982935,
+    "mtime": 1792627719.8762293,
     "ast_hash": "06f7fe4b4e67f919ba30730600e5623b",
     "semantic_hash": ""
   },
@@ -55,7 +55,7 @@
     "semantic_hash": "2443c5137e947dae3a19adc90035e222"
   },
   "Core/Inc/st7735_status.h": {
-    "mtime": 1792624978.600421,
+    "mtime": 1792627719.8762293,
     "ast_hash": "bde6b9a291a18592f87cb7803bd7c8fe",
     "semantic_hash": ""
   },
@@ -75,32 +75,32 @@
     "semantic_hash": "5025ea19ecb95acc84b17dcc17d3ebab"
   },
   "Core/Src/app_main.c": {
-    "mtime": 1792624978.6062298,
-    "ast_hash": "f99222be1db4bd9c5931ba4d67299909",
+    "mtime": 1792643632.1869547,
+    "ast_hash": "d349e11b4dfa21bf26fc8f097f03d065",
     "semantic_hash": ""
   },
   "Core/Src/cluster_app.c": {
-    "mtime": 1792624978.60824,
-    "ast_hash": "d6134fa218c3becd0fbebd79d6a3129b",
+    "mtime": 1792643605.141631,
+    "ast_hash": "d71ae129dc7a70648a401d408f1f81ae",
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792624978.6108787,
-    "ast_hash": "976fa24d0ff9071b0df797a19ef97a54",
+    "mtime": 1792643766.394292,
+    "ast_hash": "c1df954d1f91e7b9b7d5c310a3c8e38e",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
-    "mtime": 1792624978.612875,
+    "mtime": 1792627719.8918865,
     "ast_hash": "abd0a27fdd04cc34d695de011483d881",
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1792624978.6148758,
+    "mtime": 1792627719.8937633,
     "ast_hash": "4ed7bb09edf58c87ebff21bb1ab10b84",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
-    "mtime": 1792624978.6158745,
+    "mtime": 1792627719.8947647,
     "ast_hash": "bfae753f952d8c082cadcc67b829d8df",
     "semantic_hash": ""
   },
@@ -110,7 +110,7 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1792624978.6218648,
+    "mtime": 1792627719.899763,
     "ast_hash": "e3f4599a61d97f41c3a52a57adaaa337",
     "semantic_hash": ""
   },
@@ -125,7 +125,7 @@
     "semantic_hash": ""
   },
   "Core/Src/st7735_status.c": {
-    "mtime": 1792624978.6238656,
+    "mtime": 1792627719.9017618,
     "ast_hash": "1654d57f112c14257d18a2f2b36af924",
     "semantic_hash": ""
   },
@@ -155,12 +155,12 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792627379.7105596,
-    "ast_hash": "6e796a35b5644be535425262ddbeb3d1",
+    "mtime": 1792644670.6803153,
+    "ast_hash": "6d814fad802269b44c41860dd49053da",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
-    "mtime": 1792624978.660318,
+    "mtime": 1792627719.9894543,
     "ast_hash": "3b5083045b81cbf5dedde2a8cf192960",
     "semantic_hash": ""
   },
@@ -170,17 +170,17 @@
     "semantic_hash": ""
   },
   "docs/vehicle-install.md": {
-    "mtime": 1792624978.660318,
+    "mtime": 1792627719.9884524,
     "ast_hash": "671e3175f50c8f83e705d1f5a8227a67",
     "semantic_hash": ""
   },
   "Core/Inc/can_sniff.h": {
-    "mtime": 1792624978.5872912,
+    "mtime": 1792627719.8621829,
     "ast_hash": "dbd13b0ddbb4d4fe8f3d32f02a685f1d",
     "semantic_hash": ""
   },
   "Core/Src/can_sniff.c": {
-    "mtime": 1792624978.607247,
+    "mtime": 1792627719.8762293,
     "ast_hash": "477cc6a433b735a48b9ad0df82f538dd",
     "semantic_hash": ""
   },
@@ -190,7 +190,7 @@
     "semantic_hash": ""
   },
   "docs/enhanced-dids.md": {
-    "mtime": 1792624978.631485,
+    "mtime": 1792627719.908762,
     "ast_hash": "764d2357c665dff4779ae1c468554d73",
     "semantic_hash": ""
   },
@@ -200,7 +200,7 @@
     "semantic_hash": ""
   },
   "docs/oil-pressure-test.md": {
-    "mtime": 1792624978.660318,
+    "mtime": 1792627719.9864404,
     "ast_hash": "c1450b387222983c327217509a8dbf82",
     "semantic_hash": ""
   },
@@ -265,13 +265,13 @@
     "semantic_hash": ""
   },
   "docs/future/README.md": {
-    "mtime": 1792624978.6324825,
+    "mtime": 1792627719.910564,
     "ast_hash": "2d7d0f6cde3fe2e63a2456ae4ca89ab9",
     "semantic_hash": ""
   },
   "docs/future/gps-performance-meter.md": {
-    "mtime": 1792624978.6583345,
-    "ast_hash": "580304dfeaa730c62dd6cf6a7d969ae5",
+    "mtime": 1792644670.6853147,
+    "ast_hash": "f23283397591059753c707e116b24dcb",
     "semantic_hash": ""
   },
   "design/Photos/20260722_21/photo_1_2026-07-21_22-55-05.jpg": {
@@ -635,318 +635,383 @@
     "semantic_hash": ""
   },
   "Core/Inc/fault.h": {
-    "mtime": 1792624978.59129,
+    "mtime": 1792627719.8667061,
     "ast_hash": "84a91e09ab6cfa5eb6b4ee95454c9d06",
     "semantic_hash": ""
   },
   "Core/Src/fault.c": {
-    "mtime": 1792624978.6118736,
+    "mtime": 1792627719.8762293,
     "ast_hash": "dd4f92532df8f521c3649f1635b87f3d",
     "semantic_hash": ""
   },
   "tests/host/mock/stm32h7xx_hal.h": {
-    "mtime": 1792624978.7010107,
+    "mtime": 1792627720.0448935,
     "ast_hash": "365140e61eaf0c6b94668a790a59de79",
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1792624978.71316,
+    "mtime": 1792627720.057912,
     "ast_hash": "0f9f05949555d7c63212f8f11a7a260d",
     "semantic_hash": ""
   },
   "tools/build.py": {
-    "mtime": 1792626973.0272324,
-    "ast_hash": "16d13295dc53bf38fa7057549b275751",
+    "mtime": 1792637706.142736,
+    "ast_hash": "c8be77d360cd22cd9d8d22f125c2d0ed",
     "semantic_hash": ""
   },
   "tools/host_test.py": {
-    "mtime": 1792624978.7320566,
+    "mtime": 1792627720.1629908,
     "ast_hash": "b92d251fe2de9dc0220275f5810cc492",
     "semantic_hash": ""
   },
   "docs/REVIEW.md": {
-    "mtime": 1792624978.6294858,
+    "mtime": 1792627719.9057627,
     "ast_hash": "cd69293a7d22f84ec06f78f61aa3f5d5",
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
-    "mtime": 1792624978.655323,
+    "mtime": 1792627719.9769864,
     "ast_hash": "56c1755e1e14392fa74ae7f29132cb46",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_policy.h": {
-    "mtime": 1792624978.5892904,
+    "mtime": 1792627719.8651786,
     "ast_hash": "ae5bbd773334d47b9dcc4d84dae7701f",
     "semantic_hash": ""
   },
   "tests/host/mock_lv_port_disp/cmsis_os2.h": {
-    "mtime": 1792624978.702008,
+    "mtime": 1792627720.045894,
     "ast_hash": "2be4563f3183b63e7bc011f623815269",
     "semantic_hash": ""
   },
   "tests/host/mock_lv_port_disp/lvgl.h": {
-    "mtime": 1792624978.7032154,
+    "mtime": 1792627720.046896,
     "ast_hash": "c9074941b3487a0514ef8481ef2f1d12",
     "semantic_hash": ""
   },
   "tests/host/mock_lv_port_disp/stm32h7xx_hal.h": {
-    "mtime": 1792624978.7037318,
+    "mtime": 1792627720.047895,
     "ast_hash": "f41eb58bbcfc1b7c947fe4fd23f0fc19",
     "semantic_hash": ""
   },
   "tests/host/test_can_sniff.c": {
-    "mtime": 1792624978.712547,
+    "mtime": 1792627720.0559118,
     "ast_hash": "b50e7d1e11f194b5d5ccfdc84910e68a",
     "semantic_hash": ""
   },
   "tests/host/test_lv_port_disp.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "0f52f10e9d46f4d097c43014753bba3f",
     "semantic_hash": ""
   },
   "tests/host/test_oilp_dpid.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "edf24c3b8dd3e87bba0c1203b932d815",
     "semantic_hash": ""
   },
   "docs/future/build-hardware.md": {
-    "mtime": 1792627344.1645896,
-    "ast_hash": "6ab3ad064bd82def24945960f4669fb0",
+    "mtime": 1792644670.6823218,
+    "ast_hash": "9fecb90fe0302769e4291e8d33027462",
     "semantic_hash": ""
   },
   "docs/future/gps-odometer-fuel.md": {
-    "mtime": 1792624978.6573198,
-    "ast_hash": "9bde8da5759febd5679389048a20d176",
+    "mtime": 1792644670.6843164,
+    "ast_hash": "13cd574db2431ab6c108ef394afe8a47",
     "semantic_hash": ""
   },
   "Core/Inc/gps.h": {
-    "mtime": 1792624978.5942934,
+    "mtime": 1792627719.8762293,
     "ast_hash": "b53dc8fd29c8e6bcf86b5770a9878941",
     "semantic_hash": ""
   },
   "Core/Inc/gps_hw.h": {
-    "mtime": 1792624978.595293,
+    "mtime": 1792627719.8762293,
     "ast_hash": "4726c125e65dd14df69df97c450f0743",
     "semantic_hash": ""
   },
   "Core/Inc/gps_nmea.h": {
-    "mtime": 1792624978.5962908,
+    "mtime": 1792627719.8762293,
     "ast_hash": "a1fda4cdf3b86295db9f8af2fc0343b4",
     "semantic_hash": ""
   },
   "Core/Inc/input.h": {
-    "mtime": 1792624978.5962908,
+    "mtime": 1792627719.8762293,
     "ast_hash": "a1dbeca975c14f2e396efb560834e54d",
     "semantic_hash": ""
   },
   "Core/Src/gps.c": {
-    "mtime": 1792624978.6168752,
+    "mtime": 1792627719.8957615,
     "ast_hash": "c6637c0a69e69ed4a08053f2a83b7a34",
     "semantic_hash": ""
   },
   "Core/Src/gps_hw.c": {
-    "mtime": 1792624978.6188662,
+    "mtime": 1792627719.896763,
     "ast_hash": "24369def01465bd957371ff53d91bb8d",
     "semantic_hash": ""
   },
   "Core/Src/gps_nmea.c": {
-    "mtime": 1792624978.6198142,
+    "mtime": 1792627719.8977616,
     "ast_hash": "c3a1428a70556fa59d6f640305c4df68",
     "semantic_hash": ""
   },
   "Core/Src/input.c": {
-    "mtime": 1792624978.6208656,
+    "mtime": 1792627719.8987617,
     "ast_hash": "48828ee72609793316c41e79b8384cab",
     "semantic_hash": ""
   },
   "tests/host/test_gps.c": {
-    "mtime": 1792624978.7169697,
+    "mtime": 1792627720.0589092,
     "ast_hash": "0c0a692385721c13c6253eee4d9e1271",
     "semantic_hash": ""
   },
   "tests/host/test_gps_nmea.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "47a12ae23cbf5402299241e2d4c14044",
     "semantic_hash": ""
   },
   "tests/host/test_input.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "f58cd8171de643303fcbdb9e9c089dfc",
     "semantic_hash": ""
   },
   "docs/future/carrier-board.md": {
-    "mtime": 1792627360.6123288,
+    "mtime": 1792627719.932541,
     "ast_hash": "a3cbd217825abb178624f14fc25ed437",
     "semantic_hash": ""
   },
   "docs/future/carrier-board.svg": {
-    "mtime": 1792627266.5940838,
+    "mtime": 1792627719.932541,
     "ast_hash": "0a7dc5865c5a29b02e0229d3ec4c2a1c",
     "semantic_hash": ""
   },
   "tests/host/mock_st7735_status/lvgl.h": {
-    "mtime": 1792624978.704743,
+    "mtime": 1792627720.048895,
     "ast_hash": "bc5b1079f08c285d244d86bcaab0213c",
     "semantic_hash": ""
   },
   "tests/host/mock_st7735_status/stm32h7xx_hal.h": {
-    "mtime": 1792624978.708744,
+    "mtime": 1792627720.052895,
     "ast_hash": "dc2a2b9eb7a089c0fa5122a4f26658a1",
     "semantic_hash": ""
   },
   "tests/host/test_st7735_status.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "a206fb99048ebc1bce7a922804cf2f51",
     "semantic_hash": ""
   },
   "Core/Inc/alert.h": {
-    "mtime": 1792624978.5852926,
+    "mtime": 1792627719.8583128,
     "ast_hash": "d3a4972f256c219aa1da799a5227a871",
     "semantic_hash": ""
   },
   "Core/Inc/fw_info.h": {
-    "mtime": 1792624978.593294,
+    "mtime": 1792627719.8737037,
     "ast_hash": "38a8a17a373940187bf93bb6d660a96d",
     "semantic_hash": ""
   },
   "Core/Src/alert.c": {
-    "mtime": 1792624978.6049256,
+    "mtime": 1792627719.8762293,
     "ast_hash": "5d03e7721e1273fb0b579087458a57ef",
     "semantic_hash": ""
   },
   "tests/host/test_alert.c": {
-    "mtime": 1792624978.7097433,
+    "mtime": 1792627720.053899,
     "ast_hash": "8c3e1cb30f1de8ae498e91f3227bea6e",
     "semantic_hash": ""
   },
   "tests/host/test_alert_oilp.c": {
-    "mtime": 1792624978.7115517,
+    "mtime": 1792627720.054898,
     "ast_hash": "22eb4fab3c800e6934c62763160c5ba3",
     "semantic_hash": ""
   },
   "docs/bench-first-flash.md": {
-    "mtime": 1792627670.484775,
-    "ast_hash": "0ee34f95b4dcb24f3faac4749b710c72",
+    "mtime": 1792644688.114525,
+    "ast_hash": "9923a885d64a98214876fab916769db3",
     "semantic_hash": ""
   },
   "Core/Inc/speed_cal.h": {
-    "mtime": 1792624978.5991056,
+    "mtime": 1792627719.8762293,
     "ast_hash": "7e76b7a648e50b5ff7c214fb384c0767",
     "semantic_hash": ""
   },
   "Core/Inc/trip_stats.h": {
-    "mtime": 1792624978.6034176,
+    "mtime": 1792627719.8762293,
     "ast_hash": "a1646b7e4bed8f8745ea360b1b9c91ad",
     "semantic_hash": ""
   },
   "Core/Src/speed_cal.c": {
-    "mtime": 1792624978.6228666,
+    "mtime": 1792627719.900762,
     "ast_hash": "36c5d80a7d5f527da7adf034148df1f5",
     "semantic_hash": ""
   },
   "Core/Src/trip_stats.c": {
-    "mtime": 1792624978.6248684,
+    "mtime": 1792627719.9027634,
     "ast_hash": "ccd0929b028c0f5362004b4fb82bc240",
     "semantic_hash": ""
   },
   "tests/host/test_speed_cal.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "b15db5821b6324f3ff786b843104efef",
     "semantic_hash": ""
   },
   "tests/host/test_trip_stats.c": {
-    "mtime": 1792624978.7179856,
+    "mtime": 1792627720.059911,
     "ast_hash": "52b3dafd5a8642a65b7c51b5eec0f369",
     "semantic_hash": ""
   },
   "tools/drawings/assembly_steps.py": {
-    "mtime": 1792627169.0722916,
+    "mtime": 1792627720.0860922,
     "ast_hash": "f1678b3731d8849f2a338b1637acbd0d",
     "semantic_hash": ""
   },
   "tools/drawings/carrier_board.py": {
-    "mtime": 1792627266.4061587,
-    "ast_hash": "71c3786158a943367221cacac66739a9",
+    "mtime": 1792627720.089089,
+    "ast_hash": "b07abfc8a96943b86bfdfcae00f279ac",
     "semantic_hash": ""
   },
   "tools/drawings/carrier_template.py": {
-    "mtime": 1792627266.3553286,
-    "ast_hash": "82edb492867443680cbcd54a7dfb8330",
+    "mtime": 1792627720.113319,
+    "ast_hash": "58b65cbf1d5bcf0c66dcf7f5fd96424c",
     "semantic_hash": ""
   },
   "tools/drawings/harness_tree.py": {
-    "mtime": 1792624978.7300546,
+    "mtime": 1792627720.1609898,
     "ast_hash": "084a9e24245bd55c6012d9d47177e0f9",
     "semantic_hash": ""
   },
   "tools/drawings/wiring_overview.py": {
-    "mtime": 1792627169.0776331,
+    "mtime": 1792627720.1619933,
     "ast_hash": "245eff152338e637f310f5e80be3a4a6",
     "semantic_hash": ""
   },
   "docs/future/assembly.md": {
-    "mtime": 1792627360.613804,
+    "mtime": 1792627719.9115634,
     "ast_hash": "b9e87df926041519006c7abbcd400d01",
     "semantic_hash": ""
   },
   "docs/future/harness.md": {
-    "mtime": 1792627360.6103318,
+    "mtime": 1792627719.9810467,
     "ast_hash": "e7bfa7a13ccd49c0f67691fa61464c39",
     "semantic_hash": ""
   },
   "docs/future/carrier-template.pdf": {
-    "mtime": 1792627269.3261817,
+    "mtime": 1792627719.96458,
     "ast_hash": "cda34da4ea4807af6b37941c76089554",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-1-power.svg": {
-    "mtime": 1792627169.2453551,
+    "mtime": 1792627719.9125645,
     "ast_hash": "950f298078778461a083ccd56b398806",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-2-rails.svg": {
-    "mtime": 1792627169.246296,
+    "mtime": 1792627719.9135642,
     "ast_hash": "f2429c1e0f7f2207234ee541a4a688db",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-3-display.svg": {
-    "mtime": 1792627169.2482972,
+    "mtime": 1792627719.9224646,
     "ast_hash": "67a11532a30833198881d30403a60174",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-4-backlight.svg": {
-    "mtime": 1792627169.2492962,
+    "mtime": 1792627719.927485,
     "ast_hash": "912ffa73c820c3f66b0cf4c521ac33ff",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-5-can.svg": {
-    "mtime": 1792627169.2502959,
+    "mtime": 1792627719.927485,
     "ast_hash": "7a4e99e2ad67feb2efc720b580744c5c",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-6-gps.svg": {
-    "mtime": 1792627169.252294,
+    "mtime": 1792627719.932541,
     "ast_hash": "3558e6393672a4ea3b1bdb262ed84189",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-7-buttons.svg": {
-    "mtime": 1792627169.2532961,
+    "mtime": 1792627719.932541,
     "ast_hash": "d34f836f504182451761c0b184f1fab2",
     "semantic_hash": ""
   },
   "docs/future/assembly/step-8-parking-lights.svg": {
-    "mtime": 1792627169.2552986,
+    "mtime": 1792627719.932541,
     "ast_hash": "d6114674fb56c5b457e7ba16bc0cd4ee",
     "semantic_hash": ""
   },
   "docs/future/harness.svg": {
-    "mtime": 1792624978.660318,
+    "mtime": 1792627719.9830582,
     "ast_hash": "0ea69068b330ac18943bf308dbee3858",
     "semantic_hash": ""
   },
   "docs/future/wiring-overview.svg": {
-    "mtime": 1792627174.888048,
+    "mtime": 1792627719.984063,
     "ast_hash": "f2e63900ad9a62a6d2b51822588a796d",
+    "semantic_hash": ""
+  },
+  "Core/Inc/nvlog.h": {
+    "mtime": 1792643423.2662668,
+    "ast_hash": "38a3bd431d39e4349d2547e1b301d828",
+    "semantic_hash": ""
+  },
+  "Core/Inc/odo.h": {
+    "mtime": 1792644040.2382896,
+    "ast_hash": "718fc72e7288936a340214648596990a",
+    "semantic_hash": ""
+  },
+  "Core/Inc/perf.h": {
+    "mtime": 1792644040.2402928,
+    "ast_hash": "1277dfe920aae675b8df157209aedfb7",
+    "semantic_hash": ""
+  },
+  "Core/Inc/spi_nor.h": {
+    "mtime": 1792643376.2138941,
+    "ast_hash": "f672f67c051c4f58a4fad60e9cd12d91",
+    "semantic_hash": ""
+  },
+  "Core/Inc/trip_app.h": {
+    "mtime": 1792643571.6499348,
+    "ast_hash": "1e8375b1dbd2b6feb6ce45ef24adecb5",
+    "semantic_hash": ""
+  },
+  "Core/Src/nvlog.c": {
+    "mtime": 1792643453.94346,
+    "ast_hash": "73608a07ab23d2b0d5b1f6ebb4370acc",
+    "semantic_hash": ""
+  },
+  "Core/Src/odo.c": {
+    "mtime": 1792644040.23929,
+    "ast_hash": "ab191799713da28fefd7e7d443daf721",
+    "semantic_hash": ""
+  },
+  "Core/Src/perf.c": {
+    "mtime": 1792644040.2412903,
+    "ast_hash": "63a3712da2efde3f5c30ee303b90c733",
+    "semantic_hash": ""
+  },
+  "Core/Src/spi_nor.c": {
+    "mtime": 1792643377.322032,
+    "ast_hash": "ae038291138b0d5da33708c66150184b",
+    "semantic_hash": ""
+  },
+  "Core/Src/trip_app.c": {
+    "mtime": 1792643587.4293723,
+    "ast_hash": "3dac640580eb62f02d5ff64f65f2ab91",
+    "semantic_hash": ""
+  },
+  "tests/host/test_nvlog.c": {
+    "mtime": 1792643883.1975203,
+    "ast_hash": "b877dde7cd637e40f163addee4e58a12",
+    "semantic_hash": ""
+  },
+  "tests/host/test_odo.c": {
+    "mtime": 1792644066.5190988,
+    "ast_hash": "fb18eb4bb07971f9ca1a0ee4b0e92f1c",
+    "semantic_hash": ""
+  },
+  "tests/host/test_perf.c": {
+    "mtime": 1792644088.1674793,
+    "ast_hash": "2cdb4685ca156abbd2b2301169f7ec99",
     "semantic_hash": ""
   }
 }
