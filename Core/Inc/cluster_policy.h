@@ -60,13 +60,18 @@ static inline bool policy_ecm_fresh(const volatile obd_data_t *d, uint32_t now)
 
 /* Everything the alert strip judges and this truck supplies is fresh:
  * RPM, coolant, oil temp, ATF, battery and MIL. EGT (not supported by this
- * E98) and oil pressure (not validated) are not required. Without this a
+ * E98) and oil pressure (not validated) are not required. Oil temp (PID
+ * 0x5C) is required only until the ECM's support map says it does not have
+ * it — this E98 does not, so without that NOMINAL could never show in the
+ * truck. Unknown (map not read yet) still requires it. Without this check a
  * single fresh RPM could paint a green NOMINAL over missing temperatures. */
 static inline bool policy_complete(const volatile obd_data_t *d, uint32_t now)
 {
     static const metric_key_t need[] = { M_RPM, M_COOL, M_OIL, M_ATF, M_BATTERY };
-    for (unsigned i = 0; i < sizeof need / sizeof need[0]; i++)
+    for (unsigned i = 0; i < sizeof need / sizeof need[0]; i++) {
+        if (need[i] == M_OIL && obd_pid_supported(0x5Cu) == 0) continue;
         if (!policy_shown(d, need[i], now)) return false;
+    }
     return obd_mil_fresh(d, now);
 }
 

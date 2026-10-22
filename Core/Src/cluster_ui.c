@@ -51,9 +51,9 @@
  * (lines, tracks, "no data" marks) is blue alone: it can get brighter or
  * darker with the angle but cannot change hue. Orange (reverse) is the one
  * exception: only its green channel is mid-level.
- * A normal reading is white, the brightest and steadiest colour. A coloured
- * value always means something: cyan = cold or not judged, yellow = warning,
- * red = critical. Green is kept for small "all good" marks: dots, bars,
+ * A normal reading, or one nothing judges, is white, the brightest and
+ * steadiest colour. A coloured value always means something: cyan = engine
+ * cold, yellow = warning, red = critical. Green is kept for small "all good" marks: dots, bars,
  * NOMINAL, READY. */
 #define C_SCREEN     lv_color_hex(0x000000)
 #define C_SURFACE    lv_color_hex(0x000000)
@@ -74,6 +74,7 @@
 #define C_ALERTBG    lv_color_hex(0x000000)
 #define C_TOPBAR     lv_color_hex(0x000000)
 #define C_VALUE_OK   C_TEXT                   /* a reading in its normal range */
+#define C_VALUE_INFO C_TEXT                   /* a reading nothing judges (IAT, load) */
 #define C_OFF        C_LINE_STR               /* no-data dot / bar, unknown DTC ring */
 #define C_PAGER_OFF  C_LINE_STR
 #define C_STRIP_CRIT C_ALERTBG                /* near-black tints do not survive the angle */
@@ -105,6 +106,7 @@
 #define C_ALERTBG    lv_color_hex(0x000000)
 #define C_TOPBAR     lv_color_hex(0x000000)
 #define C_VALUE_OK   C_OK
+#define C_VALUE_INFO C_INFO
 #define C_OFF        C_FAINT
 #define C_PAGER_OFF  lv_color_hex(0x344051)
 #define C_STRIP_CRIT lv_color_hex(0x1a0a0d)
@@ -119,10 +121,17 @@ LV_FONT_DECLARE(montserrat_bold_24);
 LV_FONT_DECLARE(montserrat_bold_28);
 LV_FONT_DECLARE(montserrat_bold_48);
 LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero */
+/* The small text is SemiBold too (2026-10-22): the built-in Montserrat Medium
+ * strokes are ~1 px, mostly anti-aliasing mid-tones, and on the TN panel
+ * those are what each eye sees differently. LV_SYMBOL_* icons fall back to
+ * the built-in font of the same size (.fallback in each file). */
+LV_FONT_DECLARE(montserrat_semibold_12);
+LV_FONT_DECLARE(montserrat_semibold_14);
+LV_FONT_DECLARE(montserrat_semibold_20);
 
-#define F12 &lv_font_montserrat_12
-#define F14 &lv_font_montserrat_14
-#define F20 &lv_font_montserrat_20
+#define F12 &montserrat_semibold_12
+#define F14 &montserrat_semibold_14
+#define F20 &montserrat_semibold_20
 #define F24 &montserrat_bold_24    /* small stat values */
 #define F28 &montserrat_bold_28    /* rpm / mini / stat / boost */
 #define F48 &montserrat_bold_48    /* gear / grid metric values / soot */
@@ -153,8 +162,9 @@ static struct {
     lv_obj_t *strip;
     lv_obj_t *tag[8];               /* MIL CLT OIL ATF EGT BAT DTC CAN */
     lv_obj_t *tag_ul[8];            /* per-tag state underline (design signature) */
+    int16_t   tag_w[8];             /* text width of each tag, px              */
+    uint8_t   tag_shown;            /* bit i: tag i is drawn (in alarm)        */
     lv_obj_t *summary;
-    lv_obj_t *count;
 
     /* DRIVE */
     lv_obj_t *gear_val;
@@ -345,13 +355,14 @@ static lv_obj_t *mk_dot(lv_obj_t *p, int x, int y)
  * SNIFF page does not shift the row the eye is used to. */
 static void mk_pager(lv_obj_t *page, int active)
 {
-    const int span = (PAGE_COUNT - 1) * 16 + 7;
+    const int span = (PAGE_COUNT - 1) * 16 + 18;
     const int x0   = 144 - span / 2;
     for (int i = 0; i < PAGE_COUNT; i++) {
         lv_obj_t *d = lv_obj_create(page);
         int wide = (i == active);
         lv_obj_set_size(d, wide ? 18 : 7, 7);
-        lv_obj_set_pos(d, x0 + i * 16, 448 - 16);
+        /* the dots after the wide one move right by its extra 11 px */
+        lv_obj_set_pos(d, x0 + i * 16 + (i > active ? 11 : 0), 448 - 16);
         lv_obj_set_style_radius(d, 4, 0);
         lv_obj_set_style_bg_color(d, wide ? C_TEXT2 : C_PAGER_OFF, 0);
         lv_obj_set_style_bg_opa(d, LV_OPA_COVER, 0);
@@ -723,10 +734,9 @@ static void build_perf(void)
     ui.pf_head = mk_label(tb, "", F12, C_MUTED);
     lv_obj_align(ui.pf_head, LV_ALIGN_LEFT_MID, 8, 0);
 
-    ui.pf_big = mk_label(pg, "--", F48, C_TEXT);
-    lv_obj_set_pos(ui.pf_big, 12, 36);
-    ui.pf_unit = mk_label(pg, "", F20, C_LABEL);
-    lv_obj_set_pos(ui.pf_unit, 200, 58);
+    ui.pf_big = mk_value(pg, F48, C_TEXT, "km/h", F20);   /* unit hugs the number */
+    lv_obj_set_pos(lv_obj_get_parent(ui.pf_big), 10, 36);
+    ui.pf_unit = lv_obj_get_child(lv_obj_get_parent(ui.pf_big), 1);
 
     lv_obj_t *h = mk_label(pg, "LAST", F12, C_FAINT);
     lv_obj_set_pos(h, 140, 104);
@@ -745,7 +755,7 @@ static void build_perf(void)
     lv_obj_set_pos(ui.pf_trap, 12, 332);
     ui.pf_gps = mk_label(pg, "", F12, C_MUTED);
     lv_obj_set_pos(ui.pf_gps, 12, 352);
-    lv_obj_t *n1 = mk_label(pg, "from a standstill, no rollout: 1/4 mi ~0.3 s over a strip", F12, C_FAINT);
+    lv_obj_t *n1 = mk_label(pg, "no rollout: 1/4 mi ~0.3 s over a strip", F12, C_FAINT);
     lv_obj_set_pos(n1, 12, 376);
     lv_obj_t *n2 = mk_label(pg, "hold " LV_SYMBOL_BULLET " clears (standing)", F12, C_FAINT);
     lv_obj_set_pos(n2, 12, 398);
@@ -766,16 +776,18 @@ static void build_strip(lv_obj_t *scr)
     lv_obj_set_style_pad_all(ui.strip, 0, 0);
     lv_obj_clear_flag(ui.strip, LV_OBJ_FLAG_SCROLLABLE);
 
+    /* Tags show only while their system is in alarm, packed from the left
+     * (refresh_strip_tags); a healthy tag says nothing, so it is not drawn. */
     for (int i = 0; i < 8; i++) {
-        ui.tag[i] = mk_label(ui.strip, TAG_NAME[i], F12, C_FAINT);
-        lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, 4 + i * 24, -3);
-        /* hairline state underline beneath each tag (coloured in refresh) */
-        ui.tag_ul[i] = mk_tick(ui.strip, 4 + i * 24, 25, 18, 2, C_LINE);
+        ui.tag[i] = mk_label(ui.strip, TAG_NAME[i], F12, C_WARN);
+        ui.tag_w[i] = (int16_t)lv_text_get_width(TAG_NAME[i], (uint32_t)strlen(TAG_NAME[i]), F12, 0);
+        /* state underline beneath each tag */
+        ui.tag_ul[i] = mk_tick(ui.strip, 0, 25, ui.tag_w[i], 2, C_WARN);
+        lv_obj_add_flag(ui.tag[i], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui.tag_ul[i], LV_OBJ_FLAG_HIDDEN);
     }
-    ui.count = mk_label(ui.strip, "", F12, C_CRIT);
-    lv_obj_align(ui.count, LV_ALIGN_RIGHT_MID, -8, 0);
     ui.summary = mk_label(ui.strip, "NOMINAL", F12, C_OK);
-    lv_obj_align(ui.summary, LV_ALIGN_RIGHT_MID, -26, 0);
+    lv_obj_align(ui.summary, LV_ALIGN_RIGHT_MID, -8, 0);
 }
 
 /* =============================================================== public API */
@@ -972,11 +984,14 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     /* Cold temperature (engine warming up): light blue instead of green. */
     bool cold = (s == ST_OK && is_temp(k) && v < 50.0f);
     if (cold) c = C_COLD;
-    /* The value takes its state colour (INFO/cold = blue, WARN = amber,
-     * CRIT = red); a normal one is C_VALUE_OK: white on the TN palette,
-     * green (the design reference) on the previous one. The dot and the bar
-     * always show the state colour. */
-    ui_text_color(val, (s == ST_OK && !cold) ? C_VALUE_OK : c);
+    /* The value takes its state colour (cold = blue, WARN = amber,
+     * CRIT = red); a normal or not judged one is C_VALUE_OK / C_VALUE_INFO:
+     * white on the TN palette, green / blue (the design reference) on the
+     * previous one. The dot and the bar always show the state colour. */
+    lv_color_t vc = c;
+    if (!cold && s == ST_OK)   vc = C_VALUE_OK;
+    if (s == ST_INFO)          vc = C_VALUE_INFO;
+    ui_text_color(val, vc);
     if (dot) ui_bg_color(dot, c, 0);
     if (bar) {
         lv_bar_set_value(bar, pct_of(k, v), LV_ANIM_OFF);
@@ -1470,37 +1485,52 @@ void cluster_ui_refresh(void)
      * A tag only judges a value we actually have and that is recent:
      * metric_state() on NaN would fall through every comparison and report a
      * confident ST_OK, and a PID that reads 0 because it is unsupported must
-     * not raise CHECK either. A tag with nothing to judge is drawn neutral,
-     * not as a green "healthy" — that includes the battery while the engine
-     * is not running (alert.c judges it only then). States are the filtered
+     * not raise CHECK either. A tag with nothing to judge raises no alarm —
+     * that includes the battery while the engine is not running (alert.c
+     * judges it only then). States are the filtered
      * ones: a value at a threshold does not flicker the strip. */
     static const metric_key_t TAG_M[8] = { 0, M_COOL, M_OIL, M_ATF, M_EGT, M_BATTERY, 0, 0 };
     metric_state_t ts[8];
-    bool known[8];
     for (int i = 1; i <= 5; i++) {
         metric_state_t a = alerts_state(TAG_M[i]);
-        known[i] = (a != ST_INFO);
-        ts[i]    = known[i] ? a : ST_OK;
+        ts[i] = (a == ST_INFO) ? ST_OK : a;              /* not judged: no alarm */
     }
-    known[0] = mil_ok; ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
-    known[6] = mil_ok; ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
-    known[7] = true;   ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
+    ts[0] = (mil_ok && d.mil) ? ST_CRIT : ST_OK;            /* MIL */
+    ts[6] = (mil_ok && d.dtc_count > 0) ? ST_WARN : ST_OK;  /* DTC */
+    ts[7] = live ? ST_OK : ST_CRIT;                         /* CAN */
 
-    int worst = ST_OK, nalarm = 0;
+    /* A tag is drawn only while its system is in alarm (amber / red), packed
+     * from the left in strip order: a healthy or unknown tag carries nothing
+     * for the driver, and all eight no longer fit side by side anyway. The
+     * summary on the right still says NOMINAL / PARTIAL DATA. Shown / hidden
+     * and the positions change only when the set changes: in LVGL 9.3 each
+     * flag or position write invalidates even when nothing changed. */
+    int worst = ST_OK;
+    uint8_t shown = 0;
     for (int i = 0; i < 8; i++) {
-        /* MIL (0) and DTC (6) are indicators: grey/dim when nominal, not green.
-         * The monitored systems glow green when healthy (design signature). */
-        bool indicator = (i == 0 || i == 6);
-        lv_color_t tc, ulc;
-        if      (ts[i] == ST_CRIT) { tc = C_CRIT; ulc = C_CRIT; }
-        else if (ts[i] == ST_WARN) { tc = C_WARN; ulc = C_WARN; }
-        else if (!known[i])        { tc = C_FAINT; ulc = C_LINE; }
-        else                       { tc  = indicator ? C_FAINT : C_MUTED;
-                                     ulc = indicator ? C_LINE  : C_OK; }
-        ui_text_color(ui.tag[i], tc);
-        ui_bg_color(ui.tag_ul[i], ulc, 0);
+        if (ts[i] >= ST_WARN) {
+            lv_color_t tc = (ts[i] == ST_CRIT) ? C_CRIT : C_WARN;
+            ui_text_color(ui.tag[i], tc);
+            ui_bg_color(ui.tag_ul[i], tc, 0);
+            shown |= (uint8_t)(1u << i);
+        }
         if (ts[i] > worst) worst = ts[i];
-        if (ts[i] >= ST_WARN) nalarm++;
+    }
+    if (shown != ui.tag_shown) {
+        ui.tag_shown = shown;
+        int x = 8;
+        for (int i = 0; i < 8; i++) {
+            if (shown & (1u << i)) {
+                lv_obj_align(ui.tag[i], LV_ALIGN_LEFT_MID, x, -3);
+                lv_obj_set_x(ui.tag_ul[i], x);
+                lv_obj_clear_flag(ui.tag[i], LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(ui.tag_ul[i], LV_OBJ_FLAG_HIDDEN);
+                x += ui.tag_w[i] + 10;
+            } else {
+                lv_obj_add_flag(ui.tag[i], LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui.tag_ul[i], LV_OBJ_FLAG_HIDDEN);
+            }
+        }
     }
 
     /* Name the alarm instead of a bare CHECK/WARN: the most severe tag (first
@@ -1551,9 +1581,6 @@ void cluster_ui_refresh(void)
 #endif
     ui_text(ui.summary, txt);
     ui_text_color(ui.summary, col);
-
-    if (nalarm > 0) { lv_snprintf(b, sizeof b, "%d", nalarm); ui_text(ui.count, b); }
-    else            ui_text(ui.count, "");
 
     /* strip background tint by worst state */
     lv_color_t sbg = C_ALERTBG, sbd = C_LINE;
