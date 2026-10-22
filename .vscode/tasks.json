@@ -91,7 +91,10 @@
         { "label": "BENCH FT2: HardFault -> reset", "value": "-D FAULT_TEST=2" },
         { "label": "BENCH FT3: main-panel SPI errors (recovery, no reset)", "value": "-D FAULT_TEST=3" },
         { "label": "BENCH FT4: configASSERT -> reset", "value": "-D FAULT_TEST=4" },
-        { "label": "BENCH KOEO: oil-pressure $2C/$AA experiment, parked only", "value": "-D OILP_DPID_ENABLE=1" }
+        { "label": "BENCH KOEO: oil-pressure $2C/$AA experiment, parked only", "value": "-D OILP_DPID_ENABLE=1" },
+        { "label": "LOOK FLIP: main panel turned 180 degrees (module mounted upside down)", "value": "-D LCD_FLIP=1" },
+        { "label": "LOOK PAL0: previous colour palette, to compare with the TN one", "value": "-D UI_PALETTE_TN=0" },
+        { "label": "PROBE: which controller the main panel has (3 colour bands for 4 s at start)", "value": "-D LCD_PROBE=1" }
       ]
     }
   ]

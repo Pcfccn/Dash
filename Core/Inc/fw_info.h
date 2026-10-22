@@ -23,6 +23,8 @@
 #endif
 
 #include "app_main.h"        /* BACKLIGHT_ACTIVE_LOW            */
+#include "cluster_ui.h"      /* UI_PALETTE_TN                   */
+#include "lv_port_disp.h"    /* LCD_FLIP                        */
 #include "cluster_config.h"  /* OBD_DEMO, OILP_DPID_ENABLE       */
 #include "cluster_policy.h"  /* SNIFF_BENCH_OVERRIDE            */
 #include "fault.h"           /* FAULT_TEST                       */
@@ -50,6 +52,21 @@
 #else
 #define FW_V_OILP ""
 #endif
+#if UI_PALETTE_TN
+#define FW_V_PAL ""
+#else
+#define FW_V_PAL " PAL0"         /* previous colour palette           */
+#endif
+#if LCD_FLIP
+#define FW_V_FLIP " FLIP"        /* main panel turned 180 degrees     */
+#else
+#define FW_V_FLIP ""
+#endif
+#if LCD_PROBE
+#define FW_V_PROBE " PROBE"      /* 16-bit controller test at start   */
+#else
+#define FW_V_PROBE ""
+#endif
 #if BACKLIGHT_ACTIVE_LOW
 #define FW_V_BL ""
 #else
@@ -65,7 +82,7 @@
 #define FW_KIND "ROAD"
 #endif
 
-#define FW_VARIANT       FW_KIND FW_V_DEMO FW_V_FT FW_V_SNIFF FW_V_OILP FW_V_BL
+#define FW_VARIANT       FW_KIND FW_V_DEMO FW_V_FT FW_V_SNIFF FW_V_OILP FW_V_PAL FW_V_FLIP FW_V_PROBE FW_V_BL
 #define FW_VARIANT_SHORT FW_KIND FW_V_BL          /* fits the 80 px ST7735 */
 
 #if FW_GIT_DIRTY

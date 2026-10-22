@@ -39,7 +39,47 @@
 #include <string.h>
 #include <stdarg.h>
 
-/* ---- palette (from the HTML :root) --------------------------------------- */
+/* ---- palette --------------------------------------------------------------- */
+#if UI_PALETTE_TN
+/* Palette for the TN panel (2026-10-22). On TN the colour of a pixel depends
+ * on the viewing angle, and the two eyes look from angles ~5 degrees apart.
+ * A channel between fully off and fully on changes level with the angle, so a
+ * mixed tone (soft green, amber, blue-grey) has a different hue in each eye
+ * and the picture looks doubled; a channel at 0 or 255 hardly moves. So every
+ * colour here is built from channels that are fully on or off: white, yellow,
+ * cyan, green, red on black, the set glass-cockpit displays use. The dim tone
+ * (lines, tracks, "no data" marks) is blue alone: it can get brighter or
+ * darker with the angle but cannot change hue. Orange (reverse) is the one
+ * exception: only its green channel is mid-level.
+ * A normal reading is white, the brightest and steadiest colour. A coloured
+ * value always means something: cyan = cold or not judged, yellow = warning,
+ * red = critical. Green is kept for small "all good" marks: dots, bars,
+ * NOMINAL, READY. */
+#define C_SCREEN     lv_color_hex(0x000000)
+#define C_SURFACE    lv_color_hex(0x000000)
+#define C_LINE       lv_color_hex(0x0000c0)   /* card borders, grid, tag underlines */
+#define C_LINE_STR   lv_color_hex(0x0000ff)
+#define C_TEXT       lv_color_hex(0xffffff)
+#define C_TEXT2      lv_color_hex(0xffffff)
+#define C_LABEL      lv_color_hex(0xffffff)
+#define C_MUTED      lv_color_hex(0xffffff)   /* hierarchy by size, not by grey */
+#define C_FAINT      lv_color_hex(0xffffff)
+#define C_OK         lv_color_hex(0x00ff00)
+#define C_COLD       lv_color_hex(0x00ffff)   /* temperature < 50C: engine warming up */
+#define C_INFO       lv_color_hex(0x00ffff)
+#define C_WARN       lv_color_hex(0xffff00)
+#define C_CRIT       lv_color_hex(0xff0000)
+#define C_ORANGE     lv_color_hex(0xff8000)   /* reverse gear */
+#define C_TRACK      lv_color_hex(0x000090)
+#define C_ALERTBG    lv_color_hex(0x000000)
+#define C_TOPBAR     lv_color_hex(0x000000)
+#define C_VALUE_OK   C_TEXT                   /* a reading in its normal range */
+#define C_OFF        C_LINE_STR               /* no-data dot / bar, unknown DTC ring */
+#define C_PAGER_OFF  C_LINE_STR
+#define C_STRIP_CRIT C_ALERTBG                /* near-black tints do not survive the angle */
+#define C_STRIP_WARN C_ALERTBG
+#else
+/* Previous palette (UI_PALETTE_TN=0), kept for comparison. */
 /* Palette brightened for the ILI9488 SPI panel: dark background kept for
  * contrast, but text/borders/accents pushed much brighter so it reads crisp
  * and vivid instead of dim/muddy (the reference tones looked washed here). */
@@ -64,6 +104,12 @@
 #define C_TRACK      lv_color_hex(0x2b3d54)
 #define C_ALERTBG    lv_color_hex(0x000000)
 #define C_TOPBAR     lv_color_hex(0x000000)
+#define C_VALUE_OK   C_OK
+#define C_OFF        C_FAINT
+#define C_PAGER_OFF  lv_color_hex(0x344051)
+#define C_STRIP_CRIT lv_color_hex(0x1a0a0d)
+#define C_STRIP_WARN lv_color_hex(0x1a1408)
+#endif
 
 #define DEG "\xC2\xB0"          /* UTF-8 degree sign */
 
@@ -307,7 +353,7 @@ static void mk_pager(lv_obj_t *page, int active)
         lv_obj_set_size(d, wide ? 18 : 7, 7);
         lv_obj_set_pos(d, x0 + i * 16, 448 - 16);
         lv_obj_set_style_radius(d, 4, 0);
-        lv_obj_set_style_bg_color(d, wide ? C_TEXT2 : lv_color_hex(0x344051), 0);
+        lv_obj_set_style_bg_color(d, wide ? C_TEXT2 : C_PAGER_OFF, 0);
         lv_obj_set_style_bg_opa(d, LV_OPA_COVER, 0);
         lv_obj_set_style_border_width(d, 0, 0);
         lv_obj_clear_flag(d, LV_OBJ_FLAG_SCROLLABLE);
@@ -906,10 +952,10 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     if (!ok) {
         ui_text(val, "--");
         ui_text_color(val, C_MUTED);
-        if (dot) ui_bg_color(dot, C_FAINT, 0);
+        if (dot) ui_bg_color(dot, C_OFF, 0);
         if (bar) {
             lv_bar_set_value(bar, 0, LV_ANIM_OFF);
-            ui_bg_color(bar, C_FAINT, LV_PART_INDICATOR);
+            ui_bg_color(bar, C_OFF, LV_PART_INDICATOR);
         }
         return;
     }
@@ -924,11 +970,13 @@ static void set_metric(lv_obj_t *val, lv_obj_t *bar, lv_obj_t *dot,
     metric_state_t s = alert_cfg[k].used ? alerts_state(k) : metric_state(k, v);
     lv_color_t c = state_color(s);
     /* Cold temperature (engine warming up): light blue instead of green. */
-    if (s == ST_OK && is_temp(k) && v < 50.0f) c = C_COLD;
-    /* Vivid state colouring, matching the design reference: the value takes
-     * its state colour (OK=green, INFO=blue, WARN=amber, CRIT=red). The
-     * saturated colour is what carries contrast on this weak panel. */
-    ui_text_color(val, c);
+    bool cold = (s == ST_OK && is_temp(k) && v < 50.0f);
+    if (cold) c = C_COLD;
+    /* The value takes its state colour (INFO/cold = blue, WARN = amber,
+     * CRIT = red); a normal one is C_VALUE_OK: white on the TN palette,
+     * green (the design reference) on the previous one. The dot and the bar
+     * always show the state colour. */
+    ui_text_color(val, (s == ST_OK && !cold) ? C_VALUE_OK : c);
     if (dot) ui_bg_color(dot, c, 0);
     if (bar) {
         lv_bar_set_value(bar, pct_of(k, v), LV_ANIM_OFF);
@@ -1235,7 +1283,7 @@ void cluster_ui_refresh(void)
         ui_text_color(ui.dtc_msg, C_MUTED);
         ui_text(ui.dtc_ic, "-");
         ui_text_color(ui.dtc_ic, C_MUTED);
-        ui_border_color(ui.dtc_ring, C_FAINT);
+        ui_border_color(ui.dtc_ring, C_OFF);
     } else if (d.dtc_count > 0) {
         char mb[40];
         lv_snprintf(mb, sizeof mb, "ECM: %u EMISSION CODE%s",
@@ -1509,8 +1557,8 @@ void cluster_ui_refresh(void)
 
     /* strip background tint by worst state */
     lv_color_t sbg = C_ALERTBG, sbd = C_LINE;
-    if (worst == ST_CRIT || !live) { sbg = lv_color_hex(0x1a0a0d); sbd = C_CRIT; }
-    else if (worst == ST_WARN || !ecm_fresh) { sbg = lv_color_hex(0x1a1408); sbd = C_WARN; }
+    if (worst == ST_CRIT || !live) { sbg = C_STRIP_CRIT; sbd = C_CRIT; }
+    else if (worst == ST_WARN || !ecm_fresh) { sbg = C_STRIP_WARN; sbd = C_WARN; }
     ui_bg_color(ui.strip, sbg, 0);
     ui_border_color(ui.strip, sbd);
 

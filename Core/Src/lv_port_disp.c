@@ -169,6 +169,42 @@ static void lcd_set_window(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
     lcd_write_cmd(0x2C); /* RAMWR: memory write follows */
 }
 
+#if LCD_PROBE
+/* Which controller is behind the "ILI9488" label, without the SDO wire. Over
+ * 4-wire SPI an ILI9488 takes 18-bit pixels only; an ST7796 also takes 16-bit
+ * ones. Three bands (red, green, blue, top to bottom) are sent as RGB565 with
+ * COLMOD 0x55 and held for 4 s:
+ *   three clean bands over the whole screen -> it reads 16-bit, so it is not
+ *     an ILI9488 (most likely an ST7796);
+ *   mixed / wrong colours, stripes, the lower third untouched -> a real
+ *     ILI9488 (it took the bytes as 18-bit pixels).
+ * Then back to 18-bit and the normal start. Blocking SPI (no DMA), so no
+ * cache maintenance; ~4.2 s of the ~10 s boot watchdog. */
+static void lcd_probe_565(void)
+{
+    static const uint16_t band[3] = { 0xF800u, 0x07E0u, 0x001Fu };
+    const uint32_t rows = 16u, px = LCD_H_RES * rows;   /* 10 KB of tx_buf */
+
+    lcd_write_cmd(0x3A);
+    lcd_write_data_byte(0x55);
+    lcd_set_window(0, 0, LCD_H_RES - 1u, LCD_V_RES - 1u);
+    dc_data();
+    cs_low();
+    for (uint32_t b = 0; b < 3u; b++) {
+        for (uint32_t i = 0; i < px; i++) {
+            tx_buf[2u * i]      = (uint8_t)(band[b] >> 8);
+            tx_buf[2u * i + 1u] = (uint8_t)band[b];
+        }
+        for (uint32_t r = 0; r < LCD_V_RES / 3u; r += rows)
+            lcd_tx(tx_buf, (uint16_t)(px * 2u), LCD_BULK_TIMEOUT_MS);
+    }
+    cs_high();
+    HAL_Delay(4000);
+    lcd_write_cmd(0x3A);
+    lcd_write_data_byte(0x66);
+}
+#endif
+
 static void ili9488_init_sequence(void)
 {
     HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
@@ -201,7 +237,8 @@ static void ili9488_init_sequence(void)
     lcd_write_data((const uint8_t[]){0x00,0x1E,0x80}, 3);
 
     lcd_write_cmd(0x36); /* MADCTL: memory access order / orientation */
-    lcd_write_data_byte(0x48); /* portrait 320x480 (MX + BGR); flip to 0x88 if upside down */
+    /* portrait 320x480: MX + BGR; LCD_FLIP turns it 180 degrees (MY + BGR) */
+    lcd_write_data_byte(LCD_FLIP ? 0x88 : 0x48);
 
     lcd_write_cmd(0x3A); /* COLMOD: pixel format */
     lcd_write_data_byte(0x66); /* 18bpp -- the only format ILI9488 supports over 4-wire SPI */
@@ -386,6 +423,9 @@ void lv_port_disp_init(void)
     spi2_dma_init();
     uint32_t e0 = s_err_seq;
     ili9488_init_sequence();
+#if LCD_PROBE
+    lcd_probe_565();
+#endif
 
     lv_display_t *disp = lv_display_create(LCD_H_RES, LCD_V_RES);
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);

@@ -31,6 +31,9 @@
 | Плата-носитель с 2N7000 | `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0` | `build-backlight_active_low_0/Dash.elf` | `ROAD INV` |
 | Стол без машины: цвета и тревоги | `python tools/build.py -D OBD_DEMO=1` | `build-obd_demo_1/Dash.elf` | `BENCH DEMO` (жёлтым) |
 | Проверка сбросов, n = 1…4 | `python tools/build.py -D FAULT_TEST=n` | `build-fault_test_n/Dash.elf` | `BENCH FTn` |
+| Прежняя палитра, для сравнения с TN-палитрой | `python tools/build.py -D UI_PALETTE_TN=0` | `build-ui_palette_tn_0/Dash.elf` | `ROAD PAL0` |
+| Модуль перевёрнут на 180° | `python tools/build.py -D LCD_FLIP=1` | `build-lcd_flip_1/Dash.elf` | `ROAD FLIP` |
+| Какой контроллер у экрана: 4 с полос при старте ([display-upgrade.md](future/display-upgrade.md) §0) | `python tools/build.py -D LCD_PROBE=1` | `build-lcd_probe_1/Dash.elf` | `ROAD PROBE` |
 
 **Прошить** — STM32CubeProgrammer (из CubeCLT или отдельно), ST-LINK по SWD:
 

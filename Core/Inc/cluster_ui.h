@@ -7,6 +7,12 @@
 
 #include <stdint.h>
 
+/* 1 = colours for the TN panel: channels fully on or off, normal readings
+ * white (see the palette in cluster_ui.c); 0 = the previous palette. */
+#ifndef UI_PALETTE_TN
+#define UI_PALETTE_TN 1
+#endif
+
 /* Page order for ▶ / KEY. SNIFF is skipped while it may not open. */
 enum {
     UI_PAGE_DRIVE = 0,
