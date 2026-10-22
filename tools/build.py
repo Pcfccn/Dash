@@ -10,11 +10,17 @@ reference build: if compiler options change there, change them here too.
     python tools/build.py --clean      # wipe build/ first
     python tools/build.py --toolchain C:/path/to/arm-gnu-toolchain/bin
     python tools/build.py -D OILP_DPID_ENABLE=1   # experiment build -> build-oilp_dpid_enable_1/
+    python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0 --flash   # build, then flash that image
 
 -D NAME=VALUE (repeatable) adds a define on top of the project's own, for an
 explicit experiment build. It goes to its own build-<name>/ directory, so the
 normal build/ is never silently a variant (the dependency check cannot see a
 changed -D).
+
+--flash writes the image just built over ST-LINK (SWD) with STM32CubeProgrammer
+(STM32_Programmer_CLI on PATH, else C:/ST/STM32CubeCLT_*/STM32CubeProgrammer/bin),
+verifies it and resets the board: the variant's build-<name>/ path is worked out
+here, so the VS Code task does not have to.
 
 The toolchain is looked up in --toolchain, then $ARM_GCC_DIR, then PATH, then
 ~/tools/arm-gnu-toolchain-*/bin. Warnings in Core/ (our code) are listed at the
@@ -174,6 +180,7 @@ def main():
     ap.add_argument("--clean", action="store_true")
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("-D", dest="defines", action="append", default=[], metavar="NAME=VALUE")
+    ap.add_argument("--flash", action="store_true", help="flash the image over ST-LINK once it has built")
     args = ap.parse_args()
 
     global OUT, CFLAGS
@@ -236,6 +243,28 @@ def main():
         print(f"\nwarning in {rel}:\n{err}")
     print(f"\nwarnings: {sum(e.count('warning:') for _, e in core_warn)} in Core/, {vendor_warn} in vendor code")
     print(subprocess.run([tool(bindir, "size"), str(elf)], capture_output=True, text=True).stdout)
+    if args.flash:
+        flash(elf)
+
+
+def find_programmer():
+    exe = "STM32_Programmer_CLI" + (".exe" if os.name == "nt" else "")
+    found = shutil.which(exe)
+    if found:
+        return found
+    for d in sorted(Path("C:/ST").glob("STM32CubeCLT_*/STM32CubeProgrammer/bin"), reverse=True):
+        if (d / exe).exists():
+            return str(d / exe)
+    sys.exit("STM32_Programmer_CLI not found (install STM32CubeCLT or STM32CubeProgrammer)")
+
+
+def flash(elf):
+    print(f"flashing {elf.relative_to(ROOT).as_posix()} over ST-LINK")
+    r = subprocess.run([find_programmer(), "-c", "port=SWD", "-w", str(elf), "-v", "-rst"])
+    if r.returncode != 0:
+        # "No debug probe detected" with the probe plugged in usually means
+        # stlinkserver.exe (or an open debug session) holds it.
+        sys.exit("FLASH FAILED")
 
 
 if __name__ == "__main__":

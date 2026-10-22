@@ -14,22 +14,76 @@
       "args": ["all", "-j8"],
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": ["$gcc"],
-      "detail": "Build via the CubeIDE-generated Debug/ makefile. NOTE the explicit 'all' target: a bare 'make' resolves the default goal to clean and wipes the build."
+      "detail": "STM32CubeIDE's own Debug build (Debug/makefile). NOTE the explicit 'all': a bare 'make' resolves to clean. 'No rule to make target ...' after source files were added or removed = run 'CubeIDE: regenerate Debug/ and build' once."
     },
     {
-      "label": "Clean",
-      "type": "shell",
-      "command": "make",
-      "args": ["clean"],
-      "problemMatcher": []
+      "label": "CubeIDE: regenerate Debug/ and build",
+      "type": "process",
+      "command": "C:\\ST\\STM32CubeIDE_1.19.0\\STM32CubeIDE\\stm32cubeidec.exe",
+      "args": [
+        "--launcher.suppressErrors", "-nosplash",
+        "-application", "org.eclipse.cdt.managedbuilder.core.headlessbuild",
+        "-data", "${env:TEMP}\\dash-cubeide-ws",
+        "-import", "${workspaceFolder}",
+        "-build", "Dash/Debug"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": ["$gcc"],
+      "detail": "Headless STM32CubeIDE build in its own workspace (does not touch the one your CubeIDE has open). Rewrites Debug/makefile and subdir.mk, so new or deleted Core/Src files are picked up; ~30 s, ~4 min the first time."
     },
     {
       "label": "Flash (ST-LINK)",
       "type": "shell",
       "command": "STM32_Programmer_CLI",
-      "args": ["-c", "port=SWD", "-w", "Dash.elf", "-rst"],
+      "args": ["-c", "port=SWD", "-w", "Dash.elf", "-v", "-rst"],
       "dependsOn": "Build (make all)",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "detail": "Builds the CubeIDE Debug image (default flags, DIAG label IDE), then flashes Debug/Dash.elf with STM32CubeProgrammer."
+    },
+    {
+      "label": "Build image variant (tools/build.py)",
+      "type": "shell",
+      "command": "python tools/build.py ${input:variant}",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Same compiler and flags as the Debug build, plus a -D variant; ROAD goes to build/, a variant to build-<name>/. DIAG shows the commit and the variant."
+    },
+    {
+      "label": "Build + flash image variant (tools/build.py)",
+      "type": "shell",
+      "command": "python tools/build.py ${input:variant} --flash",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "detail": "The only way to put a -D variant on the board (e.g. BACKLIGHT_ACTIVE_LOW=0 for the 2N7000 backlight driver): CubeIDE always builds the default."
+    },
+    {
+      "label": "Host tests",
+      "type": "shell",
+      "command": "python tools/host_test.py",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$gcc"],
+      "detail": "tests/host on the PC (gcc/clang, or: pip install ziglang)."
+    }
+  ],
+  "inputs": [
+    {
+      "id": "variant",
+      "type": "pickString",
+      "description": "Image variant (docs/bench-first-flash.md §0)",
+      "default": "",
+      "options": [
+        { "label": "ROAD: default, current breadboard (Si4599 gate driven straight from PA8)", "value": "" },
+        { "label": "ROAD INV: carrier board with the 2N7000 backlight driver", "value": "-D BACKLIGHT_ACTIVE_LOW=0" },
+        { "label": "BENCH DEMO: synthetic values, no car", "value": "-D OBD_DEMO=1" },
+        { "label": "BENCH FT1: loop hang -> watchdog reset", "value": "-D FAULT_TEST=1" },
+        { "label": "BENCH FT2: HardFault -> reset", "value": "-D FAULT_TEST=2" },
+        { "label": "BENCH FT3: main-panel SPI errors (recovery, no reset)", "value": "-D FAULT_TEST=3" },
+        { "label": "BENCH FT4: configASSERT -> reset", "value": "-D FAULT_TEST=4" },
+        { "label": "BENCH KOEO: oil-pressure $2C/$AA experiment, parked only", "value": "-D OILP_DPID_ENABLE=1" }
+      ]
     }
   ]
 }
