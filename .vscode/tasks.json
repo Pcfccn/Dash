@@ -59,6 +59,15 @@
       "detail": "The only way to put a -D variant on the board (e.g. BACKLIGHT_ACTIVE_LOW=0 for the 2N7000 backlight driver): CubeIDE always builds the default."
     },
     {
+      "label": "Lint (-O2 warnings) + build",
+      "type": "shell",
+      "command": "python tools/build.py --lint",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": ["$gcc"],
+      "detail": "Compiles Core/Src once more at -O2 with array-bounds / overflow warnings (the -O0 Debug build cannot see an index past an array's end), then builds build/Dash.elf."
+    },
+    {
       "label": "Host tests",
       "type": "shell",
       "command": "python tools/host_test.py",

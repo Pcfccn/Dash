@@ -11,11 +11,19 @@ reference build: if compiler options change there, change them here too.
     python tools/build.py --toolchain C:/path/to/arm-gnu-toolchain/bin
     python tools/build.py -D OILP_DPID_ENABLE=1   # experiment build -> build-oilp_dpid_enable_1/
     python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0 --flash   # build, then flash that image
+    python tools/build.py --lint       # extra -O2 warnings over Core/Src, then build
 
 -D NAME=VALUE (repeatable) adds a define on top of the project's own, for an
 explicit experiment build. It goes to its own build-<name>/ directory, so the
 normal build/ is never silently a variant (the dependency check cannot see a
 changed -D).
+
+--lint first compiles every Core/Src file once more at -O2 with
+-Warray-bounds=2 / -Wstringop-overflow=4 / -Wextra, output discarded, and stops
+on any warning. GCC only runs those checks with optimisation on, so the -O0
+Debug build cannot see e.g. an index past the end of an array: page[3] holding
+four page handles went through the normal build with 0 warnings and broke page
+switching (2026-10-22). The image itself is still the -O0 Debug build.
 
 --flash writes the image just built over ST-LINK (SWD) with STM32CubeProgrammer
 (STM32_Programmer_CLI on PATH, else C:/ST/STM32CubeCLT_*/STM32CubeProgrammer/bin),
@@ -181,6 +189,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("-D", dest="defines", action="append", default=[], metavar="NAME=VALUE")
     ap.add_argument("--flash", action="store_true", help="flash the image over ST-LINK once it has built")
+    ap.add_argument("--lint", action="store_true", help="-O2 bounds/overflow warnings over Core/Src first")
     args = ap.parse_args()
 
     global OUT, CFLAGS
@@ -201,6 +210,9 @@ def main():
             shutil.rmtree(OUT / "obj")
         stamp.write_text(want + "\n")
     print(f"firmware {write_version_header()}")
+
+    if args.lint:
+        lint(bindir)
 
     srcs = sources()
     failed, core_warn, vendor_warn, built = [], [], 0, 0
@@ -245,6 +257,31 @@ def main():
     print(subprocess.run([tool(bindir, "size"), str(elf)], capture_output=True, text=True).stdout)
     if args.flash:
         flash(elf)
+
+
+LINT_FLAGS = ["-O2", "-Wextra", "-Wno-unused-parameter", "-Warray-bounds=2",
+              "-Wstringop-overflow=4", "-Wformat-truncation=1"]
+
+
+def lint(bindir):
+    srcs = sorted((ROOT / "Core" / "Src").glob("*.c"))
+    def one(src):
+        rel = Path(os.path.relpath(src, OUT)).as_posix()
+        r = subprocess.run([tool(bindir, "gcc"), *CFLAGS, *LINT_FLAGS, "-c", rel, "-o", os.devnull],
+                           capture_output=True, text=True, cwd=OUT)
+        return src, r.returncode, r.stderr
+    bad = []
+    with concurrent.futures.ThreadPoolExecutor(os.cpu_count() or 4) as ex:
+        for src, rc, err in ex.map(one, srcs):
+            # only our own lines: vendor headers may warn at -O2
+            ours = [ln for ln in err.splitlines() if "Core/" in ln and ("warning:" in ln or "error:" in ln)]
+            if rc != 0 or ours:
+                bad.append((src.relative_to(ROOT).as_posix(), err))
+    print(f"lint: {len(srcs)} Core/Src files at -O2, {len(bad)} with findings")
+    for rel, err in bad:
+        print(f"\n{rel}:\n{err}")
+    if bad:
+        sys.exit("lint failed")
 
 
 def find_programmer():

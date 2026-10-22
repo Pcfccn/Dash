@@ -81,9 +81,19 @@ LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero 
 #define F48 &montserrat_bold_48    /* gear / grid metric values / soot */
 #define F72 &montserrat_bold_72    /* speed — matches the 74px design hero */
 
+/* SNIFF is a workbench page for reverse-engineering unknown CAN IDs; it is
+ * skipped while it may not open. STATS (trip statistics, speedometer check)
+ * comes after it, so DRIVE and DIAG keep their natural order. */
+#define PAGE_SNIFF  2
+#define PAGE_STATS  3
+#define PAGE_COUNT  4
+
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
-    lv_obj_t *page[3];
+    /* Sized by PAGE_COUNT, never by hand: with page[3] and four pages, the
+     * STATS page handle landed in `border` below, so page switching hid and
+     * showed the alert border while STATS stayed on top of every page. */
+    lv_obj_t *page[PAGE_COUNT];
 
     /* full-screen alert border overlay (red = critical, orange = reverse) */
     lv_obj_t *border;
@@ -115,12 +125,6 @@ static struct {
     lv_obj_t *st_cal[4];            /* speedometer check                      */
 } ui;
 
-/* SNIFF is a workbench page for reverse-engineering unknown CAN IDs; it is
- * skipped while it may not open. STATS (trip statistics, speedometer check)
- * comes after it, so DRIVE and DIAG keep their natural order. */
-#define PAGE_SNIFF  2
-#define PAGE_STATS  3
-#define PAGE_COUNT  4
 
 static uint8_t s_page = 0;
 
@@ -875,7 +879,9 @@ static void refresh_stats(void)
      * reset loop, so this is the number to watch as pages grow. */
     lv_mem_monitor_t mm;
     lv_mem_monitor(&mm);
-    unsigned peak = mm.total_size ? (unsigned)((uint64_t)mm.max_used * 100u / mm.total_size) : 0u;
+    /* rounded up, like LVGL's used_pct, so "now" never reads above the peak */
+    unsigned peak = mm.total_size
+        ? (unsigned)(((uint64_t)mm.max_used * 100u + mm.total_size - 1u) / mm.total_size) : 0u;
     uint32_t up = (s_now - trip_stats_since()) / 1000u;
     char tm[12];
     if (up < 3600u) lv_snprintf(tm, sizeof tm, "%u:%02u", (unsigned)(up / 60u), (unsigned)(up % 60u));
