@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
-    "mtime": 1792643605.141631,
-    "ast_hash": "0b82790a91eee25af9ceb088e1b79192",
+    "mtime": 1792675479.0351624,
+    "ast_hash": "df19176bea924e5bd8721ee408083f90",
     "semantic_hash": ""
   },
   "Core/Inc/fdcan.h": {
@@ -40,8 +40,8 @@
     "semantic_hash": "8f8f0410e0509c4b0ca7724d68ae503b"
   },
   "Core/Inc/lv_port_disp.h": {
-    "mtime": 1792627719.8762293,
-    "ast_hash": "06f7fe4b4e67f919ba30730600e5623b",
+    "mtime": 1792676245.1878533,
+    "ast_hash": "11c106c5071307616d1d9df182f0b33a",
     "semantic_hash": ""
   },
   "Core/Inc/main.h": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792643766.394292,
-    "ast_hash": "c1df954d1f91e7b9b7d5c310a3c8e38e",
+    "mtime": 1792675479.0351624,
+    "ast_hash": "126e41e47b6295d069deee5acf5305ad",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -110,8 +110,8 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1792627719.899763,
-    "ast_hash": "e3f4599a61d97f41c3a52a57adaaa337",
+    "mtime": 1792676245.1898134,
+    "ast_hash": "547a2b38a5a956c45352811c1e9fceea",
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792644670.6803153,
-    "ast_hash": "6d814fad802269b44c41860dd49053da",
+    "mtime": 1792676986.4251628,
+    "ast_hash": "fda04dc4b713b8c8fcb199a670bd9bb3",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -670,8 +670,8 @@
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
-    "mtime": 1792627719.9769864,
-    "ast_hash": "56c1755e1e14392fa74ae7f29132cb46",
+    "mtime": 1792676986.4152162,
+    "ast_hash": "dbb0b7441f488b3ce78dcdca15d02224",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_policy.h": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/fw_info.h": {
-    "mtime": 1792627719.8737037,
-    "ast_hash": "38a8a17a373940187bf93bb6d660a96d",
+    "mtime": 1792676245.1908233,
+    "ast_hash": "3ec70a2daf218e5296a561b883b5b2ab",
     "semantic_hash": ""
   },
   "Core/Src/alert.c": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "docs/bench-first-flash.md": {
-    "mtime": 1792644688.114525,
-    "ast_hash": "9923a885d64a98214876fab916769db3",
+    "mtime": 1792676986.4190252,
+    "ast_hash": "44f063c2b6036c39a3a1b3faf7539d5c",
     "semantic_hash": ""
   },
   "Core/Inc/speed_cal.h": {
