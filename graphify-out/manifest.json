@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792675479.0351624,
-    "ast_hash": "126e41e47b6295d069deee5acf5305ad",
+    "mtime": 1792678865.3061504,
+    "ast_hash": "267fcc897e923481f163cdf9539fcfdf",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -110,8 +110,8 @@
     "semantic_hash": "5fb63b106450cb40e742351c2f692250"
   },
   "Core/Src/lv_port_disp.c": {
-    "mtime": 1792676245.1898134,
-    "ast_hash": "547a2b38a5a956c45352811c1e9fceea",
+    "mtime": 1792677462.7899346,
+    "ast_hash": "d5fe4aa45a56c21ed35ad28cc06ce964",
     "semantic_hash": ""
   },
   "Core/Src/main.c": {
@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792676986.4251628,
-    "ast_hash": "fda04dc4b713b8c8fcb199a670bd9bb3",
+    "mtime": 1792679583.124765,
+    "ast_hash": "40134308f098d15d34193fb77f0c17f4",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1792627720.057912,
-    "ast_hash": "0f9f05949555d7c63212f8f11a7a260d",
+    "mtime": 1792678973.3884916,
+    "ast_hash": "c787f2cc236d607763088190e4fd6038",
     "semantic_hash": ""
   },
   "tools/build.py": {
@@ -670,13 +670,13 @@
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
-    "mtime": 1792676986.4152162,
-    "ast_hash": "dbb0b7441f488b3ce78dcdca15d02224",
+    "mtime": 1792679583.126653,
+    "ast_hash": "532685411ad7f16b8078a92eb20713ef",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_policy.h": {
-    "mtime": 1792627719.8651786,
-    "ast_hash": "ae5bbd773334d47b9dcc4d84dae7701f",
+    "mtime": 1792678962.1671493,
+    "ast_hash": "aab2054148960b005043a84349012614",
     "semantic_hash": ""
   },
   "tests/host/mock_lv_port_disp/cmsis_os2.h": {
@@ -1012,6 +1012,36 @@
   "tests/host/test_perf.c": {
     "mtime": 1792644088.1674793,
     "ast_hash": "2cdb4685ca156abbd2b2301169f7ec99",
+    "semantic_hash": ""
+  },
+  "Core/Src/montserrat_semibold_12.c": {
+    "mtime": 1792678644.501742,
+    "ast_hash": "878ceca1c5e50874f7dfc708f1351c33",
+    "semantic_hash": ""
+  },
+  "Core/Src/montserrat_semibold_14.c": {
+    "mtime": 1792678644.5051632,
+    "ast_hash": "6fcd29d47950752fae71b262337acc5d",
+    "semantic_hash": ""
+  },
+  "Core/Src/montserrat_semibold_20.c": {
+    "mtime": 1792678644.5313177,
+    "ast_hash": "23ec251eced7812dd5bc118977c863c4",
+    "semantic_hash": ""
+  },
+  "tools/ui_render.py": {
+    "mtime": 1792678418.768781,
+    "ast_hash": "a10aa29929bf439967fbf76b306920a2",
+    "semantic_hash": ""
+  },
+  "tools/ui_render/main.c": {
+    "mtime": 1792678879.111802,
+    "ast_hash": "1f30514b44f44f14fca57ef827bb5299",
+    "semantic_hash": ""
+  },
+  "tools/ui_render/stubs.c": {
+    "mtime": 1792679010.5479527,
+    "ast_hash": "4f9ccc4103173ab62941f04993854d0c",
     "semantic_hash": ""
   }
 }

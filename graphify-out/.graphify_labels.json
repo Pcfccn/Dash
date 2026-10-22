@@ -67,5 +67,20 @@
   "65": "obd_data_t",
   "66": "lv_display_get_screen_active",
   "67": "SPI_HandleTypeDef",
-  "68": "SNIFF capture — selector / PRNDL search"
+  "68": "SNIFF capture — selector / PRNDL search",
+  "69": "HAL_StatusTypeDef",
+  "70": "lv_display_t",
+  "71": "lv_port_disp_init",
+  "72": "park",
+  "73": "cap_scenario",
+  "74": "HAL_GPIO_Init",
+  "75": "IRQn_Type",
+  "76": "flush_cb",
+  "77": "lv_tick_set_cb",
+  "78": "metric_key_t",
+  "79": "obd_data_t",
+  "80": "FDCAN_FilterTypeDef",
+  "81": "FDCAN_HandleTypeDef",
+  "82": "HAL_StatusTypeDef",
+  "83": "IRQn_Type"
 }

@@ -50,3 +50,6 @@ graphify-out/.needs_update
 # CLI build output (tools/build.py)
 /build/
 /build-*/
+
+# Python bytecode (tools/ui_render.py imports host_test)
+__pycache__/
