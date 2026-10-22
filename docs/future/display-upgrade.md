@@ -43,6 +43,35 @@
 
 **Если хочется 4"+ IPS и остаться на STM32** — плата на STM32H743IIT6 с RGB-экраном: тот же чип, код в основном переносится. Перед заказом в лоте проверить: «IPS» в характеристиках панели; разводку платы, чтобы были свободны пины FDCAN (PD0/PD1 или PB8/PB9) и UART под GPS; есть ли там SPI-флешка под журнал (иначе — внутренняя флеш H743).
 
+### Все варианты одной таблицей (2026-10-22)
+
+Цены — с найденных страниц, перед заказом проверить; «AUD» — с доставкой по Австралии или со склада в Австралии. «Прошивка» — сколько менять в нашем коде.
+
+| # | Вариант | Экран | Плюсы | Минусы | Прошивка | Цена | Где заказать |
+|---|---|---|---|---|---|---|---|
+| 0 | **Оставить нынешний TN 4"**, поставить правильно | 4" TN 320×480 | бесплатно | TN: узкая ось никуда не денется; сначала проверить, что вертикально не двоится | ничего | 0 | — |
+| 1 | **DFRobot DFR0669** | 3.5" IPS 320×480, ILI9488, 300 кд/м², −20…+70 °C | тот же контроллер, что сейчас, те же провода; склад в Сиднее | меньше: 3.5"; тач и SD лишние | почти ничего (возможно, инверсия цвета / BGR) | 47.90 AUD | [Core Electronics](https://core-electronics.com.au/3-5-480x320-tft-lcd-capacitive-touchscreen.html) |
+| 2 | **Waveshare 3.5" Capacitive Touch Display (F)** | 3.5" IPS 320×480, ST7796S | дешевле всех местных; в наличии; RGB565 по SPI — вывод на треть быстрее | 3.5"; подключение кабелем GH1.25 13P (в комплекте) — сверить распиновку | драйвер ST7796, ~1 вечер | 35.30 AUD | [Core Electronics](https://core-electronics.com.au/waveshare-3-5-inch-touchscreen-for-pi-f.html) |
+| 3 | Waveshare 3.5" Capacitive Touch LCD (WS-29318) | 3.5" IPS 320×480, ST7796S | гребёнка, документация Waveshare | везут от Waveshare, не со склада | драйвер ST7796 | ~37 AUD | [Little Bird](https://littlebirdelectronics.com.au/products/3-5-capacitive-touch-ips-display-320x480-st7796s-ft6336u-ws-29318) |
+| 4 | Elecrow DLS30035B | 3.5" IPS 320×480, ST7796 | гребёнка, понятный магазин | доставка дороже экрана | драйвер ST7796 | US$31.19 с доставкой (16.90 + 14.29) | [Elecrow](https://www.elecrow.com/3-5-ips-spi-lcd-capacitive-touch-module-st7796-driver-320-480-resolution.html) |
+| 5 | LCDWIKI MSP3525 / Hosyond 3.5 IPS | 3.5" IPS 320×480, ST7796U | самый дешёвый | 2–3 недели; под тем же названием бывают TN / ILI9488 — в лоте должно быть **IPS** | драйвер ST7796 | ~15–25 AUD | AliExpress: искать «MSP3525 IPS ST7796U» |
+| 6 | Display Visions EA TFT035-34AI | 3.5" IPS 320×480, HX8357D, **850–1000 кд/м²** | читается на солнце, −20…+70 °C | голая панель со шлейфом: своя переходная плата и драйвер подсветки; дорого | init HX8357D | ~US$80 | DigiKey / Mouser (на [LCSC](https://www.lcsc.com/product-detail/LCD-Screen_Display-Visions-EA-TFT035-34AITC_C17476479.html) нет в наличии) |
+| 7 | **Плата STM32H743IIT6 «Core» + RGB-экран** | 4.3" / 5" / 7" RGB, 800×480+; IPS — по лоту | **4"+ и тот же чип**: CAN, FreeRTOS, LVGL, логика переносятся; SDRAM 32 МБ, LTDC — быстрее SPI | безымянный продавец; проверять IPS и распиновку; нет маленького экрана статуса; трансивер CAN — свой модуль | перенос на другую плату, драйвер LTDC, ~1–2 выходных | ~US$35 плата, ~US$60 с экраном | AliExpress: [поиск STM32H743IIT6](https://www.aliexpress.com/w/wholesale-stm32h743iit6.html); [LVGL forum](https://forum.lvgl.io/t/support-for-affordable-stm32h743-core-board-rgb-lcd-touch/23360) |
+| 8 | Waveshare OpenH743I-C + RGB-экран Waveshare | 4.3" IPS 800×480 RGB (16249) | тот же чип, документация Waveshare | дорого; совместимость экрана с этой платой проверить | как №7 | US$74 плата + ~€30 экран | [Waveshare (платы)](https://www.waveshare.com/product/mcu-tools/development-boards.htm), [экран 16249](https://welectron.com/Waveshare-16249-43inch-Capacitive-Touch-LCD) |
+| 9 | ST **STM32H735G-DK** | 4.3" 480×272 RGB, тач; тип панели не указан | официальная плата ST; **CAN FD** на плате; H7 — код переносится | 480×272 грубее нынешнего; дорого | как №7 | 166.86 AUD | [RS Australia](https://au.rs-online.com/web/p/microcontroller-development-tools/2102028) |
+| 10 | ST STM32H747I-DISCO | 4" 800×480 MIPI DSI, тач | 4" высокой чёткости, официальная плата | тип панели не указан; DSI сложнее; дорого | как №7 + DSI | ~€85–91 | [ST (дистрибьюторы)](https://www.st.com/en/evaluation-tools/stm32h747i-disco.html) |
+| 11 | **DWIN DGUS** DMG80480T043 | 4.3" **IPS 800×480**, 85/85/85/85°, 270–900 кд/м² | IPS 4.3" дёшево; WeAct остаётся (4 провода UART) | интерфейс рисуется заново в программе DWIN, наш LVGL — в мусор; продавцы найдены только в Индии | связь по UART вместо LVGL | ~₹1 400–4 500 (≈ AUD 25–80) | [Evelta](https://evelta.com/4-3inch-800x480-display-capacitive/), [Hubtronics](https://hubtronics.in/dmg80480t043_09wn) |
+| 12 | Riverdi EVE4 4.3" (BT817) | 4.3" IPS 480×272, 850–1000 кд/м² | ярко; WeAct остаётся (SPI) | дорого; LVGL с EVE ограниченно | драйвер EVE | ~US$109 | DigiKey (через [findchips](https://www.findchips.com/search/RVT43)) |
+| 13 | **Waveshare ESP32-S3-LCD-4** / Touch-LCD-4 | 4" **IPS 480×480** | **CAN-трансивер и вход 7–36 В на плате**; одна плата вместо всего | перенос на ESP32 (другой процессор), квадратная вёрстка | перенос + вёрстка | US$25.99 / 32.99 | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-4.htm) |
+| 14 | Waveshare ESP32-S3-Touch-LCD-4.3B | 4.3" IPS 800×480, 550 кд/м² | ярче остальных доступных; CAN, 7–36 В | ландшафт; подсветка только вкл/выкл | перенос + вёрстка | ~US$37 | [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-4.3b.htm) |
+| 15 | Guition ESP32-4848S040 | 4" IPS 480×480 | дешевле всех на 4" | **CAN нет** — нужен модуль; китайский ноунейм | перенос + вёрстка | ~US$20–28 | AliExpress; [описание](https://devices.esphome.io/devices/guition-esp32-s3-4848s040) |
+
+**Коротко:**
+- быстро и почти без работы — **№1** (DFR0669);
+- дешевле, но с драйвером — **№2**;
+- 4"+ IPS и остаться на STM32 — **№7** (по лоту с IPS);
+- лучшее «всё в одном» на 4" — **№13**, но это переход на ESP32.
+
 ## 1. Что сейчас и где теряется
 
 > **Архив: таблица ниже — состояние до этапа 0 (2026-10-09).** Сейчас в прошивке: SPI2 /8 = **18,75 МГц**, flush через **DMA**, I-cache и D-cache **включены**, виджеты обновляются только при изменении. Полный кадр 320×480×3 байта по проводу ≈ **197 мс**, то есть не больше ~5 полных кадров в секунду: DMA освобождает CPU, но провод не ускоряет. Важна доля перерисовываемой площади, а не FPS всего экрана (ревью C7, PERF-01). Выводы про TN-панель, яркость и разрешение остаются в силе.
