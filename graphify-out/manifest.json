@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792678865.3061504,
-    "ast_hash": "267fcc897e923481f163cdf9539fcfdf",
+    "mtime": 1792706809.0095422,
+    "ast_hash": "26f58f28b06166cef5b5a412bb85c09f",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792679583.124765,
-    "ast_hash": "40134308f098d15d34193fb77f0c17f4",
+    "mtime": 1792706809.0251791,
+    "ast_hash": "8f5fdd026a0b8fd868cb5030e86ce143",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -670,8 +670,8 @@
     "semantic_hash": ""
   },
   "docs/future/display-upgrade.md": {
-    "mtime": 1792679583.126653,
-    "ast_hash": "532685411ad7f16b8078a92eb20713ef",
+    "mtime": 1792706809.0408,
+    "ast_hash": "cbf7cad6d5849a2a9aadbca017bed0fa",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_policy.h": {

@@ -82,5 +82,9 @@
   "80": "FDCAN_FilterTypeDef",
   "81": "FDCAN_HandleTypeDef",
   "82": "HAL_StatusTypeDef",
-  "83": "IRQn_Type"
+  "83": "IRQn_Type",
+  "84": "obd_pid_supported",
+  "85": "lvgl",
+  "86": "metric_key_t",
+  "87": "obd_data_t"
 }
