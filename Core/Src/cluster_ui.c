@@ -32,6 +32,7 @@
 #include "alert.h"            /* filtered alarm states                  */
 #include "trip_stats.h"       /* STATS page                             */
 #include "speed_cal.h"
+#include "trip_app.h"         /* TRIP / PERF pages                      */
 #include "lvgl.h"
 #include <stdbool.h>
 #include <math.h>
@@ -84,9 +85,13 @@ LV_FONT_DECLARE(montserrat_bold_72);   /* digits+'-' only: the DRIVE speed hero 
 /* SNIFF is a workbench page for reverse-engineering unknown CAN IDs; it is
  * skipped while it may not open. STATS (trip statistics, speedometer check)
  * comes after it, so DRIVE and DIAG keep their natural order. */
-#define PAGE_SNIFF  2
-#define PAGE_STATS  3
-#define PAGE_COUNT  4
+#define PAGE_DRIVE  UI_PAGE_DRIVE   /* order: cluster_ui.h */
+#define PAGE_TRIP   UI_PAGE_TRIP
+#define PAGE_PERF   UI_PAGE_PERF
+#define PAGE_DIAG   UI_PAGE_DIAG
+#define PAGE_SNIFF  UI_PAGE_SNIFF
+#define PAGE_STATS  UI_PAGE_STATS
+#define PAGE_COUNT  UI_PAGE_COUNT
 
 /* ---- widget handles we update in refresh() ------------------------------- */
 static struct {
@@ -120,6 +125,10 @@ static struct {
     lv_obj_t *sn_stat, *sn_rows, *sn_ana;
 
     /* STATS */
+    /* TRIP */
+    lv_obj_t *tr_head, *tr_name[3], *tr_val[3], *tr_sub, *tr_fuel, *tr_src, *tr_nv;
+    /* PERF */
+    lv_obj_t *pf_head, *pf_big, *pf_unit, *pf_last[6], *pf_best[6], *pf_trap, *pf_gps;
     lv_obj_t *st_head;
     lv_obj_t *st_cell[14][4];       /* N, P95, GAP, MIN..MAX per signal      */
     lv_obj_t *st_cal[4];            /* speedometer check                      */
@@ -329,7 +338,7 @@ static lv_obj_t *mk_eyebrow(lv_obj_t *page, const char *title)
 /* ------------------------------------------------------------------ page: DRIVE */
 static void build_drive(void)
 {
-    lv_obj_t *pg = ui.page[0];
+    lv_obj_t *pg = ui.page[PAGE_DRIVE];
 
     /* No eyebrow on DRIVE: the gear+speed hero already identifies the page and
      * the pager dots show position, so the 28px bar was dead space. The hero and
@@ -442,13 +451,13 @@ static void build_drive(void)
         lv_obj_align(th, LV_ALIGN_TOP_RIGHT, -12, ch - 28);
     }
 
-    mk_pager(pg, 0);
+    mk_pager(pg, PAGE_DRIVE);
 }
 
 /* -------------------------------------------------------------- page: DIAG */
 static void build_diag(void)
 {
-    lv_obj_t *pg = ui.page[1];
+    lv_obj_t *pg = ui.page[PAGE_DIAG];
 
     /* Left side of the eyebrow: why the previous run ended. A watchdog or
      * fault reset is amber so it is noticed; a normal power-up stays quiet. */
@@ -520,7 +529,7 @@ static void build_diag(void)
     lv_obj_set_pos(ui.did_dbg, 10, 382);
     lv_obj_set_style_text_line_space(ui.did_dbg, 1, 0);
 
-    mk_pager(pg, 1);
+    mk_pager(pg, PAGE_DIAG);
 
     /* Which image this is (fw_info.h), either side of the page dots: commit
      * (+ = sources changed since) on the left, variant on the right, amber
@@ -619,6 +628,84 @@ static void build_stats(void)
 /* Strip tags, left to right. 1..5 are measured values (TAG_M in refresh). */
 static const char *const TAG_NAME[8] = { "MIL","CLT","OIL","ATF","EGT","BAT","DTC","CAN" };
 static const char *const TAG_UNIT[8] = { "", DEG "C", DEG "C", DEG "C", DEG "C", "V", "", "" };
+/* ---------------------------------------------------------------- TRIP page */
+/* Own odometer (trip_app.c / odo.c): TRIP big, A and TOTAL below; ● picks a
+ * counter (arrow), ● held resets it when standing (TOTAL never). Fuel has no
+ * source yet (docs/future/gps-odometer-fuel.md §3), so it says so. */
+static const char *const TR_NAME[3] = { "TRIP", "A", "TOTAL" };
+
+static void build_trip(void)
+{
+    lv_obj_t *pg = ui.page[PAGE_TRIP];
+    lv_obj_t *tb = mk_eyebrow(pg, "TRIP");
+    ui.tr_head = mk_label(tb, "", F12, C_MUTED);
+    lv_obj_align(ui.tr_head, LV_ALIGN_LEFT_MID, 8, 0);
+
+    static const int y_name[3] = { 40, 178, 250 };
+    for (int i = 0; i < 3; i++) {
+        ui.tr_name[i] = mk_label(pg, TR_NAME[i], F14, C_LABEL);
+        lv_obj_set_pos(ui.tr_name[i], 12, y_name[i]);
+    }
+    ui.tr_val[0] = mk_value(pg, F48, C_TEXT, "km", F20);
+    lv_obj_set_pos(lv_obj_get_parent(ui.tr_val[0]), 10, 58);
+    ui.tr_sub = mk_label(pg, "", F14, C_TEXT2);
+    lv_obj_set_pos(ui.tr_sub, 12, 120);
+    for (int i = 1; i < 3; i++) {
+        ui.tr_val[i] = mk_value(pg, F28, C_TEXT, "km", F14);
+        lv_obj_set_pos(lv_obj_get_parent(ui.tr_val[i]), 10, y_name[i] + 18);
+    }
+    ui.tr_fuel = mk_label(pg, "FUEL  --  no fuel-rate source yet", F12, C_FAINT);
+    lv_obj_set_pos(ui.tr_fuel, 12, 326);
+    ui.tr_src = mk_label(pg, "", F12, C_MUTED);
+    lv_obj_set_pos(ui.tr_src, 12, 350);
+    ui.tr_nv = mk_label(pg, "", F12, C_FAINT);
+    lv_obj_set_pos(ui.tr_nv, 12, 374);
+    lv_obj_t *hint = mk_label(pg, LV_SYMBOL_BULLET " picks   hold " LV_SYMBOL_BULLET " resets (standing)", F12, C_FAINT);
+    lv_obj_set_pos(hint, 12, 398);
+    mk_pager(pg, PAGE_TRIP);
+}
+
+/* ---------------------------------------------------------------- PERF page */
+/* GPS acceleration timer (perf.c): stand still until READY, then go. Last and
+ * best per item; ● held clears them. */
+static const char *const PF_NAME[6] = { "0-60", "0-100", "60-100", "100-200", "1/8 mi", "1/4 mi" };
+
+static void build_perf(void)
+{
+    lv_obj_t *pg = ui.page[PAGE_PERF];
+    lv_obj_t *tb = mk_eyebrow(pg, "PERF");
+    ui.pf_head = mk_label(tb, "", F12, C_MUTED);
+    lv_obj_align(ui.pf_head, LV_ALIGN_LEFT_MID, 8, 0);
+
+    ui.pf_big = mk_label(pg, "--", F48, C_TEXT);
+    lv_obj_set_pos(ui.pf_big, 12, 36);
+    ui.pf_unit = mk_label(pg, "", F20, C_LABEL);
+    lv_obj_set_pos(ui.pf_unit, 200, 58);
+
+    lv_obj_t *h = mk_label(pg, "LAST", F12, C_FAINT);
+    lv_obj_set_pos(h, 140, 104);
+    h = mk_label(pg, "BEST", F12, C_FAINT);
+    lv_obj_set_pos(h, 232, 104);
+    for (int i = 0; i < 6; i++) {
+        int y = 122 + 34 * i;
+        lv_obj_t *n = mk_label(pg, PF_NAME[i], F14, C_LABEL);
+        lv_obj_set_pos(n, 12, y + 4);
+        ui.pf_last[i] = mk_label(pg, "--", F20, C_TEXT);
+        lv_obj_set_pos(ui.pf_last[i], 140, y);
+        ui.pf_best[i] = mk_label(pg, "--", F20, C_TEXT2);
+        lv_obj_set_pos(ui.pf_best[i], 232, y);
+    }
+    ui.pf_trap = mk_label(pg, "", F12, C_MUTED);
+    lv_obj_set_pos(ui.pf_trap, 12, 332);
+    ui.pf_gps = mk_label(pg, "", F12, C_MUTED);
+    lv_obj_set_pos(ui.pf_gps, 12, 352);
+    lv_obj_t *n1 = mk_label(pg, "from a standstill, no rollout: 1/4 mi ~0.3 s over a strip", F12, C_FAINT);
+    lv_obj_set_pos(n1, 12, 376);
+    lv_obj_t *n2 = mk_label(pg, "hold " LV_SYMBOL_BULLET " clears (standing)", F12, C_FAINT);
+    lv_obj_set_pos(n2, 12, 398);
+    mk_pager(pg, PAGE_PERF);
+}
+
 static void build_strip(lv_obj_t *scr)
 {
     ui.strip = lv_obj_create(scr);
@@ -667,6 +754,8 @@ void cluster_ui_build(void)
     }
     build_drive();
     build_diag();
+    build_trip();
+    build_perf();
     build_sniff();
     build_stats();
     build_strip(scr);
@@ -941,6 +1030,122 @@ static void refresh_stats(void)
     ui_text(ui.st_cal[3], b);
 }
 
+/* -------------------------------------------------------- TRIP / PERF refresh */
+static void fmt_secs(char *b, size_t n, float secs)           /* 12.34 */
+{
+    if (isnan(secs)) { lv_snprintf(b, n, "--"); return; }
+    int c = iround(secs * 100.0f);
+    lv_snprintf(b, n, "%d.%02d", c / 100, c % 100);
+}
+
+static void gps_brief(char *b, size_t n)
+{
+    const gps_state_t *g = gps_state();
+    if (g->link != GPS_LINK_RUN) { lv_snprintf(b, n, "GPS NOT CONNECTED"); return; }
+    if (!gps_fix_fresh(s_now))   { lv_snprintf(b, n, "GPS NO FIX  %u SAT", (unsigned)g->fix.sats); return; }
+    char hd[8] = "--";
+    if (!isnan(g->fix.hdop)) fmt(hd, sizeof hd, g->fix.hdop, 1);
+    lv_snprintf(b, n, "GPS %u HZ  %u SAT  HDOP %s", (unsigned)g->rate_hz, (unsigned)g->fix.sats, hd);
+}
+
+static void refresh_trip(void)
+{
+    static uint32_t t_last;
+    if (s_now - t_last < 200u) return;
+    t_last = s_now;
+    const odo_t *o = trip_app_odo();
+    char b[64];
+
+    for (int i = 0; i < 3; i++) {
+        if (i == 0)      fmt(b, sizeof b, (float)(o->trip_m / 1000.0), 1);
+        else if (i == 1) fmt(b, sizeof b, (float)(o->a_m / 1000.0), 1);
+        else             lv_snprintf(b, sizeof b, "%lu", (unsigned long)(o->total_m / 1000.0));
+        ui_text(ui.tr_val[i], b);
+        bool sel = (trip_app_selected() == (trip_sel_t)i);
+        lv_snprintf(b, sizeof b, "%s%s", sel ? LV_SYMBOL_RIGHT " " : "", TR_NAME[i]);
+        ui_text(ui.tr_name[i], b);
+        ui_text_color(ui.tr_name[i], sel ? C_OK : C_LABEL);
+    }
+
+    unsigned mins = (unsigned)(o->trip_s / 60.0);
+    char avg[12] = "--";
+    if (o->trip_s >= 60.0) fmt(avg, sizeof avg, (float)(o->trip_m / o->trip_s * 3.6), 0);
+    lv_snprintf(b, sizeof b, "%u:%02u moving   avg %s km/h%s", mins / 60u, mins % 60u, avg,
+                o->trip_auto_reset ? "   NEW TRIP" : "");
+    ui_text(ui.tr_sub, b);
+
+    odo_src_t src = odo_source(o, s_now);
+    char gb[40];
+    gps_brief(gb, sizeof gb);
+    lv_snprintf(b, sizeof b, "SPEED FROM %s",
+                src == ODO_SRC_GPS ? "GPS" : (src == ODO_SRC_OBD ? "OBD x SCALE" : "-- (no speed)"));
+    ui_text(ui.tr_src, b);
+    ui_text(ui.tr_head, gb);
+
+    nv_info_t nv;
+    nvlog_info(&nv);
+    lv_color_t nc = C_FAINT;
+    if (nv.state == NV_NO_FLASH) {
+        lv_snprintf(b, sizeof b, "MEMORY: NO FLASH - NOT SAVED");
+        nc = C_WARN;
+    } else {
+        int k = lv_snprintf(b, sizeof b, "MEMORY: %s #%lu", nv.state == NV_LOADED ? "OK" : "EMPTY",
+                            (unsigned long)nv.seq);
+        if (nv.errors) {
+            lv_snprintf(b + k, sizeof b - (size_t)k, "  ERR %u", (unsigned)nv.errors);
+            nc = C_WARN;
+        }
+    }
+    ui_text(ui.tr_nv, b);
+    ui_text_color(ui.tr_nv, nc);
+}
+
+static void refresh_perf(void)
+{
+    static uint32_t t_last;
+    if (s_now - t_last < 100u) return;
+    t_last = s_now;
+    const perf_t *p = trip_app_perf();
+    const gps_state_t *g = gps_state();
+    char b[64];
+
+    static const char *const ST[4] = { "NO GPS", "STOP TO ARM", "READY - GO", "RUN" };
+    lv_color_t hc = (p->state == PERF_READY) ? C_OK : (p->state == PERF_RUN ? C_WARN : C_MUTED);
+    ui_text(ui.pf_head, ST[p->state]);
+    ui_text_color(ui.pf_head, hc);
+
+    if (p->state == PERF_RUN) {
+        fmt_secs(b, sizeof b, perf_elapsed(p, s_now));
+        ui_text(ui.pf_big, b);
+        ui_text(ui.pf_unit, "s");
+    } else if (gps_fix_fresh(s_now) && !isnan(g->fix.speed_kmh)) {
+        fmt(b, sizeof b, g->fix.speed_kmh, 0);
+        ui_text(ui.pf_big, b);
+        ui_text(ui.pf_unit, "km/h");
+    } else {
+        ui_text(ui.pf_big, "--");
+        ui_text(ui.pf_unit, "");
+    }
+    ui_text_color(ui.pf_big, hc);
+
+    for (int i = 0; i < 6; i++) {
+        fmt_secs(b, sizeof b, p->last_s[i]);
+        ui_text(ui.pf_last[i], b);
+        fmt_secs(b, sizeof b, p->best_s[i]);
+        ui_text(ui.pf_best[i], b);
+    }
+    char t8[8] = "--", t4[8] = "--";
+    if (!isnan(p->trap_kmh[PF_EIGHTH]))  fmt(t8, sizeof t8, p->trap_kmh[PF_EIGHTH], 0);
+    if (!isnan(p->trap_kmh[PF_QUARTER])) fmt(t4, sizeof t4, p->trap_kmh[PF_QUARTER], 0);
+    lv_snprintf(b, sizeof b, "TRAP SPEED  1/8 mi %s   1/4 mi %s km/h", t8, t4);
+    ui_text(ui.pf_trap, b);
+
+    gps_brief(b, sizeof b);
+    ui_text(ui.pf_gps, b);
+    bool slow = g->link == GPS_LINK_RUN && gps_fix_fresh(s_now) && g->rate_hz < 5u;
+    ui_text_color(ui.pf_gps, slow ? C_WARN : C_MUTED);
+}
+
 void cluster_ui_refresh(void)
 {
     /* snapshot the volatile shared struct */
@@ -1210,6 +1415,8 @@ void cluster_ui_refresh(void)
 
     /* ----- STATS ----- */
     if (s_page == PAGE_STATS) refresh_stats();
+    if (s_page == PAGE_TRIP)  refresh_trip();
+    if (s_page == PAGE_PERF)  refresh_perf();
 
     /* ----- alert strip -----
      * A tag only judges a value we actually have and that is recent:

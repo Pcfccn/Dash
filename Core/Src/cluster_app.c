@@ -10,8 +10,10 @@
 #include "gps.h"              /* GPS fixes for the speedometer check */
 #include "speed_cal.h"
 #include "trip_stats.h"
+#include "trip_app.h"         /* odometer, acceleration timer, persistent store */
 
 void cluster_app_init(FDCAN_HandleTypeDef *hfdcan) {
+    trip_app_init();                   /* SPI NOR store: odometer + brightness  */
     trip_stats_reset(HAL_GetTick());   /* STATS page: counts since power-up */
     speed_cal_reset();
     cluster_ui_build();         /* create the pages + alert strip on the active screen */
@@ -22,7 +24,10 @@ void cluster_app_init(FDCAN_HandleTypeDef *hfdcan) {
  * and range statistics, and the OBD side of the speedometer check. */
 void obd_on_stamp(uint8_t ch, float v, uint32_t rx_ms) {
     trip_stats_update(ch, v, rx_ms);
-    if (ch == (uint8_t)M_SPEED) speed_cal_obd(v, rx_ms);
+    if (ch == (uint8_t)M_SPEED) {
+        speed_cal_obd(v, rx_ms);
+        trip_app_obd_speed(v, rx_ms);
+    }
 }
 
 /* The GPS side: each new fix, with its receive time. Before obd_rx_poll(),
@@ -33,6 +38,7 @@ static void feed_gps(void) {
     if (g->fix_ms == 0u || g->fix_ms == last_fix) return;
     last_fix = g->fix_ms;
     speed_cal_gps(g->fix.speed_kmh, g->fix.rmc_fix, g->fix.sats, g->fix.hdop, g->fix_ms);
+    trip_app_gps(g);
 }
 
 void cluster_app_run(void) {
@@ -51,5 +57,6 @@ void cluster_app_run(void) {
     if (now - t_wdg  >= 1000) { t_wdg  = now; obd_watchdog_tick_1hz(); }
 #endif
 
+    trip_app_service(now);           /* odometer saves; NOR erase / program steps */
     if (now - t_ui   >= 40)   { t_ui   = now; cluster_ui_refresh(); }   /* ~25 Hz UI       */
 }

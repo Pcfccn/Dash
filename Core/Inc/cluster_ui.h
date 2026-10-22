@@ -1,5 +1,5 @@
 /* ============================================================================
- *  cluster_ui.h — LVGL UI for the Colorado 2.8 cluster (3 pages + alert strip)
+ *  cluster_ui.h — LVGL UI for the Colorado 2.8 cluster (pages + alert strip)
  *  Build once with cluster_ui_build(); refresh from the main loop.
  * ========================================================================== */
 #ifndef CLUSTER_UI_H
@@ -7,9 +7,20 @@
 
 #include <stdint.h>
 
+/* Page order for ▶ / KEY. SNIFF is skipped while it may not open. */
+enum {
+    UI_PAGE_DRIVE = 0,
+    UI_PAGE_TRIP,                   /* odometer TRIP / A / TOTAL               */
+    UI_PAGE_PERF,                   /* acceleration timer                      */
+    UI_PAGE_DIAG,
+    UI_PAGE_SNIFF,
+    UI_PAGE_STATS,
+    UI_PAGE_COUNT
+};
+
 void cluster_ui_build(void);        /* create all widgets (call after lv_init) */
 void cluster_ui_refresh(void);      /* push g_obd -> widgets (main ctx, ~20Hz) */
-void cluster_ui_set_page(uint8_t p);/* 0=DRIVE 1=DIAG 2=SNIFF 3=STATS            */
+void cluster_ui_set_page(uint8_t p);/* UI_PAGE_*                                 */
 void cluster_ui_next_page(void);    /* ▶ / KEY -> next page                     */
 void cluster_ui_prev_page(void);    /* ◀ -> previous page                        */
 uint8_t cluster_ui_get_page(void);  /* current page index (for diagnostics)     */

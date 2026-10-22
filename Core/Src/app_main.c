@@ -11,6 +11,7 @@
 #include "fault.h"           /* IWDG + last-reset reason */
 #include "gps.h"             /* GPS receiver on USART2 (PA2/PA3) */
 #include "input.h"           /* button gestures, day/night filter */
+#include "trip_app.h"        /* brightness profiles kept in the SPI NOR; TRIP / PERF actions */
 #include "can_sniff.h"       /* clean point on the SNIFF page */
 #include "fw_info.h"         /* image variant, shown on the ST7735 at start-up */
 #include "trip_stats.h"      /* STATS page: loop time, reset */
@@ -95,6 +96,7 @@ static void bl_edit(int delta, bool wrap)
     if (v < (int)BL_MIN_PCT) v = (int)BL_MIN_PCT;
     *p = (uint8_t)v;
     backlight_set(*p);
+    trip_app_set_brightness(s_bl_profile[0], s_bl_profile[1], HAL_GetTick());   /* saved 2 s later */
 }
 
 static void btn_tap(uint8_t b, uint32_t t)
@@ -111,7 +113,8 @@ static void btn_tap(uint8_t b, uint32_t t)
     case B_KEY:    cluster_ui_next_page(); break;
     case B_PREV:   cluster_ui_prev_page(); break;
     case B_ACTION:
-        if (cluster_ui_get_page() == 2u) can_sniff_reset();   /* SNIFF: clean point */
+        if (cluster_ui_get_page() == UI_PAGE_SNIFF) can_sniff_reset();   /* clean point  */
+        if (cluster_ui_get_page() == UI_PAGE_TRIP)  trip_app_select_next(); /* TRIP/A/TOTAL */
         break;
     default:       break;
     }
@@ -124,10 +127,14 @@ static void btn_hold(uint8_t b, uint32_t t)
         s_bl_mode_t = t;
     }
     /* ● held 2 s on STATS: start the statistics and the speedometer check over. */
-    if (b == B_ACTION && cluster_ui_get_page() == 3u) {
+    if (b == B_ACTION && cluster_ui_get_page() == UI_PAGE_STATS) {
         trip_stats_reset(t);
         speed_cal_reset();
     }
+    /* ● held on TRIP: reset the selected counter (TRIP or A, never TOTAL); on
+     * PERF: clear the results. Standing still only (trip_app.c). */
+    if (b == B_ACTION && cluster_ui_get_page() == UI_PAGE_TRIP) (void)trip_app_reset_selected(t);
+    if (b == B_ACTION && cluster_ui_get_page() == UI_PAGE_PERF) (void)trip_app_perf_clear(t);
 }
 
 /* On-board WeAct LED on PE3 (active low). Display-independent heartbeat:
@@ -271,7 +278,14 @@ void AppMain_Init(void)
     buttons_init();         /* KEY PC13, ▶ ● ◀ PE7-PE9, parking lights PE15 */
 
     lv_port_disp_init();          /* lv_init + the 4" ILI9488 display (default) */
-    cluster_app_init(&hfdcan1);   /* build the 3 pages on the 4" + start OBD-II  */
+    cluster_app_init(&hfdcan1);   /* store + pages on the 4" + start OBD-II      */
+    {   /* brightness profiles saved last time (trip_app.c / nvlog.c) */
+        uint8_t day, night;
+        if (trip_app_brightness(&day, &night)) {
+            if (day   >= BL_MIN_PCT && day   <= BL_MAX_PCT) s_bl_profile[0] = day;
+            if (night >= BL_MIN_PCT && night <= BL_MAX_PCT) s_bl_profile[1] = night;
+        }
+    }
     st7735_status_init();         /* small status screen on SPI4 (2nd display)   */
     /* Which image went in, for 10 s: readable even when a wrong backlight
      * variant keeps the main panel dark (fw_info.h). */
