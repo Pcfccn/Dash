@@ -115,5 +115,16 @@ int main(int argc, char **argv)
     if (!f) { perror(path); return 1; }
     fwrite(fb, 1, sizeof fb, f);
     fclose(f);
+
+    /* Every page has been built and drawn: what the LVGL heap holds now,
+     * and its peak (render-time layers included). */
+    lv_mem_monitor_t mm;
+    lv_mem_monitor(&mm);
+    printf("LVGL heap (%u-bit build): %lu bytes, used %lu (%u %%), peak %lu (%u %%), frag %u %%\n",
+           (unsigned)(sizeof(void *) * 8u), (unsigned long)mm.total_size,
+           (unsigned long)(mm.total_size - mm.free_size), (unsigned)mm.used_pct,
+           (unsigned long)mm.max_used,
+           (unsigned)(mm.total_size ? (mm.max_used * 100u + mm.total_size - 1u) / mm.total_size : 0u),
+           (unsigned)mm.frag_pct);
     return 0;
 }

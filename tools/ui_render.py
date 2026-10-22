@@ -4,6 +4,7 @@
     python tools/ui_render.py                    # -> build/render/<page>.png
     python tools/ui_render.py -D UI_PALETTE_TN=0 # any -D the firmware takes
     python tools/ui_render.py --scale 2
+    python tools/ui_render.py --m32              # 32-bit build: LVGL heap use as on the MCU
 
 Compiles the real cluster_ui.c, its fonts and the pure modules it reads
 (alert, trip_stats, speed_cal, perf, odo) plus LVGL itself for the host, with
@@ -11,6 +12,10 @@ the hardware-facing functions stubbed in tools/ui_render/stubs.c, fills
 g_obd with one scene (tools/ui_render/main.c) and writes each page as a PNG
 exactly 320x480 (or scaled). Positions, fonts, colours and text overflow
 are what the panel gets; the TN panel's own look (angle, gamma) is not.
+It also prints the LVGL heap use after building every page. On a 64-bit PC
+pointers are 8 bytes and every object is bigger than on the Cortex-M7, so
+that figure is too high; --m32 builds for 32-bit x86 (zig or clang with a
+32-bit runtime), where it comes out close to the MCU's.
 
 Compiler: the same lookup as host_test.py (gcc/clang, else zig). PNG: Pillow.
 """
@@ -51,13 +56,17 @@ def main():
     ap.add_argument("--cc")
     ap.add_argument("-D", dest="defines", action="append", default=[], metavar="NAME=VALUE")
     ap.add_argument("--scale", type=int, default=1)
+    ap.add_argument("--m32", action="store_true", help="32-bit build (heap use as on the MCU)")
     args = ap.parse_args()
     cc = find_cc(args.cc)
+    arch = []
+    if args.m32:
+        arch = ["-target", "x86-windows-gnu"] if "ziglang" in cc else ["-m32"]
 
-    tag = "_".join(d.lower().replace("=", "_") for d in args.defines)
+    tag = "_".join(d.lower().replace("=", "_") for d in args.defines + (["m32"] if args.m32 else []))
     out = ROOT / "build" / ("render" + ("-" + tag if tag else ""))
-    lv_obj_dir = ROOT / "build" / "render-lvgl"
-    base = ["-std=gnu11", "-O1", "-g0", "-w", f"-I{LVGL}"]
+    lv_obj_dir = ROOT / "build" / ("render-lvgl" + ("-m32" if args.m32 else ""))
+    base = ["-std=gnu11", "-O1", "-g0", "-w", *arch, f"-I{LVGL}"]
 
     # LVGL: compiled once, shared by every variant.
     lv_srcs = sorted((LVGL / "src").rglob("*.c"))
@@ -83,8 +92,8 @@ def main():
     exe = out / ("ui_render" + (".exe" if os.name == "nt" else ""))
     rsp = out / "objs.rsp"          # Windows caps a command line at 32 K
     rsp.write_text("\n".join(o.as_posix() for o in app_objs + lv_objs))
-    run([*cc, f"@{rsp}", "-o", str(exe), "-lm"])
-    run([str(exe), str(out)])
+    run([*cc, *arch, f"@{rsp}", "-o", str(exe), "-lm"])
+    print(run([str(exe), str(out)]).stdout, end="")
 
     from PIL import Image
     pages = []
