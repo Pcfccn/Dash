@@ -176,8 +176,11 @@ static void lcd_set_window(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
  * COLMOD 0x55 and held for 4 s:
  *   three clean bands over the whole screen -> it reads 16-bit, so it is not
  *     an ILI9488 (most likely an ST7796);
- *   mixed / wrong colours, stripes, the lower third untouched -> a real
- *     ILI9488 (it took the bytes as 18-bit pixels).
+ *   grey -> a real ILI9488: it takes the bytes as 18-bit pixels, which come
+ *     out as alternating magenta / green (red and green bands) and nearly
+ *     black ones (blue band), too fine to see apart. Only the top 320 rows
+ *     are written; the rest keeps what was there. The 4" TN module of this
+ *     project showed grey (2026-10-22).
  * Then back to 18-bit and the normal start. Blocking SPI (no DMA), so no
  * cache maintenance; ~4.2 s of the ~10 s boot watchdog. */
 static void lcd_probe_565(void)
