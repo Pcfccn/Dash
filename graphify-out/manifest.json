@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792706809.0251791,
-    "ast_hash": "8f5fdd026a0b8fd868cb5030e86ce143",
+    "mtime": 1792708561.7387867,
+    "ast_hash": "33d9b15ddbfe168f14075e1690e7827e",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "docs/bench-first-flash.md": {
-    "mtime": 1792676986.4190252,
-    "ast_hash": "44f063c2b6036c39a3a1b3faf7539d5c",
+    "mtime": 1792708561.6491096,
+    "ast_hash": "65c28640b125fc36645ec4db3723efc8",
     "semantic_hash": ""
   },
   "Core/Inc/speed_cal.h": {
@@ -1030,13 +1030,13 @@
     "semantic_hash": ""
   },
   "tools/ui_render.py": {
-    "mtime": 1792678418.768781,
-    "ast_hash": "a10aa29929bf439967fbf76b306920a2",
+    "mtime": 1792708103.46669,
+    "ast_hash": "fa812bdfcd0c48792b78c8ad33a46183",
     "semantic_hash": ""
   },
   "tools/ui_render/main.c": {
-    "mtime": 1792678879.111802,
-    "ast_hash": "1f30514b44f44f14fca57ef827bb5299",
+    "mtime": 1792708248.278079,
+    "ast_hash": "48643005c03da57616376fd7408dc9c0",
     "semantic_hash": ""
   },
   "tools/ui_render/stubs.c": {
