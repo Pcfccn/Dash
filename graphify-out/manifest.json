@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_config.h": {
-    "mtime": 1792627719.8641806,
-    "ast_hash": "16ad96252606cf2965217b1db3f56789",
+    "mtime": 1792715146.0614872,
+    "ast_hash": "db5f7f6b2fb85b7ba6bcbe870bd38448",
     "semantic_hash": ""
   },
   "Core/Inc/cluster_ui.h": {
@@ -30,8 +30,8 @@
     "semantic_hash": "f2994326990ed77919a8d8decb6cc854"
   },
   "Core/Inc/fdcan_obd.h": {
-    "mtime": 1792627719.867703,
-    "ast_hash": "2e4cf2c0cdd113b0547f3fee940561d0",
+    "mtime": 1792715146.0614872,
+    "ast_hash": "76b85d78c34320b66b5e31e4769dc5f6",
     "semantic_hash": ""
   },
   "Core/Inc/gpio.h": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "Core/Src/cluster_ui.c": {
-    "mtime": 1792706809.0095422,
-    "ast_hash": "26f58f28b06166cef5b5a412bb85c09f",
+    "mtime": 1792715262.615657,
+    "ast_hash": "358ca964889c0c9391987f14ad95f630",
     "semantic_hash": ""
   },
   "Core/Src/fdcan.c": {
@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "Core/Src/fdcan_obd.c": {
-    "mtime": 1792627719.8937633,
-    "ast_hash": "4ed7bb09edf58c87ebff21bb1ab10b84",
+    "mtime": 1792715160.6238382,
+    "ast_hash": "e52a83360061d95ada0a902e5c1af0ab",
     "semantic_hash": ""
   },
   "Core/Src/freertos.c": {
@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792714076.324747,
-    "ast_hash": "77e660777a15110ea9b0adea94f6ed2c",
+    "mtime": 1792716059.2005112,
+    "ast_hash": "8df13b739e94531d35cee7adf1ce2f15",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "docs/enhanced-dids.md": {
-    "mtime": 1792627719.908762,
-    "ast_hash": "764d2357c665dff4779ae1c468554d73",
+    "mtime": 1792716059.2025135,
+    "ast_hash": "c981c23b90b79ce4af7cf7a91f8d9840",
     "semantic_hash": ""
   },
   "docs/run-2026-07-21.md": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1792714076.3025136,
-    "ast_hash": "9b9c05e4d0a080682aa28263a15f19e7",
+    "mtime": 1792715211.5476623,
+    "ast_hash": "acbd5a8a6809b3e300c7c6f7a84d4ca9",
     "semantic_hash": ""
   },
   "tools/build.py": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "docs/bench-first-flash.md": {
-    "mtime": 1792708561.6491096,
-    "ast_hash": "65c28640b125fc36645ec4db3723efc8",
+    "mtime": 1792716075.2597198,
+    "ast_hash": "aaffd01cde485e4c9f9eb59138513124",
     "semantic_hash": ""
   },
   "Core/Inc/speed_cal.h": {
@@ -1035,13 +1035,13 @@
     "semantic_hash": ""
   },
   "tools/ui_render/main.c": {
-    "mtime": 1792714076.324747,
-    "ast_hash": "3809d6bdb2588d6f6cbd4068f6d47ee2",
+    "mtime": 1792715279.4025805,
+    "ast_hash": "4ed2b6d2afa8bdf2e4ffc854a3f5c5c2",
     "semantic_hash": ""
   },
   "tools/ui_render/stubs.c": {
-    "mtime": 1792679010.5479527,
-    "ast_hash": "4f9ccc4103173ab62941f04993854d0c",
+    "mtime": 1792715279.4025805,
+    "ast_hash": "3edbfcc0341d02e2cc4ebb3ac030fefe",
     "semantic_hash": ""
   }
 }
