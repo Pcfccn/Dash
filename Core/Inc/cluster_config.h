@@ -169,6 +169,7 @@ static const uint16_t metric_stale_ms[M_COUNT] = {
 };
 #define SEL_STALE_MS 2000u   /* selector broadcast 0x1F5 */
 #define MIL_STALE_MS 15000u  /* PID 0x01 (MIL + DTC count), medium band */
+#define DPF_STALE_MS 15000u  /* DPF DIDs: each asked every ~2-3 s, slow band */
 
 /* Generic state resolver */
 static inline metric_state_t metric_state(metric_key_t k, float v) {

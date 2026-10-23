@@ -113,6 +113,34 @@ typedef struct {
 } obd_oilp_probe_t;
 void obd_oilp_probe(obd_oilp_probe_t *p);
 
+/* DPF probe, for DIAG: the GM DIDs from the Astra-K list (docs/enhanced-
+ * dids.md), asked from the ECM in the slow band to see whether this E98 now
+ * answers them reliably. On 2026-07-21 soot read 8 %; on 2026-07-24 they
+ * answered only now and then and were dropped (b92b875), but that was the
+ * polled-RX era, when replies were also lost behind the display flush.
+ * Per DID: the decoded value (NaN = none yet, or the no-data code), the
+ * receive time of the last answer, how often we asked and how often an
+ * answer came. A refusal other than busy / conditions-not-correct stops
+ * asking (DPF_REFUSED, its NRC kept), and so do DPF_MISS_MAX unanswered
+ * requests in a row (DPF_SILENT): each one holds the slot for 150 ms. */
+enum { DPF_SOOT = 0,            /* 0x336A  A x 100/255  %                       */
+       DPF_DP,                  /* 0x20F4  signed A     kPa                     */
+       DPF_REGEN,               /* 0x20F6  A & 1        1 = regenerating        */
+       DPF_SINCE,               /* 0x3039  A x 256 + B  km, 0xFFFF = no value   */
+       DPF_N };
+typedef enum { DPF_ASKING = 0, DPF_REFUSED, DPF_SILENT } obd_dpf_state_t;
+typedef struct {
+    float    val[DPF_N];
+    uint32_t upd_ms[DPF_N];     /* receive time of the last answer              */
+    uint16_t asked[DPF_N];      /* our requests                                 */
+    uint16_t ok[DPF_N];         /* answers (also to another tester's request)   */
+    uint8_t  nrc[DPF_N];        /* last refusal, 0 = none                       */
+    uint8_t  state[DPF_N];      /* obd_dpf_state_t                              */
+} obd_dpf_t;
+void obd_dpf(obd_dpf_t *out);
+/* An answer to DID i arrived within DPF_STALE_MS (cluster_config.h). */
+bool obd_dpf_fresh(const obd_dpf_t *p, uint8_t i, uint32_t now);
+
 /* PID support maps, mode 01 PIDs 0x00, 0x20 ... 0xC0 (SAE J1979), read once
  * per power-up: mask[r] bit 31 = PID 0x20*r+1 ... bit 0 = PID 0x20*r+0x20. */
 typedef struct {

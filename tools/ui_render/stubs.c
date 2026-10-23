@@ -29,6 +29,19 @@ void obd_pid_support(obd_pid_support_t *ps) { memset(ps, 0, sizeof *ps); }
 /* as this E98: no oil temp (0x5C), no EGR temp (0x6B) */
 int8_t obd_pid_supported(uint8_t pid) { return (pid == 0x5C || pid == 0x6B) ? 0 : 1; }
 
+/* DPF probe: soot and dp answering, regen off, since-regen answering with the
+ * no-value code, as the truck did on 2026-07-21. */
+void obd_dpf(obd_dpf_t *out)
+{
+    memset(out, 0, sizeof *out);
+    static const float v[DPF_N] = { 23.0f, 1.0f, 0.0f, NAN };
+    for (int i = 0; i < DPF_N; i++) {
+        out->val[i] = v[i]; out->upd_ms[i] = ui_render_ms;
+        out->asked[i] = 48; out->ok[i] = (i == DPF_DP) ? 46 : 48;
+    }
+}
+bool obd_dpf_fresh(const obd_dpf_t *p, uint8_t i, uint32_t now) { (void)now; return p->ok[i] > 0u; }
+
 gps_state_t ui_render_gps;
 const gps_state_t *gps_state(void) { return &ui_render_gps; }
 bool gps_fix_fresh(uint32_t now) { (void)now; return ui_render_gps.fix.rmc_fix; }

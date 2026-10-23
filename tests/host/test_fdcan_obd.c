@@ -194,6 +194,8 @@ static void reset(void)
     last_map_kpa = NAN; baro_kpa = NAN; map_upd_ms = 0;
     memset(&oilp, 0, sizeof oilp);                /* back to OILP_VIA22 */
     memset(&pidsup, 0, sizeof pidsup);            /* PID support probe from the start */
+    memset(&dpf, 0, sizeof dpf);                  /* DPF probe: asking, nothing heard */
+    for (int i = 0; i < DPF_N; i++) dpf.pub.val[i] = NAN;
     filter_status = HAL_OK; start_status = HAL_OK;
     notif_status = HAL_ERROR;          /* default: polled fallback, as the old tests assume */
     nvic_on = false;
@@ -1650,6 +1652,131 @@ static void t_pidsup_map_from_any_reply(void)
     CHECK(obd_pid_supported(0x0C) == -1);          /* map 0x00 not read yet       */
 }
 
+/* ---- DPF probe ------------------------------------------------------------
+ * The Astra-K DIDs: decoded from the ECM only, whoever asked; 0xFFFF since-
+ * regen is an answer without a value; a short reply is malformed. */
+static void t_dpf_decodes(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x33, 0x6A, 0x33, 0x00, 0x00, 0x00);  /* 51 -> 20 %  */
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x20, 0xF4, 0xFE, 0x00, 0x00, 0x00);  /* -2 kPa      */
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x20, 0xF6, 0x03, 0x00, 0x00, 0x00);  /* bit 0: on   */
+    PUSH(0x7E8, 8, 0x05, 0x62, 0x30, 0x39, 0x01, 0x2C, 0x00, 0x00);  /* 300 km      */
+    obd_rx_poll();
+    obd_dpf_t d;
+    obd_dpf(&d);
+    CHECK(near(d.val[DPF_SOOT], 20.0f));
+    CHECK(near(d.val[DPF_DP], -2.0f));
+    CHECK(d.val[DPF_REGEN] == 1.0f);
+    CHECK(near(d.val[DPF_SINCE], 300.0f));
+    for (uint8_t i = 0; i < DPF_N; i++) {
+        CHECK(d.ok[i] == 1u && d.asked[i] == 0u && d.state[i] == DPF_ASKING);
+        CHECK(obd_dpf_fresh(&d, i, now_ms + DPF_STALE_MS));
+        CHECK(!obd_dpf_fresh(&d, i, now_ms + DPF_STALE_MS + 1u));
+    }
+    CHECK(rx_bad_cnt == 0);
+
+    PUSH(0x7E8, 8, 0x05, 0x62, 0x30, 0x39, 0xFF, 0xFF, 0x00, 0x00);  /* no value    */
+    obd_rx_poll();
+    obd_dpf(&d);
+    CHECK(isnan(d.val[DPF_SINCE]) && d.ok[DPF_SINCE] == 2u);          /* an answer   */
+
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x33, 0x6A, 0xFF, 0x00, 0x00, 0x00);  /* from the TCM */
+    obd_rx_poll();
+    obd_dpf(&d);
+    CHECK(near(d.val[DPF_SOOT], 20.0f) && d.ok[DPF_SOOT] == 1u);
+}
+
+static void t_dpf_short_reply_is_bad(void)
+{
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x30, 0x39, 0x01, 0x00, 0x00, 0x00);  /* one byte only */
+    obd_rx_poll();
+    obd_dpf_t d;
+    obd_dpf(&d);
+    CHECK(rx_bad_cnt == 1);
+    CHECK(isnan(d.val[DPF_SINCE]) && d.ok[DPF_SINCE] == 0u);
+}
+
+/* Once the PID maps are read, the second slow slot asks the four DIDs in
+ * turn from the ECM, and the fast band keeps running. */
+static void t_dpf_polled_in_slow_slot(void)
+{
+    pidsup.done = true;
+    int asked[DPF_N] = { 0 };
+    bool seen_rpm = false;
+    for (int t = 0; t < 16 * 4 * 3; t++) {
+        tx_n = 0;
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[1] == 0x01 && q[2] == 0x0C) seen_rpm = true;
+            if (q[1] != 0x22) continue;
+            int i = dpf_index((uint16_t)((q[2] << 8) | q[3]));
+            if (i < 0) continue;
+            CHECK(txlog[k].id == OBD_REQ_ECM);
+            asked[i]++;
+            PUSH(0x7E8, 8, 0x05, 0x62, q[2], q[3], 0x10, 0x00, 0x00, 0x00);
+        }
+        obd_rx_poll();
+    }
+    obd_dpf_t d;
+    obd_dpf(&d);
+    for (int i = 0; i < DPF_N; i++) {
+        CHECK(asked[i] >= 2);
+        CHECK(d.asked[i] == (uint16_t)asked[i] && d.ok[i] == (uint16_t)asked[i]);
+    }
+    CHECK(seen_rpm);
+}
+
+/* requestOutOfRange: this ECM has no such DID, never ask again. Busy: ask
+ * again. The others go on. */
+static void t_dpf_refusal_stops_asking(void)
+{
+    CHECK(req_dpf());                                         /* 0x336A first  */
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(await_resp_id == 0);
+    CHECK(req_dpf());                                         /* 0x20F4        */
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x21, 0x00, 0x00, 0x00, 0x00);  /* busy */
+    obd_rx_poll();
+    obd_dpf_t d;
+    obd_dpf(&d);
+    CHECK(d.state[DPF_SOOT] == DPF_REFUSED && d.nrc[DPF_SOOT] == 0x31);
+    CHECK(d.state[DPF_DP] == DPF_ASKING && d.nrc[DPF_DP] == 0x21);
+    int soot_asked = 0;
+    for (int k = 0; k < 8; k++) {
+        CHECK(req_dpf());
+        if (await_key == 0x336A) soot_asked++;
+        txn_failed();                                         /* no answer     */
+    }
+    CHECK(soot_asked == 0);
+}
+
+/* Silence: DPF_MISS_MAX unanswered requests in a row and that DID is left
+ * alone; an answer in between restarts the count. */
+static void t_dpf_silence_gives_up(void)
+{
+    dpf.pub.state[DPF_DP] = dpf.pub.state[DPF_REGEN] = dpf.pub.state[DPF_SINCE] = DPF_REFUSED;
+    for (unsigned k = 0; k + 1u < DPF_MISS_MAX; k++) {
+        CHECK(req_dpf() && await_key == 0x336A);
+        txn_failed();
+    }
+    CHECK(req_dpf());
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x33, 0x6A, 0x10, 0x00, 0x00, 0x00);  /* answers once */
+    obd_rx_poll();
+    for (unsigned k = 0; k < DPF_MISS_MAX; k++) {
+        obd_dpf_t d;
+        obd_dpf(&d);
+        CHECK(d.state[DPF_SOOT] == DPF_ASKING);
+        CHECK(req_dpf());
+        txn_failed();
+    }
+    obd_dpf_t d;
+    obd_dpf(&d);
+    CHECK(d.state[DPF_SOOT] == DPF_SILENT);
+    CHECK(!req_dpf());                                        /* none left     */
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -1708,6 +1835,11 @@ int main(void)
         { "oil_temp_single_source",     t_oil_temp_single_source },
         { "summary_needs_complete_data",t_summary_needs_complete_data },
         { "summary_oil_temp_from_did",  t_summary_oil_temp_from_did },
+        { "dpf_decodes",                t_dpf_decodes },
+        { "dpf_short_reply_is_bad",     t_dpf_short_reply_is_bad },
+        { "dpf_polled_in_slow_slot",    t_dpf_polled_in_slow_slot },
+        { "dpf_refusal_stops_asking",   t_dpf_refusal_stops_asking },
+        { "dpf_silence_gives_up",       t_dpf_silence_gives_up },
         { "schedule_contents",          t_schedule_contents },
         { "layout_reasserted",          t_layout_reasserted },
         { "layout_ok_no_reinit",        t_layout_ok_no_reinit },

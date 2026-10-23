@@ -17,8 +17,8 @@ Header: engine parameters are requested from the **ECM at 0x7E0** (response
 |---|---|---|---|---|
 | Trans fluid (ATF) temp | `0x1940` | `22 19 40` → 7E2 | A − 40 °C | reads plausibly (19 °C cold, KOEO 2026-07-21) |
 | Engine oil temp | `0x1154` | `22 11 54` → 7E0 | A − 40 °C | ✅ confirmed — DRIVE OIL 17 °C cold (KOEO 2026-07-21) |
-| DPF soot accumulation | `0x336A` | `22 33 6A` → 7E0 | A × 100/255 % | ✅ confirmed — SOOT 8 % (KOEO 2026-07-21) |
-| DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | ✅ answers — 0.0 kPa engine-off (correct); scaling under load TBD |
+| DPF soot accumulation | `0x336A` | `22 33 6A` → 7E0 | A × 100/255 % | ✅ confirmed — SOOT 8 % (KOEO 2026-07-21); intermittent 2026-07-24 (polled-RX era); **polled again as a DIAG probe since 2026-10-23** |
+| DPF differential pressure | `0x20F4` | `22 20 F4` → 7E0 | SIGNED(A) kPa | ✅ answers — 0.0 kPa engine-off (correct); scaling under load TBD; **DIAG probe since 2026-10-23** |
 | Selector / PRNDL | (broadcast `0x1F5`, not a DID) | — | b3: 1 P / 2 R / 3 N / 4 D | see [sniff-selector.md](sniff-selector.md) |
 
 ## Oil pressure — mode 22 confirmed absent on this E98
@@ -49,6 +49,26 @@ The OEM cluster reads oil pressure from a periodic broadcast frame the ECM trans
 - KOEO: 6 counts → 0.06 bar (sensor unloaded) ✓
 - **Status: FDCAN filter 2 + passive decode ADDED to firmware** (provisional)
 - **Confirmation needed:** throttle blip with SNIFF active — byte 3 of `0x1BA` must track RPM rise; if it doesn't, try byte 6 (range `0x09..0xF9`, near-identical) or other ANALOG candidates (`0x1AA` byte 2, `0x287` byte 0)
+
+## DPF probe (2026-10-23)
+
+The four DPF DIDs were dropped on 2026-07-24 (`b92b875`) as "never answered".
+The notes of that day show soot reading 8 % on some photos and `--` on others.
+At the time RX was drained only from the main loop behind a blocking display
+flush, which also killed every multi-frame reply. Since stage C, RX is
+interrupt-driven, so they are asked again, as a probe, not a gauge:
+
+- **When:** the second slow slot (`req_dpf()`), once the PID support maps are
+  read. One DID per slot in turn (soot → ∆p → regen → since-regen), each about
+  every 2–3 s.
+- **Refused:** a DID refused with an NRC other than `0x21` busy / `0x22`
+  conditions-not-correct is not asked again (`Xnn` on DIAG).
+- **Silent:** a DID unanswered 10 times in a row is not asked again either
+  (`SIL`). Each miss holds the one transaction slot for 150 ms.
+- **DIAG line 3, view 4:** `DPF SOOT 23% DP 1kPa REGEN OFF KM --`.
+- **DIAG line 3, view 5:** `DPF OK S48/48 P46/48 R48/48 K48/48`, answers per
+  our requests for each DID. These counts decide whether a gauge or a strip
+  alarm (soot high, regeneration running) is worth building.
 
 ## Added, awaiting on-car confirmation
 | Distance since regen | `0x3039` | `22 30 39` → 7E0 | A×256 + B km | ⚠️ answers **0xFFFF** = no-data (now guarded → `--`); confirm real value after a recorded regen |

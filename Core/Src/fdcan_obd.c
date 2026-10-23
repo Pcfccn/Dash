@@ -122,6 +122,21 @@ static struct {                 /* file scope: the host tests reset it          
 /* Where $22 leads when it is refused or ignored. */
 #define OILP_AFTER_22 (OILP_DPID_ENABLE ? OILP_DEFINE : OILP_NONE)
 
+/* DPF probe state (obd_dpf_t in fdcan_obd.h). File scope: the tests reset it. */
+#define DPF_MISS_MAX 10u        /* unanswered requests in a row before giving up */
+static const uint16_t DPF_DID[DPF_N] = { 0x336Au, 0x20F4u, 0x20F6u, 0x3039u };
+static struct {
+    obd_dpf_t pub;
+    uint8_t   miss_run[DPF_N];
+    uint8_t   next;             /* rotation position                            */
+} dpf = { .pub = { .val = { NAN, NAN, NAN, NAN } } };   /* never answered      */
+
+/* The DPF slot a DID belongs to, or -1. */
+static int dpf_index(uint16_t did) {
+    for (int i = 0; i < (int)DPF_N; i++) if (DPF_DID[i] == did) return i;
+    return -1;
+}
+
 /* ---- the outstanding diagnostic transaction ------------------------------
  * The OBD port is shared: the owner may leave a scan tool / insurance dongle /
  * logger plugged in alongside this cluster. Those also poll, and their
@@ -203,17 +218,34 @@ static void oilp_failed(void) {
     }
 }
 
+/* DPF probe after no answer, and after a refusal, of our $22 request. Busy
+ * (0x21) and conditions-not-correct (0x22) are asked again; any other NRC
+ * means this ECM has no such DID. */
+static void dpf_failed(void) {
+    int i = (await_sid == 0x22) ? dpf_index(await_key) : -1;
+    if (i < 0) return;
+    if (++dpf.miss_run[i] >= DPF_MISS_MAX) dpf.pub.state[i] = DPF_SILENT;
+}
+static void dpf_refused(uint8_t nrc) {
+    int i = (await_sid == 0x22) ? dpf_index(await_key) : -1;
+    if (i < 0) return;
+    dpf.pub.nrc[i] = nrc;
+    dpf.miss_run[i] = 0;
+    if (nrc != 0x21u && nrc != 0x22u) dpf.pub.state[i] = DPF_REFUSED;
+}
+
 /* The transaction ended without an answer (timeout, refused Flow Control,
  * malformed or unusable reply). */
 static void txn_failed(void) {
     if (await_sid == 0x01 && await_key == 0x01) mil_attempt_failed();
     oilp_failed();
+    dpf_failed();
     txn_close();
 }
 
 /* The open transaction got its answer: p is the validated reply payload. */
 static void txn_answered(const uint8_t *p) {
-    if (p[0] == 0x7F)          oilp_refused(p[2]);
+    if (p[0] == 0x7F)          { oilp_refused(p[2]); dpf_refused(p[2]); }
     else if (await_sid == 0x2C) oilp.mode = OILP_READ;   /* packet defined     */
     txn_close();
 }
@@ -367,6 +399,19 @@ static bool req_mode22(uint32_t req_id, uint16_t did) {
     d[2] = (uint8_t)(did >> 8);
     d[3] = (uint8_t)(did & 0xFFu);
     return request(req_id, d, 0x22, did);
+}
+
+/* Next DPF DID still worth asking, in rotation; false if none is. */
+static bool req_dpf(void) {
+    for (uint8_t k = 0; k < DPF_N; k++) {
+        uint8_t i = (uint8_t)((dpf.next + k) % DPF_N);
+        if (dpf.pub.state[i] != DPF_ASKING) continue;
+        if (!req_mode22(OBD_REQ_ECM, DPF_DID[i])) return false;
+        if (dpf.pub.asked[i] < 0xFFFFu) dpf.pub.asked[i]++;
+        dpf.next = (uint8_t)((i + 1u) % DPF_N);
+        return true;
+    }
+    return false;
 }
 
 /* Parked, for $2C: a fresh selector in P AND a fresh speed below 1 km/h —
@@ -533,6 +578,21 @@ void obd_oilp_probe(obd_oilp_probe_t *p) {
     p->have_raw = oilp.have_raw; p->raw = oilp.raw;
 }
 
+/* A DPF DID answered (whoever asked): value stamped with the receive time. */
+static void dpf_value(uint8_t i, float v) {
+    dpf.pub.upd_ms[i] = rx_ms_cur;
+    dpf.miss_run[i] = 0;
+    if (dpf.pub.ok[i] < 0xFFFFu) dpf.pub.ok[i]++;
+    bool same = (isnan(v) && isnan(dpf.pub.val[i])) || dpf.pub.val[i] == v;
+    if (!same) { dpf.pub.val[i] = v; obd_on_update(); }
+}
+
+void obd_dpf(obd_dpf_t *out) { *out = dpf.pub; }
+
+bool obd_dpf_fresh(const obd_dpf_t *p, uint8_t i, uint32_t now) {
+    return i < DPF_N && p->ok[i] > 0u && (now - p->upd_ms[i]) <= DPF_STALE_MS;
+}
+
 /* Boost is a GAUGE pressure but PID 0x0B reports ABSOLUTE manifold pressure, so
  * the reading has to be referenced to ambient (PID 0x33). Without that, a
  * stationary engine shows ~1.0 bar of "boost". Either PID can arrive first, so
@@ -652,6 +712,26 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
             if (resp_id != OBD_RESP_ECM) break;
             oilp_value(A);
             break;
+        /* DPF set (Astra-K list, docs/enhanced-dids.md), ECM only. */
+        case 0x336A:                            /* soot load, A x 100/255 %       */
+            if (resp_id != OBD_RESP_ECM) break;
+            dpf_value(DPF_SOOT, (float)A * (100.0f / 255.0f));
+            break;
+        case 0x20F4:                            /* DPF differential pressure, kPa */
+            if (resp_id != OBD_RESP_ECM) break;
+            dpf_value(DPF_DP, (float)(int8_t)A);
+            break;
+        case 0x20F6:                            /* regeneration active: bit 0     */
+            if (resp_id != OBD_RESP_ECM) break;
+            dpf_value(DPF_REGEN, (float)(A & 1u));
+            break;
+        case 0x3039: {                          /* km since the last regeneration */
+            if (resp_id != OBD_RESP_ECM) break;
+            if (n < 5) { rx_bad(); return false; }   /* two data bytes, never 0  */
+            uint16_t km = (uint16_t)(((uint16_t)A << 8) | p[4]);
+            dpf_value(DPF_SINCE, km == 0xFFFFu ? NAN : (float)km);   /* no value */
+            break;
+        }
         case 0x199A: {                          /* current gear (raw index in A) */
             if (resp_id != OBD_RESP_TCM2) break;
             /* Keep the raw byte: the DIAG page shows it so a wrong DID (byte
@@ -1076,12 +1156,15 @@ void obd_init(FDCAN_HandleTypeDef *hfdcan) {
  *         path; a fast request instead once it has no source). Baro is
  *         ambient and barely moves.
  *
- *   SLOW  (every SLOW_DIV ticks): the oil-temp DID (0x1154).
+ *   SLOW  (every SLOW_DIV ticks): the oil-temp DID (0x1154). Half a slow
+ *         period later: one PID support map until all are read, then one DPF
+ *         DID (soot, dp, regen, since-regen in turn) while any of them is
+ *         neither refused nor given up on (obd_dpf_t).
  *
  * Not polled, because this E98 never answers them or nothing uses the answer:
  * PID 0x5C (oil temp: omitted from grouped replies; 0x1154 is the source),
  * PID 0x78 (EGT: no reply), mode 03 (DTC list: never decoded — the count comes
- * from PID 0x01), and the DPF/soot/EGR probes. An unanswered request now holds
+ * from PID 0x01), and the EGR probes. An unanswered request now holds
  * the one transaction slot for OBD_AWAIT_MS, so each of these cost real
  * polling time. Their decoders stay: another tester's replies still feed us.
  *
@@ -1129,8 +1212,8 @@ void obd_poll_tick(void) {
     bool fast = false;
     if (sched.tick % SLOW_DIV == 0u) {
         req_mode22(OBD_REQ_ECM, 0x1154);                    /* engine oil temp      */
-    } else if (sched.tick % SLOW_DIV == SLOW_DIV / 2u && req_pidsup(HAL_GetTick())) {
-        /* one PID support map per slow slot until all are read */
+    } else if (sched.tick % SLOW_DIV == SLOW_DIV / 2u && (req_pidsup(HAL_GetTick()) || req_dpf())) {
+        /* one PID support map per slow slot until all are read, then DPF */
     } else if (sched.tick % MED_DIV == 0u) {
         switch (sched.med_idx % N_MED) {
             case 0: req_mode01(misc,  sizeof misc);          break; /* rail, batt       */

@@ -99,6 +99,22 @@ int main(int argc, char **argv)
         fclose(f);
     }
 
+    /* DIAG line 3 rotates every 4 s; views 3 and 4 are the DPF probe. */
+    cluster_ui_set_page(UI_PAGE_DIAG);
+    for (int view = 3; view <= 4; view++) {
+        ui_render_ms = (ui_render_ms / 20000u + 1u) * 20000u + (uint32_t)view * 4000u + 100u;
+        cluster_ui_refresh();
+        lv_timer_handler();
+        lv_obj_invalidate(lv_screen_active());
+        lv_refr_now(disp);
+        char vp[512];
+        snprintf(vp, sizeof vp, "%s/4_diag_view%d.rgb565", dir, view);
+        FILE *vf = fopen(vp, "wb");
+        if (!vf) { perror(vp); return 1; }
+        fwrite(fb, 1, sizeof fb, vf);
+        fclose(vf);
+    }
+
     /* The same DRIVE page with alarms: hot coolant and ATF, two DTCs. */
     g_obd.cool = 113.0f; g_obd.atf = 121.0f; g_obd.dtc_count = 2;
     cluster_ui_set_page(UI_PAGE_DRIVE);

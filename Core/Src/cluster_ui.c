@@ -1339,11 +1339,15 @@ void cluster_ui_refresh(void)
          *         error was ever seen, it leads this line instead (main/status
          *         errors, panel re-inits, DMA fallbacks; each up to 9999) and
          *         the probe shortens to path + raw.
-         *         Line 3 rotates every 4 s with two more views: the PID support
+         *         Line 3 rotates every 4 s with four more views: the PID support
          *         maps (mode 01 PIDs 00/20/40, then 60/80/A0; 8 hex digits each,
          *         "--------" = not read) and whether engine fuel rate 0x5E is
-         *         supported (+ yes, - no, ? unknown). One photo of each settles
-         *         what this ECM offers for fuel consumption. */
+         *         supported (+ yes, - no, ? unknown) — one photo of each settles
+         *         what this ECM offers for fuel consumption; then the DPF probe
+         *         (obd_dpf_t): soot %, differential pressure, regeneration and
+         *         km since the last one ("--" none fresh, Xnn refused with NRC
+         *         nn, SIL given up after no answers), and how many of our
+         *         requests each DID answered (S soot, P dp, R regen, K km). */
         char db[160];
         size_t o = 0;
         char nrc[8] = "--";
@@ -1388,8 +1392,40 @@ void cluster_ui_refresh(void)
         if (op.have_raw) lv_snprintf(raw, sizeof raw, "%02X", (unsigned)op.raw);
         unsigned se = lv_port_disp_spi_errors(), se4 = st7735_status_spi_errors();
         unsigned fb = lv_port_disp_dma_fallbacks(), rc = lv_port_disp_recoveries();
-        unsigned l3 = (unsigned)((s_now / 4000u) % 3u);
-        if (l3 != 0u) {
+        unsigned l3 = (unsigned)((s_now / 4000u) % 5u);
+        if (l3 >= 3u) {
+            obd_dpf_t dp;
+            obd_dpf(&dp);
+            if (l3 == 3u) {
+                char v[DPF_N][8];
+                for (uint8_t j = 0; j < DPF_N; j++) {
+                    if (dp.state[j] == DPF_REFUSED)
+                        lv_snprintf(v[j], sizeof v[j], "X%02X", (unsigned)dp.nrc[j]);
+                    else if (dp.state[j] == DPF_SILENT)
+                        lv_snprintf(v[j], sizeof v[j], "SIL");
+                    else if (!obd_dpf_fresh(&dp, j, s_now) || isnan(dp.val[j]))
+                        lv_snprintf(v[j], sizeof v[j], "--");
+                    else if (j == DPF_REGEN)
+                        lv_snprintf(v[j], sizeof v[j], "%s", dp.val[j] > 0.5f ? "ON" : "OFF");
+                    else {
+                        fmt(v[j], sizeof v[j], dp.val[j], 0);
+                        size_t l = strlen(v[j]);
+                        if (j == DPF_SOOT) lv_snprintf(v[j] + l, sizeof v[j] - l, "%%");
+                        if (j == DPF_DP)   lv_snprintf(v[j] + l, sizeof v[j] - l, "kPa");
+                    }
+                }
+                cat(db, sizeof db, &o, "DPF SOOT %s DP %s REGEN %s KM %s",
+                    v[DPF_SOOT], v[DPF_DP], v[DPF_REGEN], v[DPF_SINCE]);
+            } else {
+                #define C3(x) ((unsigned)((x) > 999u ? 999u : (x)))
+                cat(db, sizeof db, &o, "DPF OK S%u/%u P%u/%u R%u/%u K%u/%u",
+                    C3(dp.ok[DPF_SOOT]),  C3(dp.asked[DPF_SOOT]),
+                    C3(dp.ok[DPF_DP]),    C3(dp.asked[DPF_DP]),
+                    C3(dp.ok[DPF_REGEN]), C3(dp.asked[DPF_REGEN]),
+                    C3(dp.ok[DPF_SINCE]), C3(dp.asked[DPF_SINCE]));
+                #undef C3
+            }
+        } else if (l3 != 0u) {
             obd_pid_support_t ps;
             obd_pid_support(&ps);
             uint8_t r0 = (l3 == 1u) ? 0u : 3u;
