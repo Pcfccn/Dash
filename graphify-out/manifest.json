@@ -155,8 +155,8 @@
     "semantic_hash": "81051bcc2cf1bedf378224b0a93e2877"
   },
   "CLAUDE.md": {
-    "mtime": 1792708561.7387867,
-    "ast_hash": "33d9b15ddbfe168f14075e1690e7827e",
+    "mtime": 1792714076.324747,
+    "ast_hash": "77e660777a15110ea9b0adea94f6ed2c",
     "semantic_hash": ""
   },
   "docs/wiring.md": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "tests/host/test_fdcan_obd.c": {
-    "mtime": 1792678973.3884916,
-    "ast_hash": "c787f2cc236d607763088190e4fd6038",
+    "mtime": 1792714076.3025136,
+    "ast_hash": "9b9c05e4d0a080682aa28263a15f19e7",
     "semantic_hash": ""
   },
   "tools/build.py": {
@@ -675,8 +675,8 @@
     "semantic_hash": ""
   },
   "Core/Inc/cluster_policy.h": {
-    "mtime": 1792678962.1671493,
-    "ast_hash": "aab2054148960b005043a84349012614",
+    "mtime": 1792714076.2712574,
+    "ast_hash": "62668a75a640fd2d8b832f17d6c2556f",
     "semantic_hash": ""
   },
   "tests/host/mock_lv_port_disp/cmsis_os2.h": {
@@ -1035,8 +1035,8 @@
     "semantic_hash": ""
   },
   "tools/ui_render/main.c": {
-    "mtime": 1792708248.278079,
-    "ast_hash": "48643005c03da57616376fd7408dc9c0",
+    "mtime": 1792714076.324747,
+    "ast_hash": "3809d6bdb2588d6f6cbd4068f6d47ee2",
     "semantic_hash": ""
   },
   "tools/ui_render/stubs.c": {
