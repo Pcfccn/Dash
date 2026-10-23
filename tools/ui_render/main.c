@@ -33,12 +33,12 @@ static void flush_cb(lv_display_t *d, const lv_area_t *a, uint8_t *px)
     lv_display_flush_ready(d);
 }
 
-/* Cruising in D: warm engine, everything this truck answers is present;
- * oil temp and EGT are NaN as on the real ECM (not supported). */
+/* Cruising in D: warm engine, everything this truck answers is present
+ * (oil temp from DID 0x1154); EGT and oil pressure are NaN as in the truck. */
 static void scene(void)
 {
     volatile obd_data_t *d = &g_obd;
-    d->speed = 87.0f;  d->rpm = 1850.0f; d->cool = 88.0f;  d->oil = NAN;
+    d->speed = 87.0f;  d->rpm = 1850.0f; d->cool = 88.0f;  d->oil = 96.0f;
     d->iat = 31.0f;    d->load = 42.0f;  d->boost = 0.8f;  d->rail = 650.0f;
     d->egt = NAN;      d->battery = 14.1f; d->atf = 72.0f; d->oil_press = NAN;
     d->gear = 5;       d->sel_range = 4; d->mil = false;   d->dtc_count = 0;

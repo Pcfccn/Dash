@@ -1310,25 +1310,21 @@ static void t_summary_needs_complete_data(void)
     CHECK(!policy_shown(&g_obd, M_BATTERY, now_ms));
 }
 
-/* Oil temp is required only while the ECM may have it: this E98 leaves PID
- * 0x5C out of its map, and NOMINAL must still be reachable. */
-static void t_summary_skips_unsupported_oil_temp(void)
+/* Oil temp comes from DID 0x1154: a PID map without 0x5C (this E98) must
+ * not excuse it, and the DID's answer completes the data. */
+static void t_summary_oil_temp_from_did(void)
 {
     g_obd.can_ok = true; sel(1);
     put(M_RPM, &g_obd.rpm, 800.0f);  put(M_COOL, &g_obd.cool, 85.0f);
     put(M_ATF, &g_obd.atf, 70.0f);   put(M_BATTERY, &g_obd.battery, 14.1f);
     g_obd.mil_valid = true; g_obd.mil_upd_ms = now_ms;
-    CHECK(isnan(g_obd.oil));
-    CHECK(obd_pid_supported(0x5C) == -1);
-    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* map unknown */
     PUSH(0x7E8, 8, 0x06, 0x41, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00);   /* 0x41-0x60: none */
     obd_rx_poll();
     CHECK(obd_pid_supported(0x5C) == 0);
+    CHECK(isnan(g_obd.oil));
+    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* oil temp missing */
+    put(M_OIL, &g_obd.oil, 92.0f);                                 /* as from 0x1154 */
     CHECK(policy_summary(&g_obd, now_ms, false) == SUM_NOMINAL);
-    PUSH(0x7E8, 8, 0x06, 0x41, 0x40, 0x00, 0x00, 0x00, 0x10, 0x00);   /* 0x5C advertised */
-    obd_rx_poll();
-    CHECK(obd_pid_supported(0x5C) == 1);
-    CHECK(policy_summary(&g_obd, now_ms, false) == SUM_PARTIAL);  /* has it, not sent */
 }
 
 /* --- Stage C3 review ------------------------------------------------------- */
@@ -1711,7 +1707,7 @@ int main(void)
         { "sniff_fail_closed",          t_sniff_fail_closed },
         { "oil_temp_single_source",     t_oil_temp_single_source },
         { "summary_needs_complete_data",t_summary_needs_complete_data },
-        { "summary_skips_unsupported_oil_temp", t_summary_skips_unsupported_oil_temp },
+        { "summary_oil_temp_from_did",  t_summary_oil_temp_from_did },
         { "schedule_contents",          t_schedule_contents },
         { "layout_reasserted",          t_layout_reasserted },
         { "layout_ok_no_reinit",        t_layout_ok_no_reinit },
