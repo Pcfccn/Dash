@@ -183,6 +183,25 @@ static void t_movers(void)
     CHECK(n >= 2 && m[1].id == 0x501);
 }
 
+/* Review C8: an ID first seen with a short DLC, then a longer one. The new
+ * bytes are a baseline, not a change from the zeroed table (that showed a
+ * mover with a span starting at 0). */
+static void t_longer_dlc_is_a_baseline(void)
+{
+    can_sniff_set_active(true);
+    uint8_t s[2] = { 7, 7 }, l[8] = { 7, 7, 200, 200, 200, 200, 200, 200 };
+    can_sniff_feed(0x600, s, 2, 1);
+    can_sniff_feed(0x600, l, 8, 2);
+    can_sniff_feed(0x600, l, 8, 3);
+    now_ms = 5000u;
+    sniff_mover_t m[3];
+    CHECK(can_sniff_movers(m, 3) == 0);
+    CHECK(tbl[0].changes[2] == 0 && tbl[0].vmin[2] == 200);
+    l[2] = 201;
+    can_sniff_feed(0x600, l, 8, 4);                   /* a real change is one */
+    CHECK(tbl[0].changes[2] == 1 && tbl[0].vmin[2] == 200 && tbl[0].vmax[2] == 201);
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -197,6 +216,7 @@ int main(void)
         { "age_from_receive_time",       t_age_from_receive_time },
         { "table_full",                  t_table_full },
         { "movers",                      t_movers },
+        { "longer_dlc_is_a_baseline",    t_longer_dlc_is_a_baseline },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

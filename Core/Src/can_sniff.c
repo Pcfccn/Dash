@@ -9,7 +9,9 @@
 typedef struct {
     uint16_t id;
     uint8_t  len;
-    bool     primed;              /* first frame seen: baseline captured      */
+    uint8_t  primed;              /* bytes with a baseline captured: a byte
+                                   * first seen in a longer frame of this ID
+                                   * starts its own baseline (review C8)     */
     uint8_t  cur[8];
     uint16_t changes[8];
     uint32_t last_ms[8];
@@ -160,7 +162,7 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len, uint32_t rx_m
         if (!known && e->nvals[b] < SNIFF_DISTINCT_MAX)
             e->vals[b][e->nvals[b]++] = data[b];
 
-        if (!e->primed) {                    /* first sight is the baseline,  */
+        if (b >= e->primed) {                /* first sight is the baseline,  */
             e->cur[b]  = data[b];            /* not a change                  */
             e->vmin[b] = data[b];
             e->vmax[b] = data[b];
@@ -174,7 +176,7 @@ void can_sniff_feed(uint16_t id, const uint8_t *data, uint8_t len, uint32_t rx_m
             if (e->changes[b] < 0xFFFFu) e->changes[b]++;
         }
     }
-    e->primed = true;
+    if (len > e->primed) e->primed = len;
 }
 
 /* ------------------------------------------------------------- candidates */
