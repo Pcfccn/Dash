@@ -1,5 +1,7 @@
 /* Host-side tests for Core/Src/odo.c: GPS / OBD integration, hand-over without
- * double counting, standstill drift, gaps, TRIP auto-reset, civil time. */
+ * double counting (also in the loop's real order, OBD frames older than the
+ * GPS fix already fed), standstill drift and spikes, gaps, TRIP auto-reset,
+ * civil time. */
 #include <stdio.h>
 #include <math.h>
 
@@ -89,6 +91,65 @@ static void t_handover_no_double_count(void)
     CHECK(NEAR(o.total_m - before, 10.7, 0.1));
 }
 
+/* The loop's real order (review C8, P1): each iteration hands odo the newest
+ * GPS fix first (feed_gps), then the OBD speeds received during the same
+ * iteration (obd_rx_poll) — often a few ms OLDER than that fix. Those must
+ * not look like "GPS absent": GPS samples 1007..60907 at 72 km/h are 59.9 s
+ * = 1198 m, not ~1.35x that. */
+static void t_obd_older_than_fed_gps(void)
+{
+    odo_init(&o, 0, 0, 0, 0, 0);
+    uint32_t next_gps = 1007, next_obd = 1000, last_fix = 0;
+    for (uint32_t t = 1000; t < 61000; t += 40) {
+        uint32_t end = t + 40, newest = 0;
+        while (next_gps <= end) { newest = next_gps; next_gps += 100; }
+        if (newest && newest != last_fix) { last_fix = newest; odo_gps(&o, 72.0f, true, newest); }
+        while (next_obd <= end) { odo_obd(&o, 72.0f, next_obd); next_obd += 75; }
+    }
+    CHECK(NEAR(o.total_m, 1198.0, 0.5));
+    CHECK(NEAR(o.trip_s, 59.9, 0.05));
+}
+
+/* A standing interval still moves the hand-over point: a drift spike 1.9 s
+ * after a stop counts as one 100 ms step, not as 1.9 s at half its speed. */
+static void t_spike_after_stop(void)
+{
+    odo_init(&o, 0, 0, 0, 0, 0);
+    uint32_t t = 0;
+    gps_run(&t, 36.0f, 1100);                  /* 0..1000 */
+    gps_run(&t, 0.0f, 2000);                   /* stop at 1100, standing to 3000 */
+    double before = o.total_m;
+    odo_gps(&o, 2.0f, true, t); t += 100u;     /* one 2 km/h spike at 3100 */
+    gps_run(&t, 0.0f, 500);
+    CHECK(o.total_m - before < 0.1);           /* was 0.58 m */
+}
+
+/* A receive time a little after `now` (a frame stamped during the drain) is
+ * not 49 days old: still moving, still that source. */
+static void t_stamp_after_now(void)
+{
+    odo_init(&o, 0, 0, 0, 0, 0);
+    uint32_t t = 5000;
+    gps_run(&t, 50.0f, 500);                   /* last sample at 5400 */
+    CHECK(odo_moving(&o, 5399u) && odo_source(&o, 5399u) == ODO_SRC_GPS);
+}
+
+/* After a GPS gap the last GPS speed is not the start of the next stretch:
+ * 72 km/h, then 5 s of OBD at 36 that stops 1 s before GPS comes back at 36.
+ * The second the OBD did not cover goes in at 36 (10 m), not (72+36)/2. */
+static void t_gps_gap_forgets_old_speed(void)
+{
+    odo_init(&o, 0, 0, 0, 0, 0);
+    uint32_t t = 0;
+    gps_run(&t, 72.0f, 1100);                  /* GPS to 1000 */
+    uint32_t to = t + 1500u;                   /* hold window */
+    obd_run(&to, 36.0f, 3600, 100);            /* OBD 2600..6100, counted after the hold */
+    double before = o.total_m;
+    uint32_t tg = to - 100u + 1000u;           /* GPS back 1 s after the last OBD sample */
+    gps_run(&tg, 36.0f, 100);
+    CHECK(NEAR(o.total_m - before, 10.0, 0.2));
+}
+
 static void t_trip_auto_reset(void)
 {
     /* parked 2 h: the first GPS time resets TRIP to what was driven since boot */
@@ -151,6 +212,10 @@ int main(void)
         { "bad_gps_and_gaps",       t_bad_gps_and_gaps },
         { "obd_when_no_gps",        t_obd_when_no_gps },
         { "handover_no_double",     t_handover_no_double_count },
+        { "obd_older_than_fed_gps", t_obd_older_than_fed_gps },
+        { "spike_after_stop",       t_spike_after_stop },
+        { "stamp_after_now",        t_stamp_after_now },
+        { "gps_gap_old_speed",      t_gps_gap_forgets_old_speed },
         { "trip_auto_reset",        t_trip_auto_reset },
         { "manual_resets",          t_manual_resets },
         { "tick_wrap",              t_tick_wrap },

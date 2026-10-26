@@ -10,7 +10,11 @@
  *     the first fix. Each new stretch starts where the last integrated one
  *     ended (whichever source it came from), so a hand-over neither counts a
  *     stretch twice nor drops the GPS hold window or the gap before the first
- *     sample of the other source.
+ *     sample of the other source. The two sources' receive times are not in
+ *     order (the loop feeds the newest GPS fix before it decodes the CAN
+ *     frames of the same period), so every time comparison is signed: an OBD
+ *     speed a few ms older than the GPS fix already counted means "GPS
+ *     present", not "49 days late".
  * TRIP resets by itself when the first GPS time of a power-up is more than
  * ODO_TRIP_GAP_S after the last saved one (parked longer than 30 min); what
  * was driven before that fix stays in the new TRIP. A is reset by hand; TOTAL

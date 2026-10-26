@@ -16,11 +16,16 @@ void odo_init(odo_t *o, uint32_t total_m, uint32_t trip_m, uint32_t a_m,
 
 static float still0(float v) { return (isnan(v) || v < ODO_STILL_KMH) ? 0.0f : v; }
 
-/* Distance over [t0, t1] at the mean of two speeds (km/h). */
+/* Distance over [t0, t1] at the mean of two speeds (km/h). A standing
+ * interval adds nothing but still counts as covered: the next stretch starts
+ * at t1, not back where the car stopped (a drift spike 2 s after a stop would
+ * otherwise be integrated over the whole 2 s). */
 static void add(odo_t *o, float v0, float v1, uint32_t t0, uint32_t t1, odo_src_t src)
 {
     uint32_t dt = t1 - t0;
     if (dt == 0u || dt > ODO_MAX_DT_MS) return;
+    o->cover   = true;
+    o->cover_t = t1;
     double m = ((double)v0 + (double)v1) / 2.0 / 3.6 * ((double)dt / 1000.0);
     if (m <= 0.0) return;
     o->total_m += m;
@@ -31,8 +36,16 @@ static void add(odo_t *o, float v0, float v1, uint32_t t0, uint32_t t1, odo_src_
     o->boot_s  += dt / 1000.0;
     o->src   = src;
     o->src_t = t1;
-    o->cover   = true;
-    o->cover_t = t1;
+}
+
+/* t is at most `lim` ms after `ref` — or before it. Receive times of the two
+ * sources do not arrive in order: the loop hands the newest GPS fix over
+ * before it decodes the CAN frames of the same period, so an OBD speed is
+ * often a few ms older than the GPS sample already counted. Unsigned, such a
+ * frame would look 49 days late (GPS "absent", the stretch counted twice). */
+static bool within(uint32_t t, uint32_t ref, uint32_t lim)
+{
+    return (int32_t)(t - ref) <= (int32_t)lim;
 }
 
 /* Start of the next stretch: where the last one ended when that is recent,
@@ -46,6 +59,9 @@ static uint32_t from(const odo_t *o, uint32_t own_prev_t, uint32_t t)
 void odo_gps(odo_t *o, float v, bool good, uint32_t t)
 {
     if (!good || isnan(v)) { o->gps_prev = false; return; }
+    /* After a gap the old sample says nothing about the speed since: start
+     * again like after a bad sample (the gap itself went to OBD, if any). */
+    if (o->gps_prev && !within(t, o->gps_prev_t, ODO_MAX_DT_MS)) o->gps_prev = false;
     float vs = still0(v);
     if (o->gps_prev)  add(o, o->gps_prev_v, vs, from(o, o->gps_prev_t, t), t, ODO_SRC_GPS);
     else if (o->cover) add(o, vs, vs, from(o, t, t), t, ODO_SRC_GPS);   /* gap since OBD */
@@ -60,7 +76,7 @@ void odo_obd(odo_t *o, float v, uint32_t t)
 {
     if (isnan(v)) { o->obd_prev = false; return; }
     float vs = still0(v);
-    bool gps_present = o->gps_ever && (t - o->gps_last_t) <= ODO_GPS_HOLD_MS;
+    bool gps_present = o->gps_ever && within(t, o->gps_last_t, ODO_GPS_HOLD_MS);
     if (!gps_present && o->obd_prev)
         add(o, o->obd_prev_v, vs, from(o, o->obd_prev_t, t), t, ODO_SRC_OBD);
     o->obd_prev   = true;
@@ -84,13 +100,13 @@ void odo_reset_a(odo_t *o)    { o->a_m = 0.0; }
 
 bool odo_moving(const odo_t *o, uint32_t now)
 {
-    return o->src != ODO_SRC_NONE && (now - o->src_t) <= ODO_MAX_DT_MS;
+    return o->src != ODO_SRC_NONE && within(now, o->src_t, ODO_MAX_DT_MS);
 }
 
 odo_src_t odo_source(const odo_t *o, uint32_t now)
 {
-    if (o->gps_ever && (now - o->gps_last_t) <= ODO_GPS_HOLD_MS) return ODO_SRC_GPS;
-    if (o->obd_prev && (now - o->obd_prev_t) <= ODO_MAX_DT_MS) return ODO_SRC_OBD;
+    if (o->gps_ever && within(now, o->gps_last_t, ODO_GPS_HOLD_MS)) return ODO_SRC_GPS;
+    if (o->obd_prev && within(now, o->obd_prev_t, ODO_MAX_DT_MS)) return ODO_SRC_OBD;
     return ODO_SRC_NONE;
 }
 

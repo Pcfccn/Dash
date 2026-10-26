@@ -57,6 +57,8 @@ void cluster_app_run(void) {
     if (now - t_wdg  >= 1000) { t_wdg  = now; obd_watchdog_tick_1hz(); }
 #endif
 
-    trip_app_service(now);           /* odometer saves; NOR erase / program steps */
+    /* odometer saves; NOR erase / program steps. A tick read after the RX
+     * drain: a frame decoded above may carry a receive time later than `now`. */
+    trip_app_service(HAL_GetTick());
     if (now - t_ui   >= 40)   { t_ui   = now; cluster_ui_refresh(); }   /* ~25 Hz UI       */
 }
