@@ -91,12 +91,16 @@ static bool seq_newer(uint32_t a, uint32_t b) { return (int32_t)(a - b) > 0; }
  * valid follows it. Usually one read (slot 0 valid, or erased). Looking at
  * slots 0 and 1 only lost a sector whose first two writes were torn: the
  * previous sector then looked newest, and this one, holding the newer
- * records, was erased as "the next sector" (review C8). */
+ * records, was erased as "the next sector" (review C8). At most
+ * NV_HEAD_SCAN slots: torn slots in a row are one failed verify each, while
+ * a sector of old foreign data would cost 128 reads (x 256 sectors: ~2 s at
+ * every boot until the writer has gone round the ring). */
+#define NV_HEAD_SCAN 8u
 static bool sector_head(uint16_t s, uint32_t *seq)
 {
     uint8_t r[NV_SLOT];
     nv_data_t d;
-    for (uint16_t k = 0; k < NV_SLOTS; k++) {
+    for (uint16_t k = 0; k < NV_HEAD_SCAN; k++) {
         if (!nor_read(slot_addr(s, k), r, NV_SLOT)) return false;
         if (nv_decode(r, &d, seq)) return true;
         if (erased(r)) return false;
