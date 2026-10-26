@@ -49,7 +49,8 @@ typedef enum {
 typedef struct {
     nv_state_t state;
     uint32_t   jedec;
-    uint32_t   seq;                  /* of the newest record written / loaded  */
+    uint32_t   seq;                  /* of the newest record written / loaded
+                                      * (a failed verify uses its seq up)      */
     uint16_t   sector, slot;         /* where the next record goes             */
     uint16_t   errors;               /* failed programs / verifies / erases    */
     bool       pending;              /* a save is queued                       */

@@ -19,6 +19,8 @@ static int      tear_bytes = -1;      /* >= 0: the next program writes only this
 static bool     tear_erase;           /* the next erase leaves garbage           */
 static uint32_t stuck_addr = 0xFFFFFFFFu;   /* a byte that never programs        */
 static unsigned n_program, n_erase;
+static uint32_t glitch_addr = 0xFFFFFFFFu;  /* the next read there returns a flipped bit */
+static int      n_reads, read_fail_from = -1;   /* reads from this one on fail     */
 
 bool nor_init(void) { return chip_ok; }
 uint32_t nor_jedec(void) { return chip_ok ? 0xEF4017u : 0u; }
@@ -26,7 +28,12 @@ uint32_t nor_jedec(void) { return chip_ok ? 0xEF4017u : 0u; }
 bool nor_read(uint32_t a, void *buf, uint32_t len)
 {
     if (!chip_ok || a + len > NOR_SIZE) return false;
+    if (read_fail_from >= 0 && n_reads++ >= read_fail_from) return false;
     memcpy(buf, mem + a, len);
+    if (glitch_addr >= a && glitch_addr < a + len) {
+        ((uint8_t *)buf)[glitch_addr - a] ^= 0x01u;
+        glitch_addr = 0xFFFFFFFFu;
+    }
     return true;
 }
 
@@ -66,6 +73,7 @@ static void fresh_chip(uint8_t fill)
     memset(mem, fill, sizeof mem);
     chip_ok = true; busy_left = 0; tear_bytes = -1; tear_erase = false;
     stuck_addr = 0xFFFFFFFFu; n_program = n_erase = 0;
+    glitch_addr = 0xFFFFFFFFu; n_reads = 0; read_fail_from = -1;
 }
 
 /* Service until nothing is pending and the chip is idle (bounded). */
@@ -233,10 +241,76 @@ static void t_verify_failure_retries(void)
     nv_data_t b = data_n(2);
     nvlog_save(&b); settle();
     nv_info_t inf; nvlog_info(&inf);
-    CHECK(inf.errors == 1u && inf.seq == 2u && !inf.pending);
+    CHECK(inf.errors == 1u && inf.seq == 3u && !inf.pending);   /* seq 2 used up */
     nvlog_init();
     nvlog_info(&inf);
-    CHECK(inf.seq == 2u && same(nvlog_data(), &b));
+    CHECK(inf.seq == 3u && same(nvlog_data(), &b));
+}
+
+/* Review C8: the program succeeded but its verify read glitched, and newer
+ * data was queued meanwhile. The retry used to get the same seq, and at boot
+ * the first of two equal seqs — the older data — won. */
+static void t_c8_verify_glitch_newer_wins(void)
+{
+    fresh_chip(0xFF);
+    nvlog_init();
+    nv_data_t a = data_n(1), b = data_n(2), c = data_n(3);
+    nvlog_save(&a); settle();
+    nvlog_save(&b);
+    for (int i = 0; i < 20 && nv.w != W_PROGRAMMING; i++) nvlog_service();
+    CHECK(nv.w == W_PROGRAMMING);
+    glitch_addr = slot_addr(nv.sector, nv.slot) + 9u;   /* b is fine on the chip */
+    nvlog_save(&c);                                     /* queued while programming */
+    settle();
+    nvlog_init();
+    nv_info_t inf; nvlog_info(&inf);
+    CHECK(same(nvlog_data(), &c) && inf.seq == 3u);
+}
+
+/* Review C8: the first two writes of a sector failed their verify (bad
+ * cells, a supply dip) and the third landed; then the power went. That
+ * sector holds the newest record; it used to be missed (only slots 0 and 1
+ * were looked at) and then erased as "the next sector". */
+static void t_c8_two_torn_slots_at_sector_start(void)
+{
+    fresh_chip(0xFF);
+    nvlog_init();
+    nv_data_t d = { 0 };
+    for (uint32_t n = 1; n <= NV_SLOTS; n++) { d = data_n(n); nvlog_save(&d); settle(); }
+    nv_data_t e = data_n(1000);
+    tear_bytes = 7;                                     /* slot 0 of sector 1 */
+    nvlog_save(&e);
+    for (int i = 0; i < 40 && n_program == NV_SLOTS; i++) nvlog_service();
+    tear_bytes = 7;                                     /* slot 1 as well */
+    settle();                                           /* lands in slot 2 */
+    nv_info_t inf; nvlog_info(&inf);
+    CHECK(inf.errors == 2u && inf.sector == 1u && inf.slot == 3u);
+    nvlog_init();                                       /* power-up */
+    nvlog_info(&inf);
+    CHECK(same(nvlog_data(), &e) && inf.sector == 1u);
+    for (int i = 0; i < 200; i++) nvlog_service();      /* erase-ahead runs */
+    nvlog_init();
+    CHECK(same(nvlog_data(), &e));                      /* still there */
+}
+
+/* Review C8: the head was found, then the chip stopped reading. Loaded zeros
+ * would have been saved over TOTAL; the store goes RAM-only instead. */
+static void t_c8_read_failure_mid_scan(void)
+{
+    fresh_chip(0xFF);
+    nvlog_init();
+    nv_data_t d = data_n(7);
+    nvlog_save(&d); settle();
+    read_fail_from = NV_SECTORS;                        /* head scan: one read a sector */
+    nvlog_init();
+    nv_info_t inf; nvlog_info(&inf);
+    CHECK(inf.state == NV_NO_FLASH);
+    nv_data_t z = { 0 };
+    nvlog_save(&z);
+    for (int i = 0; i < 20; i++) nvlog_service();
+    read_fail_from = -1;
+    nvlog_init();
+    CHECK(same(nvlog_data(), &d));                      /* nothing was overwritten */
 }
 
 static void t_newest_queued_wins(void)
@@ -273,6 +347,9 @@ int main(void)
         { "power_cut_first_slot",   t_power_cut_first_slot_of_sector },
         { "dirty_chip_torn_erase",  t_dirty_chip_and_torn_erase },
         { "verify_failure_retries", t_verify_failure_retries },
+        { "c8_verify_glitch",       t_c8_verify_glitch_newer_wins },
+        { "c8_two_torn_slots",      t_c8_two_torn_slots_at_sector_start },
+        { "c8_read_fail_mid_scan",  t_c8_read_failure_mid_scan },
         { "newest_queued_wins",     t_newest_queued_wins },
     };
     for (size_t i = 0; i < sizeof T / sizeof T[0]; i++) {

@@ -86,14 +86,22 @@ static uint16_t next_sector(uint16_t s) { return (uint16_t)((s + 1u) % NV_SECTOR
 /* Newer in the wrap-safe sense (a record a second takes 136 years to wrap). */
 static bool seq_newer(uint32_t a, uint32_t b) { return (int32_t)(a - b) > 0; }
 
-/* First valid record of a sector: slot 0, or slot 1 when slot 0 was torn. */
+/* First valid record of a sector, past any torn slots at its start. An
+ * erased slot ends the search: the writer only moves forward, so nothing
+ * valid follows it. Usually one read (slot 0 valid, or erased). Looking at
+ * slots 0 and 1 only lost a sector whose first two writes were torn: the
+ * previous sector then looked newest, and this one, holding the newer
+ * records, was erased as "the next sector" (review C8). */
 static bool sector_head(uint16_t s, uint32_t *seq)
 {
-    uint8_t r[2 * NV_SLOT];
+    uint8_t r[NV_SLOT];
     nv_data_t d;
-    if (!nor_read(slot_addr(s, 0), r, sizeof r)) return false;
-    if (nv_decode(r, &d, seq)) return true;
-    return nv_decode(r + NV_SLOT, &d, seq);
+    for (uint16_t k = 0; k < NV_SLOTS; k++) {
+        if (!nor_read(slot_addr(s, k), r, NV_SLOT)) return false;
+        if (nv_decode(r, &d, seq)) return true;
+        if (erased(r)) return false;
+    }
+    return false;
 }
 
 void nvlog_init(void)
@@ -125,6 +133,14 @@ void nvlog_init(void)
             if (nv_decode(r, &d, &q) && (last < 0 || seq_newer(q, nv.seq))) {
                 nv.data = d; nv.seq = q; last = k;
             }
+        }
+        if (last < 0) {
+            /* The head was there a moment ago, now nothing reads: an
+             * unreliable chip. RAM only — writing zeros as "the newest
+             * record" would replace TOTAL with 0. */
+            memset(&nv.data, 0, sizeof nv.data);
+            nv.state = NV_NO_FLASH;
+            return;
         }
         nv.state  = NV_LOADED;
         nv.sector = best;
@@ -196,6 +212,10 @@ void nvlog_service(void)
             if (nv.w_gen == nv.gen) nv.pending = false;
         } else {
             error();                  /* stays pending: retried in the next slot */
+            /* The record may be on the flash all the same (a read glitch):
+             * its seq is used up, so the retry — possibly newer data — gets
+             * a higher one and wins at boot (review C8). */
+            nv.seq = nv.w_seq;
         }
         nv.slot++;
     }
