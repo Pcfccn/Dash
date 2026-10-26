@@ -30,14 +30,18 @@ void obd_on_stamp(uint8_t ch, float v, uint32_t rx_ms) {
     }
 }
 
-/* The GPS side: each new fix, with its receive time. Before obd_rx_poll(),
- * so the OBD speeds decoded below find the GPS samples of the same period. */
+/* The GPS side: each new RMC — with a fix or without, so the odometer and the
+ * acceleration timer hear that the fix is gone (a tunnel) instead of keeping
+ * the last good sample — with its receive time. Before obd_rx_poll(), so the
+ * OBD speeds decoded below find the GPS samples of the same period. Only the
+ * newest RMC of an iteration is seen; the consumers' gap limits allow that. */
 static void feed_gps(void) {
-    static uint32_t last_fix;
+    static uint32_t last_rmc;
     const gps_state_t *g = gps_state();
-    if (g->fix_ms == 0u || g->fix_ms == last_fix) return;
-    last_fix = g->fix_ms;
-    speed_cal_gps(g->fix.speed_kmh, g->fix.rmc_fix, g->fix.sats, g->fix.hdop, g->fix_ms);
+    if (g->rmc_ms == 0u || g->rmc_ms == last_rmc) return;
+    last_rmc = g->rmc_ms;
+    uint8_t sats = gps_gga_fresh(g->rmc_ms) ? g->fix.sats : 0u;   /* stale GGA: no quality */
+    speed_cal_gps(g->fix.speed_kmh, g->fix.rmc_fix, sats, g->fix.hdop, g->rmc_ms);
     trip_app_gps(g);
 }
 

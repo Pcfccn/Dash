@@ -109,6 +109,43 @@ static void t_sample_gap_ends_run(void)
     CHECK(isnan(p.last_s[PF_0_100]));
 }
 
+/* Review C8: READY, then no good samples for 20 s (a tunnel, a car park),
+ * then the fix returns at 55 km/h and rising. That was taken as a start
+ * extrapolated back from 55 -> 56 km/h: a made-up 0-60 = 6.00 s and 0-100 =
+ * 10.00 s, as LAST and BEST. A gap disarms READY. */
+static void t_gap_disarms_ready(void)
+{
+    perf_init(&p);
+    uint32_t t = 0;
+    still(&t, 1500);
+    CHECK(p.state == PERF_READY);
+    t += 20000u;
+    for (float v = 55.0f; v < 110.0f; v += 1.0f) { perf_gps(&p, v, true, t); t += 100u; }
+    CHECK(isnan(p.last_s[PF_0_60]) && isnan(p.best_s[PF_0_60]));
+    CHECK(isnan(p.last_s[PF_0_100]) && isnan(p.best_s[PF_0_100]));
+    CHECK(p.state != PERF_RUN);
+}
+
+/* No sample at all (NMEA stopped, the receiver keeps its fix): perf_tick()
+ * ends READY and RUN, so neither "READY - GO" nor a running clock stays. */
+static void t_tick_without_samples(void)
+{
+    perf_init(&p);
+    uint32_t t = 0;
+    still(&t, 1500);
+    CHECK(p.state == PERF_READY);
+    perf_tick(&p, p.pt + PERF_GAP_MS);         /* not yet */
+    CHECK(p.state == PERF_READY);
+    perf_tick(&p, p.pt + PERF_GAP_MS + 1u);
+    CHECK(p.state == PERF_NO_GPS);
+    still(&t, 1500);
+    uint32_t go = t;
+    accel(&t, go, 3.0, go + 2000u);
+    CHECK(p.state == PERF_RUN);
+    perf_tick(&p, p.pt + 60000u);
+    CHECK(p.state == PERF_NO_GPS && isnan(perf_elapsed(&p, p.pt + 60000u)));
+}
+
 static void t_creep_is_not_a_start(void)
 {
     perf_init(&p);
@@ -154,6 +191,8 @@ int main(void)
         { "lift_ends_run_best_kept", t_lift_ends_run_and_best_kept },
         { "gps_loss_discards",       t_gps_loss_discards },
         { "sample_gap_ends_run",     t_sample_gap_ends_run },
+        { "gap_disarms_ready",       t_gap_disarms_ready },
+        { "tick_without_samples",    t_tick_without_samples },
         { "creep_is_not_a_start",    t_creep_is_not_a_start },
         { "rolling_dip_cancels",     t_rolling_dip_cancels },
         { "clear",                   t_clear },

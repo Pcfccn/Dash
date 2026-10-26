@@ -7,8 +7,11 @@
  * GB, GL, GA ...): a multi-GNSS receiver reports its combined fix as GN.
  *
  * Validation before anything is written, as on the CAN side: a sentence
- * counts only with a correct "*hh" checksum, and an RMC / GGA field that does
- * not parse leaves the previous values alone rather than turning into 0. */
+ * counts only with a correct "*hh" checksum. An RMC with status A but no
+ * usable position, or a GGA whose quality field does not parse, is rejected
+ * whole and leaves the previous values alone. Any other field that does not
+ * parse becomes "unknown" — NaN for a float, 0 satellites — never an old value
+ * carried over and never a believable 0.0. */
 
 #include <stdbool.h>
 #include <stdint.h>

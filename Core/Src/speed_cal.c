@@ -36,17 +36,23 @@ void speed_cal_gps(float kmh, bool fix, uint8_t sats, float hdop, uint32_t t_ms)
 }
 
 /* Steady: every OBD speed of the last SC_STEADY_MS within SC_STEADY_KMH of
- * each other, and the history really reaches back that far. */
+ * each other, and the history really reaches back that far without a hole:
+ * after a pause (poller suspended, CAN trouble) one sample next to one from
+ * before the pause proves nothing about the 2 s in between. */
+#define SC_STEADY_GAP_MS 500u
 static bool steady(uint32_t now)
 {
-    float lo = INFINITY, hi = -INFINITY;
-    bool  reaches = false;
+    float    lo = INFINITY, hi = -INFINITY;
+    bool     reaches = false;
+    uint32_t newer = now;
     for (uint8_t i = 0; i < s_obd_cnt; i++) {
         const sc_obd_t *o = &s_obd[(s_obd_head + SC_OBD_N - 1u - i) % SC_OBD_N];
+        if (newer - o->t > SC_STEADY_GAP_MS) return false;
         uint32_t age = now - o->t;
         if (age > SC_STEADY_MS) { reaches = true; break; }
         if (o->v < lo) lo = o->v;
         if (o->v > hi) hi = o->v;
+        newer = o->t;
     }
     return reaches && (hi - lo) <= SC_STEADY_KMH;
 }

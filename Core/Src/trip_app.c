@@ -51,21 +51,25 @@ void trip_app_set_brightness(uint8_t day, uint8_t night, uint32_t now)
     s_bl_t = now;
 }
 
+/* The GGA must be current too: its quality, sats and HDOP stay in the fix
+ * after GGAs stop coming (gps_gga_fresh). */
 static bool gps_good(const gps_state_t *g, uint8_t min_sats, float max_hdop)
 {
-    return g->fix.rmc_fix && g->fix.quality >= 1u && g->fix.sats >= min_sats &&
+    return g->fix.rmc_fix && gps_gga_fresh(g->rmc_ms) && g->fix.quality >= 1u &&
+           g->fix.sats >= min_sats &&
            (isnan(g->fix.hdop) || g->fix.hdop <= max_hdop) && !isnan(g->fix.speed_kmh);
 }
 
 void trip_app_gps(const gps_state_t *g)
 {
-    odo_gps(&s_odo, g->fix.speed_kmh, gps_good(g, ODO_MIN_SATS, ODO_MAX_HDOP), g->fix_ms);
-    perf_gps(&s_perf, g->fix.speed_kmh, gps_good(g, PERF_MIN_SATS, PERF_MAX_HDOP), g->fix_ms);
-    if (g->fix.rmc_fix && !isnan(g->fix.speed_kmh)) { s_speed = g->fix.speed_kmh; s_speed_t = g->fix_ms; }
+    uint32_t t = g->rmc_ms;          /* this RMC; with a fix, also fix_ms */
+    odo_gps(&s_odo, g->fix.speed_kmh, gps_good(g, ODO_MIN_SATS, ODO_MAX_HDOP), t);
+    perf_gps(&s_perf, g->fix.speed_kmh, gps_good(g, PERF_MIN_SATS, PERF_MAX_HDOP), t);
+    if (g->fix.rmc_fix && !isnan(g->fix.speed_kmh)) { s_speed = g->fix.speed_kmh; s_speed_t = t; }
     uint32_t utc = odo_utc_from_civil(g->fix.year, g->fix.month, g->fix.day,
                                       g->fix.hh, g->fix.mm, g->fix.ss);
     if (g->fix.rmc_fix && utc != 0u && g->fix.year >= 2024u) {
-        s_utc = utc; s_utc_tick = g->fix_ms;
+        s_utc = utc; s_utc_tick = t;
         odo_utc(&s_odo, utc);
     }
 }
@@ -100,6 +104,7 @@ static void save(uint32_t now)
 
 void trip_app_service(uint32_t now)
 {
+    perf_tick(&s_perf, now);          /* no NMEA at all: no READY, no running clock */
     bool moving = odo_moving(&s_odo, now);
     if (s_save_now) {
         s_save_now = false;

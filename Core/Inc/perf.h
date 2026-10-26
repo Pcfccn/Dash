@@ -8,7 +8,9 @@
  * receiver gives a few hundredths, not a whole 0.1 s step. A run ends when the
  * speed drops PERF_LIFT_KMH below its peak (lift / brake), after
  * PERF_RUN_MAX_MS, or — discarded — when good GPS goes missing for more than
- * PERF_GAP_MS.
+ * PERF_GAP_MS. A gap also disarms READY (stand still again to re-arm), and
+ * perf_tick() ends READY / RUN when no sample comes at all (NMEA stopped), so
+ * neither a "READY - GO" nor a running clock outlives the GPS.
  * Rolling 60-100 and 100-200 are taken from any acceleration, standing start
  * or not, as long as the speed does not dip PERF_ROLL_DIP_KMH below the
  * lower mark in between.
@@ -61,6 +63,8 @@ typedef struct {
 void perf_init(perf_t *p);
 void perf_clear(perf_t *p);             /* forget all results                     */
 void perf_gps(perf_t *p, float v_kmh, bool good, uint32_t t_ms);
+/* From the loop: no sample for PERF_GAP_MS counts as GPS lost. */
+void perf_tick(perf_t *p, uint32_t now);
 /* Seconds since the start while a run is on, else NaN. */
 float perf_elapsed(const perf_t *p, uint32_t now);
 

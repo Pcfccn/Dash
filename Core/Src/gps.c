@@ -105,7 +105,10 @@ void gps_poll(void)
         heard++;
         if (r == NMEA_RMC) {
             if (rate_cnt < 255u) rate_cnt++;
+            s.rmc_ms = at;
             if (s.fix.rmc_fix) s.fix_ms = at;
+        } else if (r == NMEA_GGA) {
+            s.gga_ms = at;
         }
     }
     uint32_t now = gps_hw_now_ms();          /* after the drain: no stamp is later */
@@ -125,4 +128,10 @@ const gps_state_t *gps_state(void) { return &s; }
 bool gps_fix_fresh(uint32_t now)
 {
     return s.fix.rmc_fix && s.fix_ms != 0u && now - s.fix_ms < GPS_STALE_MS;
+}
+
+bool gps_gga_fresh(uint32_t t)
+{
+    int32_t age = (int32_t)(t - s.gga_ms);          /* a GGA may follow the RMC */
+    return s.gga_ms != 0u && age < (int32_t)GPS_STALE_MS && age > -(int32_t)GPS_STALE_MS;
 }

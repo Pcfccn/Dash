@@ -26,7 +26,7 @@ void trip_app_init(void);            /* nvlog + odometer from the last record */
 bool trip_app_brightness(uint8_t *day, uint8_t *night);
 void trip_app_set_brightness(uint8_t day, uint8_t night, uint32_t now);
 
-void trip_app_gps(const gps_state_t *g);          /* each new RMC */
+void trip_app_gps(const gps_state_t *g);          /* each new RMC, fix or not */
 void trip_app_obd_speed(float v_kmh, uint32_t rx_ms);
 void trip_app_service(uint32_t now);              /* from the loop */
 

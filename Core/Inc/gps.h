@@ -35,6 +35,10 @@ typedef enum {
 typedef struct {
     nmea_fix_t fix;              /* last RMC / GGA contents                     */
     uint32_t   fix_ms;           /* HAL tick of the last RMC with a fix         */
+    uint32_t   rmc_ms;           /* ... of the last RMC, fix or not: a consumer
+                                  * that waits for fix_ms never hears that the
+                                  * fix is gone                                 */
+    uint32_t   gga_ms;           /* ... of the last GGA (quality, sats, HDOP)   */
     uint32_t   rx_ms;            /* HAL tick of the last valid sentence         */
     gps_link_t link;
     uint32_t   baud;             /* our UART rate now                           */
@@ -48,5 +52,9 @@ void gps_poll(void);             /* from the superloop: drain, decode, link     
 const gps_state_t *gps_state(void);
 /* A fix (RMC status A) received within GPS_STALE_MS. */
 bool gps_fix_fresh(uint32_t now);
+/* The GGA fields (quality, sats, HDOP) are from within GPS_STALE_MS of t —
+ * a GGA that stopped coming (or whose quality field no longer parses) must
+ * not vouch for later RMCs. */
+bool gps_gga_fresh(uint32_t t);
 
 #endif /* GPS_H */

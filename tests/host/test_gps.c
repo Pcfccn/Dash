@@ -207,6 +207,28 @@ static void t_c7_fix_time_is_receive_time(void)
     CHECK(g->link == GPS_LINK_RUN);                 /* 1.9 s < GPS_LOST_MS      */
 }
 
+/* Review C8: an RMC without a fix gets its own stamp (rmc_ms), so the
+ * odometer and the acceleration timer hear that the fix is gone; fix_ms stays
+ * at the last fix. The GGA's quality fields are only vouched for while GGAs
+ * keep coming. */
+static void t_c8_no_fix_rmc_is_stamped(void)
+{
+    reset();
+    mod_period_ms = 100;
+    run(2000);
+    const gps_state_t *g = gps_state();
+    uint32_t last_fix = g->fix_ms;
+    CHECK(g->rmc_ms == last_fix && gps_gga_fresh(g->rmc_ms));
+    mod_fix = false;                                /* tunnel                   */
+    run(500);
+    CHECK(g->fix_ms == last_fix && g->rmc_ms > last_fix && !g->fix.rmc_fix);
+    CHECK(g->gga_ms >= g->rmc_ms - 100u && gps_gga_fresh(g->rmc_ms));
+    mod_period_ms = 0;                              /* silence                  */
+    uint32_t gga = g->gga_ms;
+    run(GPS_STALE_MS + 50);
+    CHECK(g->gga_ms == gga && !gps_gga_fresh(now_ms));
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -217,6 +239,7 @@ int main(void)
         { "lost_then_regained",          t_lost_then_regained_no_second_save },
         { "fix_fresh_and_decoded",       t_fix_fresh_and_decoded },
         { "c7_fix_time_is_receive_time", t_c7_fix_time_is_receive_time },
+        { "c8_no_fix_rmc_is_stamped",    t_c8_no_fix_rmc_is_stamped },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

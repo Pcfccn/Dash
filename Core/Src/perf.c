@@ -77,17 +77,27 @@ static void run_step(perf_t *p, float v0, float v1, uint32_t t0, uint32_t t1)
         p->state = PERF_MOVING;       /* run over; results stay */
 }
 
+static void no_gps(perf_t *p)
+{
+    p->state = PERF_NO_GPS;           /* a run without GPS is discarded */
+    p->prev  = false;
+    p->still = false;
+    p->roll60 = p->roll100 = false;
+}
+
+void perf_tick(perf_t *p, uint32_t now)
+{
+    if (p->state != PERF_NO_GPS && (int32_t)(now - p->pt) > (int32_t)PERF_GAP_MS) no_gps(p);
+}
+
 void perf_gps(perf_t *p, float v, bool good, uint32_t t)
 {
-    if (!good || isnan(v)) {
-        p->state = PERF_NO_GPS;       /* a run without GPS is discarded */
-        p->prev  = false;
-        p->still = false;
-        p->roll60 = p->roll100 = false;
-        return;
-    }
+    if (!good || isnan(v)) { no_gps(p); return; }
     if (p->prev && (t - p->pt) > PERF_GAP_MS) {      /* samples missing */
-        if (p->state == PERF_RUN) p->state = PERF_MOVING;
+        /* READY is disarmed too: the samples before the gap say nothing
+         * about whether the car still stood — a start extrapolated from the
+         * first two samples after it would be a made-up 0-60. */
+        if (p->state == PERF_RUN || p->state == PERF_READY) p->state = PERF_MOVING;
         p->prev = false;
         p->roll60 = p->roll100 = false;
     }

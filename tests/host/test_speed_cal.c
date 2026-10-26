@@ -44,6 +44,23 @@ static void t_needs_two_seconds_of_history(void)
     CHECK(speed_cal_band(1)->n > 0);
 }
 
+/* Review C8: after a 3 s pause in OBD speeds the first sample alone used to
+ * count as "steady" (the one before the pause made the history "reach back").
+ * 80 km/h, pause, then 55 with GPS at 70: no pair. Once 2 s of fresh history
+ * exist again, pairs resume. */
+static void t_pause_breaks_steadiness(void)
+{
+    speed_cal_reset(); now = 1000;
+    drive(3000, 80.0f, 0.0f, 1.0f, 9, 1.0f, true, 0);
+    uint32_t n80 = speed_cal_band(2)->n;
+    now += 3000;
+    speed_cal_gps(70.0f, true, 9, 0.9f, now);
+    speed_cal_obd(55.0f, now + 10u);
+    CHECK(speed_cal_band(0)->n == 0);
+    drive(2500, 55.0f, 0.0f, 1.0f, 9, 1.0f, true, 0);
+    CHECK(speed_cal_band(0)->n > 0 && speed_cal_band(2)->n == n80);
+}
+
 static void t_accelerating_is_not_steady(void)
 {
     speed_cal_reset(); now = 1000;
@@ -107,6 +124,7 @@ int main(void)
     static const struct { const char *name; void (*fn)(void); } tests[] = {
         { "steady_cruise_pairs",    t_steady_cruise_pairs },
         { "needs_2s_history",       t_needs_two_seconds_of_history },
+        { "pause_breaks_steadiness",t_pause_breaks_steadiness },
         { "accelerating_not_steady",t_accelerating_is_not_steady },
         { "slow_is_ignored",        t_slow_is_ignored },
         { "gps_quality_gate",       t_gps_quality_gate },
