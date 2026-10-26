@@ -64,8 +64,17 @@
       "command": "python tools/build.py --lint",
       "options": { "cwd": "${workspaceFolder}" },
       "group": "build",
-      "problemMatcher": ["$gcc"],
+      "problemMatcher": { "base": "$gcc", "fileLocation": ["relative", "${workspaceFolder}/build"] },
       "detail": "Compiles Core/Src once more at -O2 with array-bounds / overflow warnings (the -O0 Debug build cannot see an index past an array's end), then builds build/Dash.elf."
+    },
+    {
+      "label": "Lint all switches (-O2) + build",
+      "type": "shell",
+      "command": "python tools/build.py --lint-variants",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": { "base": "$gcc", "fileLocation": ["relative", "${workspaceFolder}/build"] },
+      "detail": "As Lint, plus every Core/Src file that uses a switch (OBD_DEMO, FAULT_TEST, LCD_FLIP ...) at the switch's other values: code behind #if is otherwise never linted. ~45 s."
     },
     {
       "label": "Host tests",
@@ -92,6 +101,8 @@
         { "label": "BENCH FT3: main-panel SPI errors (recovery, no reset)", "value": "-D FAULT_TEST=3" },
         { "label": "BENCH FT4: configASSERT -> reset", "value": "-D FAULT_TEST=4" },
         { "label": "BENCH KOEO: oil-pressure $2C/$AA experiment, parked only", "value": "-D OILP_DPID_ENABLE=1" },
+        { "label": "BENCH KOEO INV: the same on the carrier board (2N7000 backlight)", "value": "-D OILP_DPID_ENABLE=1 -D BACKLIGHT_ACTIVE_LOW=0" },
+        { "label": "BENCH DEMO INV: synthetic values on the carrier board", "value": "-D OBD_DEMO=1 -D BACKLIGHT_ACTIVE_LOW=0" },
         { "label": "LOOK FLIP: main panel turned 180 degrees (module mounted upside down)", "value": "-D LCD_FLIP=1" },
         { "label": "LOOK PAL0: previous colour palette, to compare with the TN one", "value": "-D UI_PALETTE_TN=0" },
         { "label": "PROBE: which controller the main panel has (3 colour bands for 4 s at start)", "value": "-D LCD_PROBE=1" }

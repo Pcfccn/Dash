@@ -639,7 +639,9 @@ static void build_sniff(void)
         "the detents. Temps/pressures: ANALOG,\n"
         "found on a warm-up / throttle blip.\n"
         "P only. Re-enter to clear. OBD paused.", F12, C_MUTED);
-    lv_obj_set_pos(hint, 10, 380);
+    /* Four lines end above the pager (y 432); the ANALOG list above holds at
+     * most 5 rows, to ~343. At 380 the last line ran into the page dots. */
+    lv_obj_set_pos(hint, 10, 350);
     lv_obj_set_style_text_line_space(hint, 4, 0);
 
     mk_pager(pg, PAGE_SNIFF);

@@ -20,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "host"
 TESTS = sorted((ROOT / "tests" / "host").glob("test_*.c"))
+TEST_TIMEOUT_S = 120             # a hung test fails instead of blocking the run
 
 
 def find_cc(arg):
@@ -47,7 +48,11 @@ def main():
 
     san = ["-fsanitize=undefined", "-fsanitize-trap=undefined"]
     if os.name != "nt":
-        san = ["-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
+        # -fno-sanitize-recover: UBSan otherwise prints "runtime error" and
+        # lets the test exit 0 — every UB must fail the suite, as the trap does
+        # on Windows (review C8).
+        san = ["-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+               "-fno-omit-frame-pointer"]
 
     failed = []
     for t in TESTS:
@@ -66,7 +71,12 @@ def main():
         if r.stderr.strip():
             print(f"{t.name} warnings:\n{r.stderr}")
         print(f"== {t.name}", flush=True)
-        if subprocess.run([str(exe)]).returncode != 0:
+        try:
+            rc = subprocess.run([str(exe)], timeout=TEST_TIMEOUT_S).returncode
+        except subprocess.TimeoutExpired:
+            print(f"TIMEOUT: {t.name} still running after {TEST_TIMEOUT_S} s")
+            rc = -1
+        if rc != 0:
             failed.append(t.name)
     if failed:
         sys.exit(f"\nFAILED: {', '.join(failed)}")
