@@ -84,15 +84,23 @@ sensors, A×0.01 V), `0x3035` (DPF Δp sensor raw, A×5.5/255 V), `0x20F5`
 
 The standard oil-temp PID `0x5C` and the wide diesel PIDs `0x6B` (EGR temp) and
 `0x78` (EGT) are **not answered** by this E98, so the enhanced DIDs above are the
-real source. Oil pressure decodes to bar and its raw byte is shown on DIAG as
-`OILP xx=b.bb` — verify against ~2–3 bar warm idle before adding a gauge card.
+real source. Oil pressure decodes to bar; DIAG line 3 (its first view) shows
+the probe as `OILP <path> 22/<nrc> 2C/<nrc> AA/<nrc> RAW <byte>` — verify the
+raw byte against ~2–3 bar warm idle before the tile loses its `?`
+(docs/oil-pressure-test.md).
 
-## Being probed on the car (standard diesel PIDs)
+## Standard diesel PIDs: what the support maps say (not polled)
 
 No open source gives a verified formula for the LWN 2.8 diesel-emissions set, and
-the Colorado forums are paywalled. So instead of guessing scaling, the poller
-now **probes the standard J1979 diesel PIDs one per cycle** (`obd_poll_tick`
-step 6) and the DIAG page shows the **raw bytes of whichever answered**:
+the Colorado forums are paywalled. An earlier image probed the standard J1979
+diesel PIDs below one per cycle; **that probe is gone** (each unanswered PID held
+the one transaction slot for 150 ms, and 0x78 never answered). Today the ECM's
+own PID support maps are read once per power-up and shown on DIAG line 3
+(`PID 00:… 20:… 40:…`, then `60:… 80:… A0:… 5E±`, 8 hex digits per map,
+`--------` = not read): whether a PID below is supported is read off those
+bits (`obd_pid_supported()`), and only then is it worth a decoder. Their
+decoders still run on another tester's replies. The DPF values themselves come
+from the GM DIDs above (DIAG views 4 and 5, `DPF SOOT …` / `DPF OK …`).
 
 | PID | parameter | data bytes | notes |
 |---|---|---|---|
@@ -103,11 +111,9 @@ step 6) and the DIAG page shows the **raw bytes of whichever answered**:
 | `0x86` | particulate matter (soot) | 5 | scaling TBD from raw |
 | `0x6B` | EGR temperature | 5 | B−40 °C (this ECM did not answer earlier) |
 
-DIAG line 2 reads `PID xx: b0 b1 b2 …`. **Reading it on the car tells us two
-things at once:** which PIDs this ECM actually supports (only supported ones
-ever appear), and their raw bytes — from which the real scaling is derived
-against known conditions (e.g. DPF dp ≈ 0 at idle, EGT ≈ ambient cold). Then
-each gets a proper decode + gauge.
+If the maps show one of these as supported, it goes back on the scheduler for
+its raw bytes, and the scaling is derived against known conditions (e.g. DPF
+dp ≈ 0 at idle, EGT ≈ ambient cold) before it gets a decode and a gauge.
 
 Community hint to check against the raw: on the 2.8 the DPF **soot is reported
 in percent, not grams**, and one forum listed soot via `PID 8B` byte C as

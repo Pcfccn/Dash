@@ -30,8 +30,12 @@ transaction at a time:
 
 1. **`$22 A22C`** first, a plain read like the other GM DIDs (`0x1154` oil temp
    works this way). Answer `62 A2 2C A` → value.
-2. If the ECM **refuses** it (any NRC except busy `21` / conditions `22`), or
-   ignores it three times: **`$2C FE A2 2C`** defines packet `0xFE` → answer
+2. If the ECM **refuses** it twice with no answer in between (any NRC except
+   busy `21` / conditions `22`; one NRC may be another tester's `$22`, it names
+   the service, not the DID), or ignores it three times **while it answers
+   everything else** (a request that never left on one-shot TX, or one asked
+   while the ECM is silent — at ACC, still asleep — does not count; review
+   C8): **`$2C FE A2 2C`** defines packet `0xFE` → answer
    `6C FE`. **Only in the experiment build** (`OILP_DPID_ENABLE 1`, see
    below; the default road build stops at `NONE` here and never sends `$2C`
    or `$AA`), only **parked** (a fresh selector in **P** and a fresh 0 km/h —
@@ -80,7 +84,8 @@ shortens to path + raw: `SPI 3/0 R1 F0 OILP AA RAW 4B`.
 Line 3 rotates every 4 s: this probe view, then the PID support maps —
 `PID 00:BE3EB813 20:A005B011 40:FED08000`, then
 `60:........ 80:........ A0:........ 5E+` (`--------` = not read; `5E` =
-engine fuel rate, `+` yes / `-` no / `?` unknown). Wait up to 12 s for the
+engine fuel rate, `+` yes / `-` no / `?` unknown), then the two DPF views
+(`DPF SOOT …`, `DPF OK …`): five views, a 20 s cycle. Wait up to 20 s for the
 view you need.
 
 - `OILP 22 | 2C | AA | NONE` — the current step: reading with `$22`, about to
@@ -89,11 +94,11 @@ view you need.
   working `AA` is the expected picture if `$22` is refused.
 - `RAW 4B` — last raw byte (hex). `4B` = 75 × 4 kPa = 3.0 bar.
 
-The **OIL P ?** tile on DRIVE (the `?` stays until `OILP_VALIDATED 1`) shows the value in bar, in neutral blue: it is
+The **OIL P ?** tile on DRIVE (the `?` stays until `OILP_VALIDATED 1`) shows the value in bar, neutral (white on the TN palette, blue on the old one): it is
 **never a warning colour while `OILP_VALIDATED` is 0** (the default — the
 byte is the ECM's value as received, but its meaning and scaling on this
 engine are not yet confirmed). After validation it is judged only with the
-engine running (RPM ≥ 400). It is not on the alert strip; adding it there is a
+engine running (a fresh RPM ≥ 500 for 3 s, `alert.h`). It is not on the alert strip; adding it there is a
 separate decision (rpm/oil-temp context, duration, hysteresis) once real
 numbers exist.
 
@@ -102,7 +107,8 @@ numbers exist.
 **Which firmware.** The default build reads oil pressure with `$22` only. If
 DIAG then shows `OILP NONE  22/31`, the ECM wants the data-packet path: flash
 the experiment build for a KOEO session —
-`python tools/build.py -D OILP_DPID_ENABLE=1` (→ `build-oilp_dpid_enable_1/Dash.elf`),
+`python tools/build.py -D OILP_DPID_ENABLE=1` (→ `build-oilp_dpid_enable_1/Dash.elf`;
+on the carrier board add `-D BACKLIGHT_ACTIVE_LOW=0`, or its main panel stays dark),
 or set `OILP_DPID_ENABLE 1` in `cluster_config.h` for a CubeIDE build — and go
 back to the default build for everyday driving until the test has passed.
 

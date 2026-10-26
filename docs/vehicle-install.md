@@ -14,6 +14,16 @@ the HS-CAN bus through the SN65HVD230, and the bring-up sequence.
 
 ## 1. Powering the board in the car
 
+> **The build as chosen (2026-10):** a PD65W-type module (8–30 V in) feeds the
+> WeAct's **USB-C**, with a TVS and a 2 A fuse, from the **ACC wire tapped
+> directly** (no add-a-fuse), ground to a body bolt — see
+> [build-hardware.md](future/build-hardware.md) §2/§3 and
+> [harness.md](future/harness.md). On USB-C the 5 V rail sits behind D10:
+> expect ~4.6–4.8 V on the header `5V` pins, not 5.0. Toyota's ACC usually
+> drops during START, so the board restarts on every crank (`LAST RESET:
+> POWER ON` without `xN` afterwards is normal). The rest of this section is
+> the general background and the alternative of a buck on `V+`.
+
 The WeAct MiniSTM32H743 wants **3.3–5.5 V** on its 5 V/USB input (onboard DC-DC,
 ~1 A). The car's electrical system is nominally 12 V but swings **~9 V during
 cranking to ~14.8 V charging**, with much larger transient spikes (load dump).
@@ -34,8 +44,10 @@ You **cannot** feed 12 V straight in, and you **must** protect against the noise
 **Where to tap 12 V — use IGNITION-SWITCHED power, not constant:**
 
 - Tap a **switched/accessory (ACC) circuit** so the cluster powers down with the
-  car. A fuse-tap ("add-a-fuse") on an ACC fuse in the cabin fuse box is the
-  clean way.
+  car. The chosen build taps the ACC wire directly with its own inline fuse
+  (harness.md); a fuse-tap ("add-a-fuse") on an ACC fuse in the cabin fuse box
+  is the alternative. Make the tap with the key out, and keep clear of the
+  yellow SRS harness.
 - **Do NOT** power from OBD pin 16 (constant +12 V) for a permanent install — it
   never switches off and will **flatten the battery** over days. (Fine for a quick
   bench/driveway test only.)
@@ -43,9 +55,9 @@ You **cannot** feed 12 V straight in, and you **must** protect against the noise
   That's acceptable — it comes back once the alternator is up. If you want it to
   survive cranking, use a buck with a low dropout and a bulk input capacitor.
 
-**Grounding:** one common ground. The buck's ground, the board's ground, and the
-SN65HVD230's ground all tie to **vehicle chassis ground** (OBD pin 4/5 or a body
-ground bolt). Use a single star point to avoid ground loops.
+**Grounding:** one common ground. The supply's ground, the board's ground, and the
+SN65HVD230's ground all tie to **vehicle chassis ground** at a body ground bolt
+(not OBD pin 4/5 — harness.md). Use a single star point to avoid ground loops.
 
 **Where the 5 V actually connects on the board — there is NO power jack.** Per the
 WeAct V1.2 schematic the power path is:
@@ -65,7 +77,8 @@ Feed the buck's output into the board's supply input:
 - The `3V3` pins are the regulator **output** — do NOT inject supply there.
   `VBAT` is RTC backup only (BAT54C), not a power input.
 - USB is **diode-isolated** from the 5 V rail by D10, so external 5 V can't
-  back-feed the USB port — but still cleanest to run one source at a time.
+  back-feed the USB port — but run one source at a time. (In the chosen build
+  USB-C *is* the supply input and `V+` stays unused.)
 - Multimeter sanity check: `V+` ↔ header `5V` = continuity (same rail); `V+` ↔
   `3V3` = none (post-regulator); `V+` ↔ USB-C 5 V = reads through D10 as a diode
   drop (~0.2-0.3 V), NOT a dead short — that's normal.
@@ -145,10 +158,13 @@ It is an **active diagnostic node** (it transmits requests, like any scan tool)
 that never writes calibrations, memory or actuators and **never clears codes**
 (no mode 04). Requests:
 
-- **Reads:** OBD mode 01 live data, and `$22` (ReadDataByIdentifier) for the
-  GM DIDs: ATF temp and gear on `0x7E2`, oil temp `0x1154` and oil pressure
-  `0xA22C` on `0x7E0`. Mode 03/07 (DTC lists) is not requested; the DTC count
-  comes from PID `0x01`.
+- **Reads:** OBD mode 01 live data and, once per power-up, the ECM's PID
+  support maps (mode 01 PIDs `0x00`, `0x20` … `0xC0`); `$22`
+  (ReadDataByIdentifier) for the GM DIDs: ATF temp and gear on `0x7E2`; oil
+  temp `0x1154`, oil pressure `0xA22C` and the DPF probe (soot `0x336A`, ∆P
+  `0x20F4`, regen `0x20F6`, since-regen `0x3039`, one per slow slot) on
+  `0x7E0`. Mode 03/07 (DTC lists) is not requested; the DTC count comes from
+  PID `0x01`.
 - **One volatile configuration, for oil pressure only:** if the ECM refuses
   `$22 A22C`, GMLAN `$2C FE A22C` defines diagnostic data packet `0xFE` in ECM
   RAM (gone at the next ECM reset), then `$AA 01 FE` reads it. This is **not a
@@ -187,9 +203,11 @@ Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
   `0x7E2` work; oil temp comes from DID `0x1154`; EGR temp `0x6B`, EGT `0x78`
   and oil temp `0x5C` are not supported by this E98. **Oil pressure** (PID
   `0xA22C`) is wired but not yet seen in the car — `docs/oil-pressure-test.md`.
-  **DPF soot %, DPF ΔP and distance-since-regen are not polled**; ScanGauge's
-  LWN 2.8 list reads them the same `$2C`/`$AA` way as oil pressure, a candidate
-  once oil pressure is confirmed.
+  **DPF soot %, ∆P, regen and distance-since-regen** are polled again as a
+  DIAG probe (2026-10-23, DIDs from the Astra-K list, `docs/enhanced-dids.md`):
+  DIAG line 3 shows the values and answered/asked counts per DID; no gauge or
+  alarm until the counts show they answer reliably. (ScanGauge's LWN 2.8 list
+  reads them the `$2C`/`$AA` way, as for oil pressure — the fallback.)
 - **Main-display backlight polarity.** The Si4599 **P-channel** (high-side)
   MOSFET conducts while PA8 is LOW. `app_main.c` handles that with
   `BACKLIGHT_ACTIVE_LOW 1`: `backlight_set()` takes **brightness** (100 = full,
@@ -197,7 +215,8 @@ Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
   Still to measure on the bench: gate–source voltage at 0/50/100 %. From a 3.3 V
   pin with the FET source on 5 V, "off" is only Vgs ≈ −1.7 V and may not fully
   close the FET, so dimming can be weak; the fix is a small NPN/N-FET stage
-  pulling the gate (then set `BACKLIGHT_ACTIVE_LOW 0`).
+  pulling the gate — the carrier board's 2N7000 (build-hardware.md §3), whose
+  image is `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0` (`ROAD INV`).
 - **Mounting:** secure the board and modules, insulate exposed pins (no shorts to
   chassis), and keep the LCDs out of direct sun-baked dash heat where possible.
 
@@ -207,8 +226,9 @@ Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
 
 ### Power distribution
 
-Everything hangs off the WeAct board — the buck feeds ONLY the board's `5V`
-pin, exactly like USB does now.
+Everything hangs off the WeAct board. Drawn here for the buck-on-`V+`
+alternative; the chosen build feeds the same 5 V net through USB-C and D10
+(section 1).
 
 ```
 Car 12 V  (IGNITION/ACC, inline fuse 2-3 A)
@@ -217,7 +237,7 @@ Car 12 V  (IGNITION/ACC, inline fuse 2-3 A)
              +5V │              │ GND
                  ▼              ▼
         WeAct pin `5V`     WeAct pin `GND`
-        (= USB 5V net, no protection — do NOT also plug in USB)
+        (5 V net after D10: no other protection — one source at a time)
                  │
     ── on the board, already wired ─────────────────────────────
         board passes 5 V ───────────►  4" backlight LED+  (5 V)
@@ -235,15 +255,18 @@ GND: one common star ground — buck GND · WeAct GND · display GND · transcei
 |---|---|---|
 | PB13 | SPI2 SCK | 4" ILI9488 **SCK** |
 | PB15 | SPI2 MOSI | 4" **SDI/MOSI** |
-| PB14 | SPI2 MISO | 4" **SDO/MISO** (optional — panel is write-only; may leave off) |
+| PB14 | (SPI2 MISO) | **not wired** — the firmware drives SPI2 TX-only (1-line); `-D LCD_PROBE=1` tells the controller without it |
 | PC0 | GPIO | 4" **CS** |
 | PC4 | GPIO | 4" **DC/RS** |
 | PC5 | GPIO | 4" **RESET** |
-| PA8 | TIM1_CH1 PWM | **Si4599 gate** (backlight; active-LOW for the P-FET) |
+| PA8 | TIM1_CH1 PWM | breadboard: **Si4599 gate** (active-LOW, default image); carrier board: **2N7000 gate** through R (`ROAD INV`) |
 | PD1 | FDCAN1_TX | SN65HVD230 **TXD/D** |
 | PD0 | FDCAN1_RX | SN65HVD230 **RXD/R** |
 | — | CAN bus | SN65HVD230 **CANH → OBD pin 6**, **CANL → OBD pin 14** (twisted pair) |
 | — | transceiver mode | SN65HVD230 **Rs → GND** (high-speed) |
+| PA2 / PA3 | USART2 TX / RX | GPS module **RX / TX** (ATGM336H, 3V3 only) |
+| PE7 / PE8 / PE9 | GPIO, EXTI, pull-up | buttons **▶ ● ◀** to GND (1 k series, build-hardware.md §6c) |
+| PE15 | GPIO, EXTI, pull-up | parking-light sense (BC547 collector; LOW = lights on) |
 
 **On-board already, nothing to wire:** 0.96" ST7735 status screen (SPI4: SCK PE12,
 MOSI PE14, CS PE11, DC PE13, backlight PE10), KEY button (PC13), heartbeat LED (PE3).
