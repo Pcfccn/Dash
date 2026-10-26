@@ -110,9 +110,11 @@ static void mil_attempt_failed(void) {
  * The byte is the ECM's value as received; whether it is the true pressure is
  * for docs/oil-pressure-test.md to show (OILP_VALIDATED). */
 #define OILP_MISS22_MAX 3u      /* unanswered $22 A22C before trying $2C/$AA   */
+#define REFUSED_MAX     2u      /* refusals of a $22 DID in a row before "no"   */
 static struct {                 /* file scope: the host tests reset it          */
     uint8_t mode;               /* obd_oilp_mode_t                              */
     uint8_t miss22;
+    uint8_t refused22;          /* NRCs (not busy / conditions) for $22 A22C    */
     uint8_t defines;            /* $2C requests sent since power-up             */
     uint8_t nrc22, nrc2c, nrcaa;
     bool    have_raw;
@@ -128,6 +130,7 @@ static const uint16_t DPF_DID[DPF_N] = { 0x336Au, 0x20F4u, 0x20F6u, 0x3039u };
 static struct {
     obd_dpf_t pub;
     uint8_t   miss_run[DPF_N];
+    uint8_t   refused_run[DPF_N];
     uint8_t   next;             /* rotation position                            */
 } dpf = { .pub = { .val = { NAN, NAN, NAN, NAN } } };   /* never answered      */
 
@@ -185,6 +188,28 @@ static volatile uint16_t txn_cap_cnt;   /* transactions ended by OBD_TXN_MAX_MS 
 
 static volatile uint16_t tx_fail_cnt;   /* frames the TX FIFO refused           */
 
+/* Did the open transaction's request reach the ECM at all? Its frames' TX
+ * buffers (request, Flow Control) are watched: one that ended "cancelled"
+ * (one-shot TX lost to arbitration / a bus error, or nobody ACKed it) means
+ * the ECM never saw the question. And the ECM must be talking: at ACC, or
+ * with the ECM still asleep, every request times out whatever it asks. Only
+ * a miss that passes both counts against a PID or DID — the give-ups below
+ * last the whole power-up (review C8). */
+#define ECM_ALIVE_MS 500u       /* ECM heard this recently: it is answering    */
+static uint32_t last_txbuf;     /* buffer bit of the frame can_send() queued    */
+static uint32_t await_txbuf;    /* buffers carrying the open transaction        */
+static bool     await_tx_lost;  /* ... one of them was not sent                 */
+static bool     ecm_heard;
+static uint32_t ecm_heard_ms;   /* receive time of the ECM's latest frame       */
+static void tx_outcome(void);
+static void pidsup_failed(void);
+
+static bool miss_counts(void) {
+    tx_outcome();                        /* the outcome of our last frames      */
+    if (await_tx_lost) return false;
+    return ecm_heard && (int32_t)(HAL_GetTick() - ecm_heard_ms) <= (int32_t)ECM_ALIVE_MS;
+}
+
 static void txn_close(void) {
     await_resp_id = 0u;
     itp_active    = false;
@@ -200,7 +225,10 @@ static void oilp_refused(uint8_t nrc) {
         case 0x22:
             if (await_key != OILP_PID) break;
             oilp.nrc22 = nrc;
-            if (!retry) oilp.mode = OILP_AFTER_22;
+            /* Twice with no answer in between: an NRC names the service, not
+             * the DID, so one refusal may be another tester's $22 landing in
+             * our window. */
+            if (!retry && ++oilp.refused22 >= REFUSED_MAX) oilp.mode = OILP_AFTER_22;
             break;
         case 0x2C: oilp.nrc2c = nrc; if (!retry) oilp.mode = OILP_NONE; break;
         case 0xAA: oilp.nrcaa = nrc; oilp.mode = OILP_DEFINE;          break;
@@ -209,21 +237,24 @@ static void oilp_refused(uint8_t nrc) {
 }
 
 /* ... and after no answer at all. An ECM that ignores $22 A22C three times is
- * treated like one that refuses it; a lost $AA answer re-defines the packet. */
-static void oilp_failed(void) {
+ * treated like one that refuses it; a lost $AA answer re-defines the packet.
+ * A $2C that never reached the ECM does not use up one of the defines. */
+static void oilp_failed(bool counts) {
     if (await_sid == 0x22 && await_key == OILP_PID) {
-        if (++oilp.miss22 >= OILP_MISS22_MAX) oilp.mode = OILP_AFTER_22;
+        if (counts && ++oilp.miss22 >= OILP_MISS22_MAX) oilp.mode = OILP_AFTER_22;
     } else if (await_sid == 0xAA) {
         oilp.mode = OILP_DEFINE;
+    } else if (await_sid == 0x2C && await_tx_lost && oilp.defines > 0u) {
+        oilp.defines--;
     }
 }
 
 /* DPF probe after no answer, and after a refusal, of our $22 request. Busy
- * (0x21) and conditions-not-correct (0x22) are asked again; any other NRC
- * means this ECM has no such DID. */
-static void dpf_failed(void) {
+ * (0x21) and conditions-not-correct (0x22) are asked again; any other NRC,
+ * twice in a row (see oilp_refused), means this ECM has no such DID. */
+static void dpf_failed(bool counts) {
     int i = (await_sid == 0x22) ? dpf_index(await_key) : -1;
-    if (i < 0) return;
+    if (i < 0 || !counts) return;
     if (++dpf.miss_run[i] >= DPF_MISS_MAX) dpf.pub.state[i] = DPF_SILENT;
 }
 static void dpf_refused(uint8_t nrc) {
@@ -231,15 +262,18 @@ static void dpf_refused(uint8_t nrc) {
     if (i < 0) return;
     dpf.pub.nrc[i] = nrc;
     dpf.miss_run[i] = 0;
-    if (nrc != 0x21u && nrc != 0x22u) dpf.pub.state[i] = DPF_REFUSED;
+    if (nrc != 0x21u && nrc != 0x22u && ++dpf.refused_run[i] >= REFUSED_MAX)
+        dpf.pub.state[i] = DPF_REFUSED;
 }
 
 /* The transaction ended without an answer (timeout, refused Flow Control,
  * malformed or unusable reply). */
 static void txn_failed(void) {
+    bool counts = miss_counts();
     if (await_sid == 0x01 && await_key == 0x01) mil_attempt_failed();
-    oilp_failed();
-    dpf_failed();
+    if (counts) pidsup_failed();
+    oilp_failed(counts);
+    dpf_failed(counts);
     txn_close();
 }
 
@@ -332,6 +366,7 @@ static void tx_outcome(void) {
     uint32_t done = tx_watch & ~hfd->Instance->TXBRP;          /* no longer pending */
     if (done == 0u) return;
     uint32_t lost = done & hfd->Instance->TXBCF & ~hfd->Instance->TXBTO;
+    if (await_resp_id != 0u && (lost & await_txbuf) != 0u) await_tx_lost = true;
     for (; lost != 0u; lost &= lost - 1u)
         if (tx_lost_cnt < 0xFFFFu) tx_lost_cnt++;
     tx_watch &= ~done;
@@ -355,7 +390,8 @@ static bool can_send(uint32_t req_id, const uint8_t *data8) {
         if (tx_fail_cnt < 0xFFFFu) tx_fail_cnt++;
         return false;
     }
-    tx_watch |= HAL_FDCAN_GetLatestTxFifoQRequestBuffer(hfd);
+    last_txbuf = HAL_FDCAN_GetLatestTxFifoQRequestBuffer(hfd);
+    tx_watch  |= last_txbuf;
     return true;
 }
 
@@ -374,6 +410,8 @@ static bool request(uint32_t req_id, const uint8_t *d, uint8_t sid, uint16_t key
     await_sid      = sid;
     await_key      = key;
     await_npids    = 0u;
+    await_txbuf    = last_txbuf;
+    await_tx_lost  = false;
     return true;
 }
 
@@ -464,15 +502,16 @@ static bool req_oilp(void) {
  * 0x9D / 0xA2 decides how fuel consumption can be measured
  * (docs/future/gps-odometer-fuel.md). Only advertised maps are asked for. An
  * unanswered request is repeated after PIDSUP_RETRY_MS (the ECM may still be
- * asleep at ACC) and the probe gives up after PIDSUP_TRIES requests in a row
- * without a map. A map in another tester's reply is taken as well. */
+ * asleep at ACC) and the probe gives up after PIDSUP_TRIES counted misses in a
+ * row (miss_counts(): reached the bus, ECM talking) without a map. A map in
+ * another tester's reply is taken as well. */
 #define PIDSUP_N        7u
 #define PIDSUP_RETRY_MS 5000u
 #define PIDSUP_TRIES    6u
 static struct {
     uint32_t mask[PIDSUP_N];
     uint8_t  have;              /* bit r: mask[r] (PIDs 0x20*r+1 ...) read   */
-    uint8_t  tries;             /* requests since the last map arrived        */
+    uint8_t  tries;             /* counted misses since the last map arrived  */
     bool     done;              /* nothing more to ask                        */
     bool     gave_up;           /* ... because the ECM stopped answering      */
     uint32_t retry_at;          /* no request before this HAL tick            */
@@ -498,9 +537,18 @@ static bool req_pidsup(uint32_t now) {
     uint8_t base;
     if (pidsup.done || (int32_t)(now - pidsup.retry_at) < 0 || !pidsup_next(&base)) return false;
     if (pidsup.tries >= PIDSUP_TRIES) { pidsup.done = pidsup.gave_up = true; return false; }
-    pidsup.tries++;
+    if (!req_mode01(&base, 1)) return false;     /* TX refused: next slot, no try used */
     pidsup.retry_at = now + PIDSUP_RETRY_MS;
-    return req_mode01(&base, 1);
+    return true;
+}
+
+/* A map request went unanswered and the miss counts (miss_counts()): one try
+ * used. Counted here, not at sending, so a request that never reached the
+ * ECM, or one asked while the ECM is silent, does not use one up. */
+static void pidsup_failed(void) {
+    if (await_sid == 0x01 && await_npids == 1u && pidsup_is_map((uint8_t)await_key) &&
+        pidsup.tries < 0xFFu)
+        pidsup.tries++;
 }
 
 static void pidsup_store(uint8_t base, const uint8_t *v) {
@@ -534,7 +582,9 @@ int8_t obd_pid_supported(uint8_t pid) {
 /* Flow Control: clear-to-send, no block, no separation */
 static bool send_flow_control(uint32_t resp_id) {
     uint8_t d[8] = { 0x30, 0x00, 0x00, 0,0,0,0,0 };
-    return can_send(resp_id - 8u, d); /* request id = response id - 8          */
+    if (!can_send(resp_id - 8u, d)) return false;   /* request id = response id - 8 */
+    await_txbuf |= last_txbuf;       /* part of the open transaction            */
+    return true;
 }
 
 /* =============================== decode ================================== */
@@ -560,7 +610,7 @@ bool obd_mil_fresh(const volatile obd_data_t *d, uint32_t now) {
 }
 
 static void oilp_value(uint8_t a) {
-    oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0;
+    oilp.raw = a; oilp.have_raw = true; oilp.miss22 = 0; oilp.refused22 = 0;
     /* 0xFF would be 10.2 bar, the top of the byte and far above any pump
      * relief: a saturated / no-data code, not a reading. It also ends the
      * previous reading at once — leaving it, a 4.0 bar from a second ago
@@ -582,6 +632,7 @@ void obd_oilp_probe(obd_oilp_probe_t *p) {
 static void dpf_value(uint8_t i, float v) {
     dpf.pub.upd_ms[i] = rx_ms_cur;
     dpf.miss_run[i] = 0;
+    dpf.refused_run[i] = 0;
     if (dpf.pub.ok[i] < 0xFFFFu) dpf.pub.ok[i]++;
     bool same = (isnan(v) && isnan(dpf.pub.val[i])) || dpf.pub.val[i] == v;
     if (!same) { dpf.pub.val[i] = v; obd_on_update(); }
@@ -605,12 +656,15 @@ static float    last_map_kpa = NAN;
 static float    baro_kpa     = NAN;
 static uint32_t map_upd_ms;
 
-static void update_boost(void) {
+static void update_boost(bool from_map) {
     if (isnan(last_map_kpa) || isnan(baro_kpa)) return;
     float bar = (last_map_kpa - baro_kpa) / 100.0f;
     if (bar < 0.0f) bar = 0.0f;      /* vacuum: not meaningful on this gauge   */
     if (g_obd.boost != bar) { g_obd.boost = bar; obd_on_update(); }
     g_obd.upd_ms[M_BOOST] = map_upd_ms;
+    /* STATS (review C8): one stamp per MAP reading — a baro reading only
+     * recomputes the gauge, it is not a new boost sample. */
+    if (from_map) obd_on_stamp((uint8_t)M_BOOST, bar, map_upd_ms);
 }
 
 /* Data bytes after each mode-01 PID we decode (SAE J1979). Any other PID has
@@ -660,8 +714,8 @@ static bool decode_mode01(const uint8_t *p, uint16_t n) {
             case 0x0F: set_m(M_IAT, &g_obd.iat,     v[0] - 40);                       break;
             case 0x04: set_m(M_LOAD, &g_obd.load,    v[0] * 100.0f / 255.0f);          break;
             case 0x0B: last_map_kpa = (float)v[0]; map_upd_ms = rx_ms_cur;
-                       update_boost();                                     break; /* absolute MAP, kPa */
-            case 0x33: baro_kpa     = (float)v[0]; update_boost();             break; /* barometric, kPa   */
+                       update_boost(true);                                 break; /* absolute MAP, kPa */
+            case 0x33: baro_kpa     = (float)v[0]; update_boost(false);        break; /* barometric, kPa   */
             case 0x23: set_m(M_RAIL, &g_obd.rail,    ((v[0] * 256) + v[1]) / 10.0f);   break; /* bar */
             /* Exhaust gas temperature, 9 data bytes: v[0] = supported-sensor bit
              * mask, then FOUR 2-byte sensors. Sensor 1 is v[1],v[2] as (x/10)-40,
@@ -741,7 +795,7 @@ static bool decode_mode22(uint32_t resp_id, const uint8_t *p, uint16_t n) {
             if (g_obd.gear_raw != A) { g_obd.gear_raw = A; obd_on_update(); }
             int8_t g = (int8_t)A;
             if (g_obd.gear != g) { g_obd.gear = g; obd_on_update(); }
-            obd_on_stamp((uint8_t)M_GEAR, (float)g, rx_ms_cur);
+            obd_on_stamp((uint8_t)M_GEAR, g >= 0 ? (float)g : NAN, rx_ms_cur);   /* -1: no gear */
             break;
         }
         default: break;
@@ -937,7 +991,7 @@ void obd_rx_poll(void) {
             int8_t r = (d[3] >= 1 && d[3] <= 4) ? (int8_t)d[3] : -1;
             g_obd.sel_upd_ms = rx_ms_cur;
             if (g_obd.sel_range != r) { g_obd.sel_range = r; obd_on_update(); }
-            obd_on_stamp(OBD_STAMP_SEL, (float)r, rx_ms_cur);
+            obd_on_stamp(OBD_STAMP_SEL, r >= 0 ? (float)r : NAN, rx_ms_cur);     /* -1: no range */
             continue;
         }
 
@@ -949,6 +1003,7 @@ void obd_rx_poll(void) {
             if (dlc < 2u) { rx_bad(); continue; }
             last_rx_ms = rx_ms_cur;
             g_obd.can_ok = true;
+            ecm_heard = true; ecm_heard_ms = rx_ms_cur;
             if (await_resp_id != 0u && await_sid == 0xAA && d[0] == (uint8_t)await_key &&
                 arrived_in_time(await_deadline)) {
                 oilp_value(d[1]);
@@ -967,6 +1022,7 @@ void obd_rx_poll(void) {
         if (dlc < 1u) { rx_bad(); continue; }
         last_rx_ms = rx_ms_cur;
         g_obd.can_ok = true;
+        if (rh.Identifier == OBD_RESP_ECM) { ecm_heard = true; ecm_heard_ms = rx_ms_cur; }
 
         uint8_t pci = d[0] >> 4;
         if (pci == 0x0) {                       /* Single Frame                */
@@ -1201,8 +1257,12 @@ void obd_poll_tick(void) {
     if (await_resp_id != 0u) {
         uint32_t now      = HAL_GetTick();
         uint32_t deadline = itp_active ? itp_deadline : await_deadline;
-        bool     capped   = (int32_t)(now - (await_start + OBD_TXN_MAX_MS)) >= 0;
-        if (capped && txn_cap_cnt < 0xFFFFu) txn_cap_cnt++;
+        uint32_t cap_at   = await_start + OBD_TXN_MAX_MS;
+        bool     capped   = (int32_t)(now - cap_at) >= 0;
+        /* CAP counts only a transaction the cap cut short (NRC 0x78 pushed its
+         * deadline past it), not one whose own deadline had passed long ago —
+         * e.g. left open while SNIFF suspended the poller (review C8). */
+        if (capped && (int32_t)(deadline - cap_at) >= 0 && txn_cap_cnt < 0xFFFFu) txn_cap_cnt++;
         if (capped || (int32_t)(now - deadline) >= 0) txn_failed();
         if (await_resp_id != 0u) return;    /* still outstanding: send nothing   */
     }
@@ -1212,10 +1272,12 @@ void obd_poll_tick(void) {
     bool fast = false;
     if (sched.tick % SLOW_DIV == 0u) {
         req_mode22(OBD_REQ_ECM, 0x1154);                    /* engine oil temp      */
-    } else if (sched.tick % SLOW_DIV == SLOW_DIV / 2u && (req_pidsup(HAL_GetTick()) || req_dpf())) {
-        /* one PID support map per slow slot until all are read, then DPF */
+    } else if (sched.tick % SLOW_DIV == SLOW_DIV / 2u &&
+               (req_pidsup(HAL_GetTick()) || (pidsup.done && req_dpf()))) {
+        /* one PID support map per slow slot until all are read (or given up
+         * on), then DPF — not in the 5 s between two map retries */
     } else if (sched.tick % MED_DIV == 0u) {
-        switch (sched.med_idx % N_MED) {
+        switch (sched.med_idx) {
             case 0: req_mode01(misc,  sizeof misc);          break; /* rail, batt       */
             case 1: req_mode22(OBD_REQ_TCM2, 0x1940);       break; /* ATF temp         */
             case 2: req_mode22(OBD_REQ_TCM2, 0x199A);       break; /* gear             */
@@ -1224,7 +1286,7 @@ void obd_poll_tick(void) {
             case 5: req_mode01(fastB, sizeof fastB);         break; /* load, baro       */
             case 6: fast = !req_oilp();                     break; /* oil pressure     */
         }
-        sched.med_idx++;
+        sched.med_idx = (uint8_t)((sched.med_idx + 1u) % N_MED);   /* 256 % 7 != 0 */
     } else {
         fast = true;
     }

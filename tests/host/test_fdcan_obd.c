@@ -208,10 +208,16 @@ static void reset(void)
     memset(&fdregs, 0, sizeof fdregs);
     hmock.Instance = &fdregs;
     tx_put = 0; tx_latest = 0; tx_hold = false; tx_watch = 0; tx_lost_cnt = 0;
+    last_txbuf = 0; await_txbuf = 0; await_tx_lost = false;
+    ecm_heard = false; ecm_heard_ms = 0;          /* the ECM has said nothing yet */
     obd_init(&hmock);
 }
 
 static bool near(float a, float b) { return fabsf(a - b) < 0.01f; }
+
+/* The ECM is answering something (other requests, another tester): what
+ * miss_counts() needs before a silence may count against a PID or DID. */
+static void ecm_talks(void) { ecm_heard = true; ecm_heard_ms = now_ms; }
 
 /* ---------------------------------------------------------------- tests */
 static void t_sf_rpm(void)
@@ -591,6 +597,10 @@ static void t_oilp_22_refused_then_dpid(void)
     CHECK(req_oilp());
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
     obd_rx_poll();
+    CHECK(oilp.mode == OILP_VIA22 && oilp.nrc22 == 0x31);   /* once: maybe not ours */
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
     CHECK(oilp.mode == OILP_DEFINE && oilp.nrc22 == 0x31);
     CHECK(await_resp_id == 0);
 
@@ -678,12 +688,54 @@ static void t_oilp_22_silent_falls_back(void)
 {
     for (unsigned i = 0; i < OILP_MISS22_MAX; i++) {
         CHECK(oilp.mode == OILP_VIA22);
+        ecm_talks();                                    /* the ECM answers the rest */
         CHECK(req_oilp());
         now_ms += OBD_AWAIT_MS;
         obd_poll_tick();                                /* times out (and sends the next) */
         await_resp_id = 0;
     }
     CHECK(oilp.mode == OILP_AFTER_22);
+}
+
+/* Review C8: with the ECM silent (ACC, still asleep) an unanswered $22 A22C
+ * says nothing about A22C - oil pressure keeps being asked. Once the ECM
+ * talks, its silence on A22C does count. */
+static void t_c8_silent_ecm_is_not_a_miss(void)
+{
+    for (unsigned i = 0; i < 3u * OILP_MISS22_MAX; i++) {
+        CHECK(req_oilp());
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        await_resp_id = 0;
+    }
+    CHECK(oilp.mode == OILP_VIA22 && oilp.miss22 == 0u);
+    for (unsigned i = 0; i < OILP_MISS22_MAX; i++) {
+        ecm_talks();
+        CHECK(req_oilp());
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        await_resp_id = 0;
+    }
+    CHECK(oilp.mode == OILP_AFTER_22);
+}
+
+/* Review C8: a request lost on one-shot TX (buffer ended TXBCF) never reached
+ * the ECM - not a miss, even with the ECM talking. Still counted as TXL. */
+static void t_c8_lost_tx_is_not_a_miss(void)
+{
+    tx_hold = true;
+    for (unsigned i = 0; i < 3u * OILP_MISS22_MAX; i++) {
+        ecm_talks();
+        CHECK(req_oilp());
+        tx_finish(tx_latest, false);                    /* cancelled, never on air */
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        await_resp_id = 0;
+    }
+    CHECK(oilp.mode == OILP_VIA22 && oilp.miss22 == 0u);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.tx_lost >= 3u * OILP_MISS22_MAX);
 }
 
 /* 0xFF is the top of the byte (10.2 bar): a no-data code, never a reading. */
@@ -762,11 +814,16 @@ static void t_oilp_lost_read_redefines(void)
     CHECK(oilp.mode == OILP_DEFINE && oilp.nrcaa == 0x31);
 }
 #else
-/* OILP_DPID_ENABLE 0: a refused $22 ends the search; nothing else is ever
- * sent for oil pressure (the TX mock fails any $2C / $AA). */
+/* OILP_DPID_ENABLE 0: a refused $22 (twice: one NRC may be another
+ * tester's) ends the search; nothing else is ever sent for oil pressure (the
+ * TX mock fails any $2C / $AA). */
 static void t_oilp_off_never_defines(void)
 {
     park();
+    CHECK(req_oilp());
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(oilp.mode == OILP_VIA22);
     CHECK(req_oilp());
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
     obd_rx_poll();
@@ -1572,10 +1629,11 @@ static void t_sniff_pauses_polling(void)
 static uint32_t ps_maps[7];
 static int      ps_answer_upto;      /* maps with index below this are answered */
 static int      ps_req[7];           /* map requests seen, per index            */
-static void ps_run(int iters, uint32_t step_ms)
+static void ps_run(int iters, uint32_t step_ms, bool ecm_alive)
 {
     for (int i = 0; i < iters; i++) {
         tx_n = 0;
+        if (ecm_alive) ecm_talks();
         now_ms += step_ms;
         obd_poll_tick();
         for (int k = 0; k < tx_n; k++) {
@@ -1602,7 +1660,7 @@ static void t_pidsup_reads_advertised_chain(void)
     ps_maps[1] = 0x80018001u;         /* bit 0: 0x40 map exists                     */
     ps_maps[2] = 0x40000004u;         /* 0x5E (bit 2) yes, 0x5D no; no 0x60 map     */
     ps_answer_upto = 7;
-    ps_run(3000, 10);
+    ps_run(3000, 10, false);
     CHECK(ps_req[0] == 1 && ps_req[1] == 1 && ps_req[2] == 1);
     CHECK(ps_req[3] == 0);                         /* 0x60 never advertised       */
     obd_pid_support_t ps;
@@ -1615,13 +1673,13 @@ static void t_pidsup_reads_advertised_chain(void)
     CHECK(obd_pid_supported(0x61) == 0);           /* range not advertised: no    */
 }
 
-/* An ECM that never answers is asked PIDSUP_TRIES times, then left alone; its
- * PIDs stay unknown, not "unsupported". */
+/* An ECM that answers everything but the maps is asked PIDSUP_TRIES times,
+ * then left alone; its PIDs stay unknown, not "unsupported". */
 static void t_pidsup_gives_up_unanswered(void)
 {
     memset(ps_req, 0, sizeof ps_req);
     ps_answer_upto = 0;
-    ps_run(12000, 10);                             /* 120 s */
+    ps_run(12000, 10, true);                       /* 120 s */
     CHECK(ps_req[0] == (int)PIDSUP_TRIES);
     obd_pid_support_t ps;
     obd_pid_support(&ps);
@@ -1629,15 +1687,34 @@ static void t_pidsup_gives_up_unanswered(void)
     CHECK(obd_pid_supported(0x0C) == -1);
 }
 
-/* An unanswered map request is repeated no sooner than PIDSUP_RETRY_MS. */
+/* An unanswered map request is repeated no sooner than PIDSUP_RETRY_MS. A
+ * request the TX FIFO refused uses no try and no wait. */
 static void t_pidsup_retry_waits(void)
 {
     uint32_t t0 = now_ms;
+    ecm_talks();
     CHECK(req_pidsup(t0));
-    txn_failed();                                  /* no answer                   */
+    txn_failed();                                  /* no answer, ECM talking      */
+    CHECK(pidsup.tries == 1u);
     CHECK(!req_pidsup(t0 + PIDSUP_RETRY_MS - 1u)); /* too early                   */
+    tx_status = HAL_ERROR;
+    CHECK(!req_pidsup(t0 + PIDSUP_RETRY_MS));      /* refused by the TX FIFO      */
+    CHECK(pidsup.tries == 1u && pidsup.retry_at == t0 + PIDSUP_RETRY_MS);
+    tx_status = HAL_OK;
     CHECK(req_pidsup(t0 + PIDSUP_RETRY_MS));
-    CHECK(pidsup.tries == 2u);
+}
+
+/* Review C8: with the ECM silent (ACC) the maps are retried every
+ * PIDSUP_RETRY_MS for as long as it takes - never given up on. */
+static void t_c8_pidsup_silent_ecm_keeps_trying(void)
+{
+    memset(ps_req, 0, sizeof ps_req);
+    ps_answer_upto = 0;
+    ps_run(12000, 10, false);                      /* 120 s */
+    obd_pid_support_t ps;
+    obd_pid_support(&ps);
+    CHECK(!ps.done && !ps.gave_up && pidsup.tries == 0u);
+    CHECK(ps_req[0] > 2 * (int)PIDSUP_TRIES);        /* still asking, every 5-7 s */
 }
 
 /* A map in any ECM reply counts (another tester asking), and the 4-byte map
@@ -1728,15 +1805,23 @@ static void t_dpf_polled_in_slow_slot(void)
     CHECK(seen_rpm);
 }
 
-/* requestOutOfRange: this ECM has no such DID, never ask again. Busy: ask
- * again. The others go on. */
+/* requestOutOfRange, twice with no answer in between (one NRC may be
+ * another tester's $22): this ECM has no such DID, never ask again. Busy:
+ * ask again. The others go on. */
 static void t_dpf_refusal_stops_asking(void)
 {
-    CHECK(req_dpf());                                         /* 0x336A first  */
+    CHECK(req_dpf() && await_key == 0x336A);                  /* 0x336A first  */
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
     obd_rx_poll();
     CHECK(await_resp_id == 0);
-    CHECK(req_dpf());                                         /* 0x20F4        */
+    obd_dpf_t d1;
+    obd_dpf(&d1);
+    CHECK(d1.state[DPF_SOOT] == DPF_ASKING && d1.nrc[DPF_SOOT] == 0x31);
+    dpf.next = 0;                                             /* soot again    */
+    CHECK(req_dpf() && await_key == 0x336A);
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    CHECK(req_dpf() && await_key == 0x20F4);                  /* 0x20F4        */
     PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x21, 0x00, 0x00, 0x00, 0x00);  /* busy */
     obd_rx_poll();
     obd_dpf_t d;
@@ -1756,6 +1841,7 @@ static void t_dpf_refusal_stops_asking(void)
  * alone; an answer in between restarts the count. */
 static void t_dpf_silence_gives_up(void)
 {
+    ecm_talks();                                              /* silence counts */
     dpf.pub.state[DPF_DP] = dpf.pub.state[DPF_REGEN] = dpf.pub.state[DPF_SINCE] = DPF_REFUSED;
     for (unsigned k = 0; k + 1u < DPF_MISS_MAX; k++) {
         CHECK(req_dpf() && await_key == 0x336A);
@@ -1775,6 +1861,104 @@ static void t_dpf_silence_gives_up(void)
     obd_dpf(&d);
     CHECK(d.state[DPF_SOOT] == DPF_SILENT);
     CHECK(!req_dpf());                                        /* none left     */
+}
+
+/* Review C8: one refusal, then an answer: the refusal was not about this
+ * DID (another tester's $22), so it is still asked. */
+static void t_c8_dpf_one_refusal_then_answer(void)
+{
+    CHECK(req_dpf() && await_key == 0x336A);
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    dpf.next = 0;
+    CHECK(req_dpf() && await_key == 0x336A);
+    PUSH(0x7E8, 8, 0x04, 0x62, 0x33, 0x6A, 0x10, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    dpf.next = 0;
+    CHECK(req_dpf() && await_key == 0x336A);
+    PUSH(0x7E8, 8, 0x03, 0x7F, 0x22, 0x31, 0x00, 0x00, 0x00, 0x00);
+    obd_rx_poll();
+    obd_dpf_t d;
+    obd_dpf(&d);
+    CHECK(d.state[DPF_SOOT] == DPF_ASKING && d.ok[DPF_SOOT] == 1u);
+}
+
+/* Review C8: the DPF DIDs wait until the PID maps are read (or given up on);
+ * between two map retries the slot is not theirs. */
+static int dpf_requests(int ticks)
+{
+    int n = 0;
+    for (int t = 0; t < ticks; t++) {
+        tx_n = 0;
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[1] == 0x22 && dpf_index((uint16_t)((q[2] << 8) | q[3])) >= 0) n++;
+        }
+    }
+    return n;
+}
+static void t_c8_dpf_waits_for_maps(void)
+{
+    CHECK(dpf_requests(16 * 40) == 0 && !pidsup.done);
+    pidsup.done = true;
+    CHECK(dpf_requests(16 * 8) > 0);
+}
+
+/* Review C8: a request left open while SNIFF suspended the poller times out
+ * as usual afterwards - not a CAP (that is for NRC 0x78 storms). */
+static void t_c8_cap_not_counted_after_sniff(void)
+{
+    CHECK(req_oilp());
+    sniff_on = true;
+    now_ms += OBD_TXN_MAX_MS + 5000u;
+    obd_poll_tick();                                  /* suspended: nothing aged */
+    CHECK(await_resp_id != 0);
+    sniff_on = false;
+    obd_poll_tick();
+    CHECK(txn_cap_cnt == 0);
+    CHECK(!(await_sid == 0x22 && await_key == OILP_PID && await_resp_id != 0));
+}
+
+/* Review C8: the medium band goes round evenly; a uint8 counter taken % 7
+ * skipped MIL once every 256 medium slots. */
+static void t_c8_medium_rotation_even(void)
+{
+    int mil = 0, misc = 0;
+    for (int t = 0; t < 7 * 3 * 300; t++) {
+        tx_n = 0;
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        for (int k = 0; k < tx_n; k++) {
+            const uint8_t *q = txlog[k].data;
+            if (q[0] == 2 && q[1] == 0x01 && q[2] == 0x01) mil++;
+            if (q[0] == 3 && q[1] == 0x01 && q[2] == 0x23) misc++;
+        }
+    }
+    CHECK(mil > 200);
+    CHECK(mil - misc <= 1 && misc - mil <= 1);
+}
+
+/* Review C8: boost reaches the STATS hook once per MAP reading (not per
+ * baro), and a gear byte that is no gear is a stamp without a value. */
+static void t_c8_boost_and_gear_stamps(void)
+{
+    irq_mode();
+    stamp_n = 0;
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x33, 0x64, 0x00, 0x00, 0x00, 0x00);   /* baro 100 kPa */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x0B, 0xC8, 0x00, 0x00, 0x00, 0x00);   /* MAP 200 kPa  */
+    PUSH(0x7E8, 8, 0x03, 0x41, 0x33, 0x64, 0x00, 0x00, 0x00, 0x00);   /* baro again   */
+    PUSH(0x7EA, 8, 0x04, 0x62, 0x19, 0x9A, 0xFF, 0x00, 0x00, 0x00);   /* gear byte FF */
+    FDCAN1_IT0_IRQHandler();
+    obd_rx_poll();
+    int boost = 0, gear = 0;
+    for (int i = 0; i < stamp_n && i < 16; i++) {
+        if (stamps[i].ch == M_BOOST) { boost++; CHECK(near(stamps[i].v, 1.0f)); }
+        if (stamps[i].ch == M_GEAR)  { gear++;  CHECK(isnan(stamps[i].v)); }
+    }
+    CHECK(boost == 1 && gear == 1);
+    CHECK(near(g_obd.boost, 1.0f) && g_obd.gear == -1);
 }
 
 int main(void)
@@ -1878,6 +2062,14 @@ int main(void)
         { "c7_gear_not_fresh_before",   t_c7_gear_not_fresh_before_reply },
         { "c7_tx_lost_counted",         t_c7_tx_lost_counted },
         { "stamp_hook_gets_rx_time",    t_stamp_hook_gets_rx_time },
+        { "c8_silent_ecm_not_a_miss",   t_c8_silent_ecm_is_not_a_miss },
+        { "c8_lost_tx_not_a_miss",      t_c8_lost_tx_is_not_a_miss },
+        { "c8_pidsup_silent_ecm",       t_c8_pidsup_silent_ecm_keeps_trying },
+        { "c8_dpf_refusal_then_answer", t_c8_dpf_one_refusal_then_answer },
+        { "c8_dpf_waits_for_maps",      t_c8_dpf_waits_for_maps },
+        { "c8_cap_not_after_sniff",     t_c8_cap_not_counted_after_sniff },
+        { "c8_medium_rotation_even",    t_c8_medium_rotation_even },
+        { "c8_boost_and_gear_stamps",   t_c8_boost_and_gear_stamps },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;
