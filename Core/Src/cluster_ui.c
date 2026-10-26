@@ -12,10 +12,12 @@
  *
  *  Layout is absolute-positioned on a 320x480 panel:
  *      y 0..31    alert strip (always visible)
- *      y 32..479  the active page (DRIVE / DIAG / SNIFF), 320 x 448
+ *      y 32..479  the active page, 320 x 448: DRIVE / TRIP / PERF / DIAG /
+ *                 SNIFF / STATS (UI_PAGE_* in cluster_ui.h)
  *
- *  Values come from g_obd (fdcan_obd.c). "no data" (bus quiet, or an enhanced
- *  DID not yet mapped) renders as "--" in grey — never a fake green reading.
+ *  Values come from g_obd (fdcan_obd.c). "no data" (bus quiet, stale, or an
+ *  enhanced DID not yet mapped) renders as "--" with a no-data dot / bar
+ *  (C_OFF) — never a fake reading in a state colour.
  * ========================================================================== */
 
 #include "cluster_ui.h"
@@ -65,8 +67,12 @@
 #define C_MUTED      lv_color_hex(0xffffff)   /* hierarchy by size, not by grey */
 #define C_FAINT      lv_color_hex(0xffffff)
 #define C_OK         lv_color_hex(0x00ff00)
+#define C_OK_HEX     "00ff00"                 /* the same, for label recolour text */
 #define C_COLD       lv_color_hex(0x00ffff)   /* temperature < 50C: engine warming up */
-#define C_INFO       lv_color_hex(0x00ffff)
+/* The dot / bar of a reading nothing judges (OIL P ? until validated, the
+ * battery with the engine off): white like its value. Cyan here read as
+ * "engine cold" (review C8). */
+#define C_INFO       lv_color_hex(0xffffff)
 #define C_WARN       lv_color_hex(0xffff00)
 #define C_CRIT       lv_color_hex(0xff0000)
 #define C_ORANGE     lv_color_hex(0xff8000)   /* reverse gear */
@@ -97,6 +103,7 @@
 #define C_MUTED      lv_color_hex(0xe8edf3)   /* captions near-white (no dim grey) */
 #define C_FAINT      lv_color_hex(0xc8d2dc)   /* ticks / off-tags: light, still renders */
 #define C_OK         lv_color_hex(0x37d67a)   /* softer template green (2bff77 was too acidic) */
+#define C_OK_HEX     "37d67a"
 #define C_COLD       lv_color_hex(0x54c8ff)   /* temperature < 50C: engine warming up, light blue */
 #define C_INFO       lv_color_hex(0x45d0ff)
 #define C_WARN       lv_color_hex(0xffc73f)
@@ -519,11 +526,14 @@ static void build_diag(void)
     /* Left side of the eyebrow: why the previous run ended. A watchdog or
      * fault reset is amber so it is noticed; a normal power-up stays quiet. */
     lv_obj_t *tb = mk_eyebrow(pg, "DIAG");
-    char rb[40];
-    /* xN: N abnormal resets in a row — a reset storm, not a one-off. */
+    /* fault_reset_text() is up to 39 characters (ASSERT <file>:<line>). */
+    char rb[56];
+    /* xN: N abnormal resets in a row — a reset storm, not a one-off. Ahead of
+     * the text, so a long ASSERT text runs off the end instead of the streak
+     * (review C8: rb[40] used to drop "xN" first). */
     if (fault_reset_streak() > 1u)
-        lv_snprintf(rb, sizeof rb, "LAST RESET: %s x%u", fault_reset_text(),
-                     (unsigned)fault_reset_streak());
+        lv_snprintf(rb, sizeof rb, "LAST RESET x%u: %s", (unsigned)fault_reset_streak(),
+                     fault_reset_text());
     else
         lv_snprintf(rb, sizeof rb, "LAST RESET: %s", fault_reset_text());
     lv_obj_t *rst = mk_label(tb, rb, F12, fault_reset_abnormal() ? C_WARN : C_MUTED);
@@ -628,7 +638,7 @@ static void build_sniff(void)
         "Selector: STATE row whose values are\n"
         "the detents. Temps/pressures: ANALOG,\n"
         "found on a warm-up / throttle blip.\n"
-        "P/N only. Re-enter to clear. OBD paused.", F12, C_MUTED);
+        "P only. Re-enter to clear. OBD paused.", F12, C_MUTED);
     lv_obj_set_pos(hint, 10, 380);
     lv_obj_set_style_text_line_space(hint, 4, 0);
 
@@ -838,7 +848,14 @@ void cluster_ui_build(void)
     cluster_ui_set_page(0);
 }
 
+/* HAL tick of the refresh in progress, for the freshness checks. */
+static uint32_t s_now;
+
 static bool sniff_allowed(void);
+static void refresh_stats(void);
+static void refresh_trip(void);
+static void refresh_perf(void);
+static bool s_page_fresh;            /* just shown: refresh now, not at its slot */
 
 void cluster_ui_set_page(uint8_t p)
 {
@@ -854,6 +871,16 @@ void cluster_ui_set_page(uint8_t p)
         if (i == p) lv_obj_clear_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
         else        lv_obj_add_flag(ui.page[i], LV_OBJ_FLAG_HIDDEN);
     }
+    /* TRIP / PERF / STATS are refreshed only while visible. A button press
+     * switches pages before lv_timer_handler() draws, and the next refresh
+     * comes later in the iteration — so bring the page up to date now, or its
+     * first frame shows the values of its last visit (review C8). */
+    s_now = HAL_GetTick();
+    s_page_fresh = true;
+    if (p == PAGE_STATS) refresh_stats();
+    if (p == PAGE_TRIP)  refresh_trip();
+    if (p == PAGE_PERF)  refresh_perf();
+    s_page_fresh = false;
 }
 
 /* SNIFF pauses OBD polling, so it must not be reachable on the move (one
@@ -945,9 +972,6 @@ static void hex8(char out[9], uint32_t v, bool have)
     out[8] = '\0';
 }
 
-/* HAL tick of the refresh in progress, for the freshness checks. */
-static uint32_t s_now;
-
 /* Worth showing: link alive, a value ever decoded, and recent enough
  * (metric_stale_ms in cluster_config.h). Otherwise the UI shows "--". */
 static bool shown(const obd_data_t *d, metric_key_t k, bool live)
@@ -1022,7 +1046,7 @@ static void k_txt(char *b, size_t n, float k, int dec)
 static void refresh_stats(void)
 {
     static uint32_t t_last;
-    if (s_now - t_last < 500u) return;
+    if (!s_page_fresh && s_now - t_last < 500u) return;
     t_last = s_now;
     char b[48];
 
@@ -1114,7 +1138,7 @@ static void gps_brief(char *b, size_t n)
 static void refresh_trip(void)
 {
     static uint32_t t_last;
-    if (s_now - t_last < 200u) return;
+    if (!s_page_fresh && s_now - t_last < 200u) return;
     t_last = s_now;
     const odo_t *o = trip_app_odo();
     char b[64];
@@ -1152,10 +1176,11 @@ static void refresh_trip(void)
         lv_snprintf(b, sizeof b, "MEMORY: NO FLASH - NOT SAVED");
         nc = C_WARN;
     } else {
-        int k = lv_snprintf(b, sizeof b, "MEMORY: %s #%lu", nv.state == NV_LOADED ? "OK" : "EMPTY",
-                            (unsigned long)nv.seq);
+        size_t k = 0;                 /* cat(): never an offset past the buffer */
+        cat(b, sizeof b, &k, "MEMORY: %s #%lu", nv.state == NV_LOADED ? "OK" : "EMPTY",
+            (unsigned long)nv.seq);
         if (nv.errors) {
-            lv_snprintf(b + k, sizeof b - (size_t)k, "  ERR %u", (unsigned)nv.errors);
+            cat(b, sizeof b, &k, "  ERR %u", (unsigned)nv.errors);
             nc = C_WARN;
         }
     }
@@ -1166,7 +1191,7 @@ static void refresh_trip(void)
 static void refresh_perf(void)
 {
     static uint32_t t_last;
-    if (s_now - t_last < 100u) return;
+    if (!s_page_fresh && s_now - t_last < 100u) return;
     t_last = s_now;
     const perf_t *p = trip_app_perf();
     const gps_state_t *g = gps_state();
@@ -1255,7 +1280,7 @@ void cluster_ui_refresh(void)
         case 4:  /* D + engaged gear (0x199A) as the design's white letter +
                   * green number; bare "D" until the gear number arrives */
                  if (d.gear >= 1 && policy_fresh(&d, M_GEAR, s_now))
-                     lv_snprintf(b, sizeof b, "D#37d67a %d#", (int)d.gear);
+                     lv_snprintf(b, sizeof b, "D#" C_OK_HEX " %d#", (int)d.gear);
                  else             lv_snprintf(b, sizeof b, "D");
                  break;
         default: lv_snprintf(b, sizeof b, "--"); break;
@@ -1540,8 +1565,9 @@ void cluster_ui_refresh(void)
      * for the driver, and all eight no longer fit side by side anyway. The
      * summary on the right says PARTIAL DATA / NO ECM DATA / the alarm, and
      * nothing when all is well. Shown / hidden
-     * and the positions change only when the set changes: in LVGL 9.3 each
-     * flag or position write invalidates even when nothing changed. */
+     * and the positions change only when the set changes: in LVGL 9.3 a
+     * position write invalidates even when nothing changed (a flag write that
+     * changes nothing does not, but the two change together here). */
     int worst = ST_OK;
     uint8_t shown = 0;
     for (int i = 0; i < 8; i++) {

@@ -481,7 +481,11 @@ void lv_port_disp_service(void)
     }
     /* Stay pending while a re-init is still owed (it failed, or the gap has
      * not passed yet): clearing it on a repaint-only pass meant the service
-     * never ran again, so a failed re-init was never retried. */
-    s_need_repaint = s_reinit_pending;
+     * never ran again, so a failed re-init was never retried. Clear first,
+     * then look: the last area's DMA may still be in flight on a repaint-only
+     * pass, and its error callback owing a re-init between a load of
+     * s_reinit_pending and the store to s_need_repaint was lost (review C8). */
+    s_need_repaint = false;
+    if (s_reinit_pending) s_need_repaint = true;
     lv_obj_invalidate(lv_display_get_screen_active(s_disp));
 }
