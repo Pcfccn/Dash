@@ -39,8 +39,10 @@ def net(x, y, name, side="right"):
     text(x0 + w / 2, y + 4, name, 10, col, "middle", "bold")
 
 ROW, HEAD = 22, 24
+KEY = "ключ"
 def conn(cx, top, name, pins):
-    """Connector on the box edge; returns the y of each pin (1-based)."""
+    """Connector on the box edge; returns the y of each pin (1-based). A pin named KEY is the key
+    (socket pin pulled out, plug cavity blocked, carrier-board.md section 3): no wire."""
     h = HEAD + ROW * len(pins) + 4
     a(f'<rect x="{cx-38}" y="{top}" width="76" height="{h}" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>')
     text(cx, top + 16, name, 13, "#1d5a1d", "middle", "bold")
@@ -48,7 +50,10 @@ def conn(cx, top, name, pins):
     for i, p in enumerate(pins):
         yy = top + HEAD + ROW * i + 11
         ys[i + 1] = yy
-        text(cx, yy + 4, f"{i+1} {p}", 10, "#123", "middle")
+        if p == KEY:
+            text(cx, yy + 4, f"{i+1} ✕ ключ", 10, "#c0392b", "middle", "bold")
+        else:
+            text(cx, yy + 4, f"{i+1} {p}", 10, "#123", "middle")
     return ys
 
 # ---------------------------------------------------------------- frame
@@ -65,9 +70,9 @@ text(20, 90, "МАШИНА", 13, "#888", weight="bold")
 text(1160, 90, "ЭКРАН И GPS", 13, "#888", weight="bold")
 
 # ---------------------------------------------------------------- connectors
-x1 = conn(BX0, 150, "X1 питание", ["+12 В ACC", "масса"])
-x2 = conn(BX0, 420, "X2 CAN", ["CAN-H", "CAN-L", "GND"])
-x4 = conn(BX0, 640, "X4 кнопки", ["▶", "●", "◀", "GND", "ILL+", "запас"])
+x1 = conn(BX0, 150, "X1 питание", ["+12 В ACC", KEY, "масса"])
+x2 = conn(BX0, 420, "X2 CAN", ["CAN-H", "CAN-L", KEY, "GND"])
+x4 = conn(BX0, 640, "X4 кнопки", ["▶", "●", "◀", "GND", "ILL+", KEY])
 x5 = conn(BX1, 130, "X5 экран", ["VCC 3V3", "GND", "CS", "RESET", "DC/RS", "SDI", "SCK", "LED"])
 x3 = conn(BX1, 560, "X3 GPS", ["3V3", "GND", "TX", "RX"])
 LO, LI = BX0 - 38, BX0 + 38       # left connectors: outer / inner edge
@@ -85,17 +90,17 @@ text(308, x1[1] + 24, "держатель", 10, RED, "middle")
 text(308, x1[1] + 36, "у врезки", 10, RED, "middle")
 
 box(20, 262, 210, 50, "Масса кузова", ["болт / штатная точка массы"], BLK, "#f4f4f4")
-wire([(230, 287), (345, 287), (345, x1[2]), (LO, x1[2])], BLK, 3)
+wire([(230, 287), (345, 287), (345, x1[3]), (LO, x1[3])], BLK, 3)
 
 box(20, 400, 230, 150, "Разъём OBD2", ["под панелью → разветвитель 1 → 2:", "гнездо 1 — сканер (свободно),",
                                       "гнездо 2 — Dash", "", "пин 6 CAN-H, 14 CAN-L,", "5 — сигнальная земля",
                                       "16 (постоянные 12 В) — не брать"], "#7a4fb0", "#f7f2fc")
 wire([(250, x2[1]), (LO, x2[1])], YEL, 3)
 wire([(250, x2[2]), (LO, x2[2])], GRN, 3)
-wire([(250, x2[3]), (LO, x2[3])], BLK, 2.5)
+wire([(250, x2[4]), (LO, x2[4])], BLK, 2.5)
 text(305, x2[1] - 8, "6", 10, "#555", "middle"); text(305, x2[2] - 6, "14", 10, "#555", "middle")
-text(305, x2[3] - 6, "5", 10, "#555", "middle")
-text(20, 568, "CAN-H / CAN-L — витая пара, отвод от разветвителя покороче", 10, "#555")
+text(305, x2[4] - 6, "5", 10, "#555", "middle")
+text(20, 568, "CAN-H / CAN-L — витая пара; до X2 ≤ 30 см вместе с хвостом разветвителя", 10, "#555")
 
 box(20, 625, 230, 150, "3 кнопки 8 мм (1NO)", ["в штатной заглушке LC100", "контакт 1 каждой → свой провод",
                                          "контакт 2 всех трёх → общий GND", "", "кольцо подсветки 12–24 В — не через",
@@ -116,8 +121,8 @@ wire([(node, x1[1]), (node, 140)], RED, 2)
 box(442, 96, 130, 44, "TVS 1.5KE20A", ["полоска (катод) к +12"], RED, "#fff", 12)
 net(574, 118, "GND")
 wire([(572, 118), (574, 118)], BLK, 2)
-wire([(LI, x1[2]), (452, x1[2])], BLK, 2.5)
-net(452, x1[2], "GND")
+wire([(LI, x1[3]), (452, x1[3])], BLK, 2.5)
+net(452, x1[3], "GND")
 box(500, 160, 120, 70, "PD65W", ["вход 8–30 В", "выход USB-C 5 В"], ORG, "#fff8ef", 13)
 wire([(620, 195), (650, 195)], ORG, 5)
 text(635, 212, "USB-C", 9, ORG, "middle")
@@ -134,8 +139,8 @@ wpin_l(195, "USB-C: питание 5 В")
 box(470, 430, 140, 112, "SN65HVD230", ["модуль CAN", "VCC — 3V3", "120 Ом на модуле", "СНЯТЬ"], "#7a4fb0", "#f7f2fc", 12)
 wire([(LI, x2[1]), (470, x2[1])], YEL, 3)
 wire([(LI, x2[2]), (470, x2[2])], GRN, 3)
-wire([(LI, x2[3]), (442, x2[3])], BLK, 2.5)
-net(442, x2[3], "GND")
+wire([(LI, x2[4]), (442, x2[4])], BLK, 2.5)
+net(442, x2[4], "GND")
 wire([(610, 455), (WX0, 455)], "#7a4fb0", 2.2); wpin_l(455, "PD1 · P1.18  CAN TX")
 wire([(610, 485), (WX0, 485)], "#7a4fb0", 2.2); wpin_l(485, "PD0 · P1.19  CAN RX")
 text(630, 448, "TXD", 9, "#7a4fb0", "middle"); text(630, 478, "RXD", 9, "#7a4fb0", "middle")
@@ -154,7 +159,6 @@ box(470, 752, 140, 96, "Датчик габаритов", ["BC547: 47 к, 100 к
 wire([(LI, x4[5]), (470, x4[5])], RED, 2.2, "7 4")
 wire([(610, 775), (WX0, 775)], RED, 2.2)
 wpin_l(775, "PE15 · P2.38  габариты")
-text(LI + 8, x4[6] + 4, "—", 11, "#888")
 
 # display lines
 DISP = {3: (209, "CS · PC0 · P2.11"), 4: (231, "RESET · PC5 · P2.26"), 5: (253, "DC · PC4 · P2.25"),
@@ -166,7 +170,7 @@ wire([(RI, x5[1]), (1006, x5[1])], RED, 2.2); net(1006, x5[1], "3V3", "left")
 wire([(RI, x5[2]), (1006, x5[2])], BLK, 2.2); net(1006, x5[2], "GND", "left")
 
 # backlight driver
-box(895, 345, 135, 120, "Подсветка 4\"", ["2N7000 + Si4599", "R1 10 к → 5 В", "R2 1 к ← PA8", "R3 10 к → GND",
+box(895, 345, 135, 120, "Подсветка 4\"", ["2N7000 + Si4599", "R1 10 к → 5 В", "R2 1 к ← PA8", "R3 100 к → GND",
                                         "образ ROAD INV"], ORG, "#fff8ef", 12)
 wire([(WX1, 370), (895, 370)], ORG, 2.2); wpin_r(370, "PA8 · P1.28  ШИМ")
 wire([(WX1, 420), (895, 420)], ORG, 3); wpin_r(420, "5V · P2.42")
@@ -176,11 +180,14 @@ text(995, 336, "сток Si4599", 9, ORG, "end")
 # GPS lines
 wire([(RI, x3[1]), (1006, x3[1])], RED, 2.2); net(1006, x3[1], "3V3", "left")
 wire([(RI, x3[2]), (1006, x3[2])], BLK, 2.2); net(1006, x3[2], "GND", "left")
-wire([(WX1, x3[3]), (RI, x3[3])], BLU, 2.2); wpin_r(x3[3], "PA3 · P2.20  ← TX GPS")
-wire([(WX1, x3[4]), (RI, x3[4])], WHT, 2.6); wpin_r(x3[4], "PA2 · P2.19  → RX GPS")
+wire([(WX1, x3[3]), (RI, x3[3])], WHT, 2.6); wpin_r(x3[3], "PA3 · P2.20  ← TX GPS")
+wire([(WX1, x3[4]), (RI, x3[4])], BLU, 2.2); wpin_r(x3[4], "PA2 · P2.19  → RX GPS")
+for k, dy in ((3, -10), (4, 20)):           # 100 R in each line, at X3
+    a(f'<rect x="{WX1 + 32}" y="{x3[k] - 6}" width="30" height="12" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.2"/>')
+    text(WX1 + 47, x3[k] + dy, "100 Ом", 9, "#333", "middle", "bold")
 
 # rails
-wpin_r(730, "3V3 · P2.41 → шина 3V3"); wpin_r(752, "GND · P2.43 / P2.44 → шина GND")
+wpin_r(730, "3V3 · P2.41 → шина 3V3"); wpin_r(752, "GND · P2.43 → шина GND (одна точка)")
 net(WX1 + 6, 730, "3V3"); net(WX1 + 6, 752, "GND")
 text(WX0 + 10, WY1 - 12, "без гнёзд: выводы 1–4 (P2: 1–6)", 10, "#2b4f86")
 
@@ -196,7 +203,7 @@ for i, ln in enumerate(["SDO (MISO) — не подключать", "шлейф 
 
 box(1160, 555, 330, 175, "Плата GPS ATGM336H", [], "#2980b9", "#eef5fc")
 for k, nm in zip(range(1, 5), ["VCC — ТОЛЬКО 3V3", "GND", "TX", "RX"]):
-    col = RED if k == 1 else BLK if k == 2 else BLU if k == 3 else WHT
+    col = RED if k == 1 else BLK if k == 2 else WHT if k == 3 else BLU
     wire([(RO, x3[k]), (1160, x3[k])], col, 2.4)
     text(1168, x3[k] + 4, nm, 11, "#1b4f7a", weight="bold" if k == 1 else "normal")
 for i, ln in enumerate(["под лобовым стеклом, антенной вверх", "PPS — не нужен",
@@ -207,15 +214,16 @@ for i, ln in enumerate(["под лобовым стеклом, антенной 
 ly = 995
 text(20, ly, "Цвета:", 12, "#111", weight="bold")
 items = [(RED, "+12 В / 3V3"), (BLK, "масса"), (ORG, "5 В / подсветка"), (YEL, "CAN-H"), (GRN, "CAN-L"),
-         (BLU, "GPS TX"), (WHT, "GPS RX"), (GRY, "сигналы")]
+         (WHT, "GPS TX (белый)"), (BLU, "GPS RX (синий)"), (GRY, "сигналы")]
 lx = 80
 for col, nm in items:
     wire([(lx, ly - 4), (lx + 28, ly - 4)], col, 3)
     text(lx + 34, ly, nm, 11, "#333")
     lx += 36 + 9 * len(nm) + 16
 for i, ln in enumerate([
-        "3V3 / GND / 5V в флажках — шины платы-носителя. X1.2 — масса питания (кузов), X2.3 — опорная земля CAN от OBD 5; на плате обе — одна шина GND.",
-        "Пустые выводы и разводка по отверстиям — carrier-board.md §5 и carrier-board.svg. +12 В есть только в X1.1 и X4.5: их метки делать особенно заметными."]):
+        "3V3 / GND / 5V в флажках — шины платы-носителя. X1.3 — масса питания (кузов), X2.4 — опорная земля CAN от OBD 5; на плате обе — одна шина GND.",
+        "✕ ключ (X1.2, X2.3, X4.6) — штыря нет, вилка с ключом не входит в чужое гнездо (carrier-board.md §3). +12 В есть только в X1.1 и X4.5.",
+        "Разводка по отверстиям — carrier-board.md §5 и carrier-board.svg. GPS: 100 Ом в линию у X3."]):
     text(20, ly + 24 + i * 18, ln, 11, "#444")
 
 a("</svg>")

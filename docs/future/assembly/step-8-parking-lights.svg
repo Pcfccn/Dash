@@ -12,7 +12,8 @@
 <text x="288" y="182" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 ◀</text>
 <text x="288" y="210" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 GND</text>
 <text x="288" y="238" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">5 ILL+</text>
-<text x="288" y="266" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">6 запас</text>
+<rect x="264" y="252" width="48" height="20" rx="3" fill="#fff" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="3 2"/>
+<text x="288" y="266" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">6 ✕ ключ</text>
 <rect x="20" y="212" width="190" height="44" rx="6" fill="#fff5f5" stroke="#d62828" stroke-width="1.5"/>
 <text x="30" y="230" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">провод ILL+ / TAIL</text>
 <text x="30" y="245" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">(+12 В при габаритах)</text>

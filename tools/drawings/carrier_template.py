@@ -26,17 +26,21 @@ RED, BLK, ORG, GRN, GRY, BLU = "#c62828", "#111", "#e07b00", "#1d5a1d", "#777", 
 P2_EVEN, P2_ODD, P1_EVEN, P1_ODD = 0, 1, 14, 15
 def prow(pin): return (pin + 1) // 2      # header pin -> row index
 P1 = {18: "CAN TX", 19: "CAN RX", 28: "ШИМ", 41: "SDI", 43: "SCK"}
-P2 = {11: "CS", 15: "GND", 19: "→GPS", 20: "←GPS", 25: "DC", 26: "RST",
-      30: "▶", 31: "●", 32: "◀", 38: "габар.", 41: "3V3", 42: "5V", 43: "GND", 44: "GND"}
+P2 = {11: "CS", 19: "→GPS", 20: "←GPS", 25: "DC", 26: "RST",
+      30: "▶", 31: "●", 32: "◀", 38: "габар.", 41: "3V3", 42: "5V", 43: "GND"}   # GND: P2.43 only
 
-# terminal blocks: name, first hole (col, row), vertical?, pin labels
+# terminal blocks: name, first hole (col, row), vertical?, pin labels; "ключ" = key (pin pulled, hole empty)
+KEY = "ключ"
 BLOCKS = [("X5", 22, 1, True, ["VCC", "GND", "CS", "RST", "DC", "SDI", "SCK", "LED"]),
-          ("X4", 22, 15, True, ["▶", "●", "◀", "GND", "ILL+", "—"]),
-          ("X1", 2, 29, False, ["+12", "GND"]),
-          ("X3", 7, 29, False, ["3V3", "GND", "TX", "RX"]),
-          ("X2", 15, 29, False, ["H", "L", "GND"])]
+          ("X4", 22, 15, True, ["▶", "●", "◀", "GND", "ILL+", KEY]),
+          ("X3", 22, 25, True, ["3V3", "GND", "TX", "RX"]),
+          ("X1", 2, 29, False, ["+12", KEY, "GND"]),
+          ("X2", 15, 29, False, ["H", "L", KEY, "GND"])]
 ZONES = [(17, 1, 3, 6, "подсветка", "2N7000, R1–R3"), (17, 9, 3, 6, "кнопки", "6×1 к, 3×100 н"),
-         (17, 16, 3, 6, "габариты", "BC547 …"), (4, 25, 10, 1.6, "TVS 1.5KE20A", "полоска к X1.1")]
+         (17, 16, 3, 6, "габариты", "BC547 …"), (1, 25, 6, 1.6, "TVS 1.5KE20A", "полоска к X1.1"),
+         (17, 25, 3, 1, "GPS", "2×100 Ом")]
+# WeAct USB-C plug: centre 28.19 mm from the WeAct's P2-side edge, 12 mm wide, straight plug <= 21 mm
+USB_HALF, USB_LEN = 6.0, 21.0
 
 
 def esc(t):
@@ -82,6 +86,13 @@ class Sheet:
         return "\n".join(self.o + ["</svg>"])
 
 
+def key_mark(s, x, y):
+    """Key position: the socket pin is pulled out, nothing goes into this hole."""
+    s.circle(x, y, 0.85, RED, "#fff", 0.25)
+    s.line([(x - 0.6, y - 0.6), (x + 0.6, y + 0.6)], RED, 0.25)
+    s.line([(x - 0.6, y + 0.6), (x + 0.6, y - 0.6)], RED, 0.25)
+
+
 def board(s, mirror):
     """Holes, labels, sockets, blocks and zones; mirror = view from the solder side."""
     def hx(c):
@@ -100,10 +111,11 @@ def board(s, mirror):
     # WeAct outline (top view only: from below it is hidden by the board)
     if not mirror:
         mid = (hx(P2_EVEN) + hx(P1_ODD)) / 2
-        s.rect(mid - 20.3, hy(prow(1)) - 6.3, 40.6, hy(prow(43)) - hy(prow(1)) + 12.6, "#2b4f86",
+        s.rect(mid - 20.32, hy(prow(1)) - 6.48, 40.64, hy(prow(43)) - hy(prow(1)) + 6.48 + 7.06, "#2b4f86",
                dash="1.6 1", sw=0.35)
-        s.text(mid, hy(prow(1)) - 3.4, "WeAct — сверху, на гнёздах (выводы 1–4 без гнёзд)", 1.8, "#2b4f86",
-               "middle", "bold")
+        wl, wt = mid - 20.32, hy(prow(1)) - 6.48
+        s.text(wl + 1.0, wt + 1.75, "WeAct — сверху, на гнёздах", 1.5, "#2b4f86", "start", "bold")
+        s.text(wl + 1.0, wt + 3.35, "выводы 1–4 без гнёзд", 1.4, "#2b4f86", "start")
     # sockets: P1 pins 5-44, P2 pins 7-44
     for col, first in ((P2_EVEN, 7), (P2_ODD, 7), (P1_EVEN, 5), (P1_ODD, 5)):
         y0, y1 = hy(prow(first)) - 1.25, hy(prow(43)) + 1.25
@@ -132,11 +144,19 @@ def board(s, mirror):
             x = hx(c0)
             ya = hy(r0) + mid - span / 2
             s.rect(x - 3.5, ya, 7.0, span, GRN, "#3a8f3a", 0.35, opacity=0.15)
-            s.text(x, ya - 1.0, name, 2.4, GRN, "middle", "bold")
+            if name == "X3":
+                inner = -1 if not mirror else 1
+                s.text(x + inner * 4.3, ya + span / 2 + 0.8, name, 2.4, GRN, "end" if inner < 0 else "start", "bold")
+            else:
+                s.text(x, ya - 1.0, name, 2.4, GRN, "middle", "bold")
             for k, h in enumerate(holes):
                 y = hy(r0 + h)
-                s.circle(x, y, 0.8, GRN, GRN)
                 side = 1 if not mirror else -1
+                if labels[k] == KEY:
+                    key_mark(s, x, y)
+                    s.text(x + side * 4.3, y + 0.6, f"{k+1} ✕ ключ", 1.6, RED, "start" if side > 0 else "end")
+                    continue
+                s.circle(x, y, 0.8, GRN, GRN)
                 s.text(x + side * 4.3, y + 0.6, f"{k+1} {labels[k]}", 1.6, GRN, "start" if side > 0 else "end")
         else:
             y = hy(r0)
@@ -144,9 +164,15 @@ def board(s, mirror):
             xb_top = hx(c0) + (mid + span / 2) * (1 if not mirror else -1)
             x_lo, x_hi = min(xa_top, xb_top), max(xa_top, xb_top)
             s.rect(x_lo, y - 3.5, x_hi - x_lo, 7.0, GRN, "#3a8f3a", 0.35, opacity=0.15)
-            s.text(x_lo - 1.0, y + 0.8, name, 2.4, GRN, "end", "bold")
+            # the first hole's end in either view (from below that is the right end), away from X3
+            s.text(x_lo + 0.3 if not mirror else x_hi - 0.3, y - 4.3, name, 2.4, GRN,
+                   "start" if not mirror else "end", "bold")
             for k, h in enumerate(holes):
                 x = hx(c0 + h)
+                if labels[k] == KEY:
+                    key_mark(s, x, y)
+                    s.text(x, y + 5.6, f"{k+1}✕", 1.7, RED, "middle", "bold")
+                    continue
                 s.circle(x, y, 0.8, GRN, GRN)
                 s.text(x, y + 5.6, f"{k+1}", 1.7, GRN, "middle", "bold")
             s.text((x_lo + x_hi) / 2, y + 7.8, " · ".join(f"{k+1} {lb}" for k, lb in enumerate(labels)),
@@ -165,9 +191,20 @@ def board(s, mirror):
 s1 = Sheet("Плата-носитель 7×9 — шаблон 1:1, вид СВЕРХУ (сторона деталей)", [
     "Печатать в масштабе 100 % («фактический размер», без «подогнать»). Сверить линейку 50 мм внизу.",
     "Положить на макетку отверстиями к отверстиям (колонка A слева, ряд 1 сверху) — и ставить детали по меткам.",
-    "Синие точки — используемые выводы WeAct, зелёные — выводы клеммников (уже подогнутые, carrier-board.md §3).",
-    "Рыжий пунктир — где ставить мелочь (assembly.md, шаги 4, 7, 8). Ряды 24–25 — снизу идут шины: туда детали не ставить."])
+    "Синие точки — используемые выводы WeAct, зелёные — отверстия под выводы гнёзд клеммников (carrier-board.md §3),",
+    "красный ✕ — ключ: штыря нет, отверстие пустое. Рыжий пунктир — где ставить мелочь (assembly.md, шаги 1, 4, 6–8).",
+    "Ряды 24–25 — снизу идут шины: туда детали не ставить. Полоса под штекер USB-C (колонки I–N) — пустая."])
 hx, hy = board(s1, mirror=False)
+# WeAct USB-C plug lane and SWD header (top view only)
+ux = (hx(P2_EVEN) + hx(P1_ODD)) / 2 - 20.32 + 28.19
+wb = hy(prow(43)) + 7.06
+s1.rect(ux - USB_HALF, wb, 2 * USB_HALF, USB_LEN, "#b35400", "#ee8a00", 0.3, "1.2 0.8", opacity=0.10)
+s1.text(ux, wb + 13.0, "штекер USB-C", 1.8, "#b35400", "middle", "bold")
+s1.text(ux, wb + 15.2, "полоса I–N: не выше 10 мм", 1.4, "#b35400", "middle")
+wt = hy(prow(1)) - 6.48
+sx = (hx(P2_EVEN) + hx(P1_ODD)) / 2 - 20.32
+s1.rect(sx + 25.0, wt + 1.2, 8.5, 3.6, "#2b4f86", "#2b4f86", 0.25, opacity=0.2)
+s1.text(sx + 29.25, wt + 3.6, "SWD ↑ стенка", 1.4, "#2b4f86", "middle", "bold")
 s1.rect(OX + 1, hy(23) - 1.3, BW - 2, 2 * P + 0.1, "#e8a0a0", "#c62828", 0.2, rx=0.4, opacity=0.08)
 s1.text(OX + BW / 2, hy(24) + 0.6, "ряды 24–25: шины 3V3 / GND снизу", 1.6, RED, "middle")
 s1.ruler(OX + 10, 262)
@@ -187,8 +224,8 @@ s2.text(hx(2) - 1.0, hy(20) + 0.6, "↓ 3V3: перемычка в изоляц�
 s2.ruler(OX + 10, 262)
 
 # ------------------------------------------------------------ sheet 3: labels
-WIRES = [("X1.1", "+12 В ACC"), ("X1.2", "масса"),
-         ("X2.1", "CAN-H · OBD 6"), ("X2.2", "CAN-L · OBD 14"), ("X2.3", "земля · OBD 5"),
+WIRES = [("X1.1", "+12 В ACC"), ("X1.3", "масса"),
+         ("X2.1", "CAN-H · OBD 6"), ("X2.2", "CAN-L · OBD 14"), ("X2.4", "земля · OBD 5"),
          ("X3.1", "3V3 GPS"), ("X3.2", "GND GPS"), ("X3.3", "TX GPS"), ("X3.4", "RX GPS"),
          ("X4.1", "кнопка ▶"), ("X4.2", "кнопка ●"), ("X4.3", "кнопка ◀"), ("X4.4", "GND кнопок"),
          ("X4.5", "ILL+ 12 В"),
@@ -197,8 +234,9 @@ WIRES = [("X1.1", "+12 В ACC"), ("X1.2", "масса"),
 s3 = Sheet("Бирки на провода жгута — по две на провод (оба конца)", [
     "Вырезать по пунктиру, сложить пополам по средней линии вокруг провода, сверху — прозрачный скотч или прозрачная",
     "термоусадка. Надпись читается с обеих сторон. Последний ряд — бирки на сами вилки X1…X5.",
-    "Таблица проводов — harness.md."])
-tags = [w for w in WIRES for _ in (0, 1)] + [(f"X{i}", "вилка") for i in range(1, 6) for _ in (0, 1)]
+    "X1.2, X2.3, X4.6 — ключи: провода нет, бирки нет. Таблица проводов — harness.md."])
+PLUG = {1: "вилка · ключ 2", 2: "вилка · ключ 3", 3: "вилка", 4: "вилка · ключ 6", 5: "вилка"}
+tags = [w for w in WIRES for _ in (0, 1)] + [(f"X{i}", PLUG[i]) for i in range(1, 6) for _ in (0, 1)]
 TW, TH, COLS3 = 30.0, 12.0, 6
 x0, y0 = 15.0, 40.0
 for i, (lab, sub) in enumerate(tags):

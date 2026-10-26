@@ -43,22 +43,24 @@
 <text x="345" y="229" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">4</text>
 <circle cx="365" cy="167" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
 <text x="365" y="171" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
-<rect x="680" y="140" width="56" height="110" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<rect x="680" y="140" width="56" height="138" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="708" y="122" font-size="14" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X2</text>
 <text x="708" y="135" font-size="10" fill="#1d5a1d" text-anchor="middle" font-weight="normal">клеммник</text>
 <text x="708" y="166" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 CAN-H</text>
 <text x="708" y="194" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 CAN-L</text>
-<text x="708" y="222" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 GND</text>
+<rect x="684" y="208" width="48" height="20" rx="3" fill="#fff" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="3 2"/>
+<text x="708" y="222" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">3 ✕ ключ</text>
+<text x="708" y="250" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 GND</text>
 <polyline points="600,154 640,154 640,162 680,162" fill="none" stroke="#d9a400" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="655" cy="132" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
 <text x="655" y="136" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">5</text>
 <polyline points="600,182 630,182 630,190 680,190" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="615" cy="202" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
 <text x="615" y="206" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">6</text>
-<polyline points="600,218 680,218" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="596" y="222" font-size="10" fill="#222" text-anchor="end" font-weight="bold">шина GND</text>
-<circle cx="655" cy="234" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
-<text x="655" y="238" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">7</text>
+<polyline points="600,246 680,246" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="596" y="250" font-size="10" fill="#222" text-anchor="end" font-weight="bold">шина GND</text>
+<circle cx="655" cy="262" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="655" y="266" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">7</text>
 <rect x="880" y="120" width="190" height="130" rx="8" fill="#f7f2fc" stroke="#7a4fb0" stroke-width="1.5"/>
 <text x="975.0" y="140" font-size="13" fill="#111" text-anchor="middle" font-weight="bold">Разветвитель OBD2</text>
 <text x="975.0" y="238" font-size="10" fill="#444" text-anchor="middle" font-weight="normal">гнездо для Dash</text>
@@ -69,9 +71,9 @@
 <circle cx="880" cy="218" r="4" fill="#7a4fb0"/>
 <text x="888" y="222" font-size="11" fill="#222" text-anchor="start" font-weight="normal">пин 5  земля</text>
 <polyline points="736,162 800,162 800,162 880,162" fill="none" stroke="#d9a400" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<polyline points="736,190 800,190 800,190 880,190" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<polyline points="736,218 800,218 800,218 880,218" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="800" y="290" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">CAN-H и CAN-L скрутить (витая пара)</text>
+<polyline points="736,190 812,190 812,190 880,190" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="736,246 824,246 824,218 880,218" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="830" y="296" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">CAN-H и CAN-L скрутить; от разветвителя до X2 ≤ 30 см</text>
 <rect x="20" y="320" width="1060" height="56" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
 <text x="32" y="338" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
 <text x="32" y="356" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">Ключ выключен: между пинами 6 и 14 разветвителя ~60 Ом (две штатные оконечные). Если ~40 Ом — 120 Ом на модуле не снят.</text>

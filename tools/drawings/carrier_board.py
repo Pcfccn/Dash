@@ -42,12 +42,15 @@ for c in range(COLS):
 
 # WeAct outline: headers P2 at cols A(even, outer) B(odd, inner); P1 at O(even, inner) P(odd, outer);
 # pin pair k (pins 2k-1, 2k) at row k (0-based row index k, k=1..22 -> rows 2..23)
+# Board 40.64 x 66.88 (BoardShape V12): outer header columns 1.27 mm from the long edges, pin row 1
+# 6.48 mm from the top edge, pins 43/44 7.06 mm from the bottom edge. SWD (P3) at the pin-1 end,
+# USB-C (J1) at the other end, its centre 28.2 mm from the P2-side edge.
 P2_EVEN, P2_ODD, P1_EVEN, P1_ODD = 0, 1, 14, 15
 def prow(pin): return (pin + 1) // 2      # pin 1/2 -> row index 1
 mid_x = (hx(P2_EVEN) + hx(P1_ODD)) / 2
-wx0, wx1 = mid_x - 20.3 * S, mid_x + 20.3 * S
-wy0 = hy(prow(1)) - 6.3 * S
-wy1 = hy(prow(43)) + 6.3 * S
+wx0, wx1 = mid_x - 20.32 * S, mid_x + 20.32 * S
+wy0 = hy(prow(1)) - 6.48 * S
+wy1 = hy(prow(43)) + 7.06 * S
 a(f'<rect x="{wx0:.1f}" y="{wy0:.1f}" width="{wx1-wx0:.1f}" height="{wy1-wy0:.1f}" rx="6" '
   'fill="#2b4f86" fill-opacity="0.10" stroke="#2b4f86" stroke-width="2" stroke-dasharray="8 5"/>')
 a(f'<text x="{mid_x:.1f}" y="{wy1 - 22:.1f}" font-size="15" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct MiniSTM32H743 — сверху, на гнёздах</text>')
@@ -80,9 +83,8 @@ USED = {  # (header, pin): (label, color)
     (2,19): ("PA2 TX→GPS", "#2980b9"), (2,20): ("PA3 RX←GPS", "#2980b9"),
     (2,30): ("PE7 ▶", "#c0392b"), (2,31): ("PE8 ●", "#c0392b"), (2,32): ("PE9 ◀", "#c0392b"),
     (2,38): ("PE15 габариты", "#c0392b"),
-    (2,41): ("3V3", "#e67e22"), (2,42): ("5V", "#e74c3c"), (2,43): ("GND", "#000"), (2,44): ("GND", "#000"),
-    (2,15): ("GND", "#000"),
-}
+    (2,41): ("3V3", "#e67e22"), (2,42): ("5V", "#e74c3c"), (2,43): ("GND", "#000"),
+}   # GND from P2.43 only: P2.44 / P2.15 stay off the bus (one point)
 def pin_xy(hdr, pin):
     if hdr == 1: col = P1_ODD if pin % 2 else P1_EVEN
     else:        col = P2_ODD if pin % 2 else P2_EVEN
@@ -102,10 +104,18 @@ for (hdr, r), items in rows.items():
         a(f'<text x="{hx(P1_EVEN) - 9:.1f}" y="{y + 3.5:.1f}" font-size="9" fill="{colr}" text-anchor="end">P1.{txt}</text>')
 
 # terminal blocks KF2EDGV-3.81 (KEFA drawing): body (n*3.81 + 0.8) x 7.0 mm, pins 0.8 sq x 3.7 mm.
-# On the 2.54 grid every pin is stepped 0.635 mm (a quarter hole), pairs 1-2, 3-4.. toward each other:
-# pin k (0-based) sits at 1.5k - 0.25 holes from the first hole and lands in hole round(1.5k - 0.25)
-# -> holes 1,2, 4,5, 7,8, 10,11 (1-based). The plug (11.1 mm deep) is shown dashed, overhanging outward.
-def block(name, c0, r0, vertical, labels, color):
+# On the 2.54 grid every pin is offset 0.635 mm (a quarter hole) from its hole, pairs 1-2, 3-4.. toward
+# each other: pin k (0-based) sits at 1.5k - 0.25 holes from the first hole and its hole is
+# round(1.5k - 0.25) -> holes 1,2, 4,5, 7,8, 10,11 (1-based). The pin reaches its hole through a short
+# lapped wire (carrier-board.md section 3, method 1) or a 40-degree step (method 2, bench only).
+# A label "ключ" = key: that pin is pulled out, its hole stays empty. The plug (11.1 mm deep) is
+# shown dashed, overhanging outward.
+KEY = "ключ"
+def key_mark(x, y):
+    a(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4.2" fill="#fff" stroke="#c0392b" stroke-width="1.4"/>')
+    a(f'<path d="M{x-3:.1f},{y-3:.1f} L{x+3:.1f},{y+3:.1f} M{x-3:.1f},{y+3:.1f} L{x+3:.1f},{y-3:.1f}" '
+      'stroke="#c0392b" stroke-width="1.6"/>')
+def block(name, c0, r0, vertical, labels, color, name_left=False):
     n = len(labels)
     orig = [1.5 * k - 0.25 for k in range(n)]           # in holes, from the first hole
     hole = [round(o) for o in orig]
@@ -120,11 +130,18 @@ def block(name, c0, r0, vertical, labels, color):
         a(f'<rect x="{x - 3.5*S:.1f}" y="{y0:.1f}" width="{7*S:.1f}" height="{y1-y0:.1f}" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>')
         for i, lab in enumerate(labels):
             yo, yh = y_at(orig[i]), y_at(hole[i])
+            if lab == KEY:
+                key_mark(x, yh)
+                a(f'<text x="{x + 8.1*S:.1f}" y="{yh + 3.5:.1f}" font-size="10" fill="#c0392b">{name}.{i+1} ✕ ключ</text>')
+                continue
             a(f'<line x1="{x:.1f}" y1="{yo:.1f}" x2="{x:.1f}" y2="{yh:.1f}" stroke="#222" stroke-width="2"/>')
             a(f'<rect x="{x-2:.1f}" y="{yo-2:.1f}" width="4" height="4" fill="#222"/>')
             a(f'<circle cx="{x:.1f}" cy="{yh:.1f}" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>')
             a(f'<text x="{x + 8.1*S:.1f}" y="{yh + 3.5:.1f}" font-size="10" fill="#1a1a1a">{name}.{i+1} {lab}</text>')
-        a(f'<text x="{x:.1f}" y="{y0 - 6:.1f}" font-size="12" font-weight="bold" fill="{color}" text-anchor="middle">{name}</text>')
+        if name_left:      # tight under the block above: smaller name, closer to the body
+            a(f'<text x="{x:.1f}" y="{y0 - 2.5:.1f}" font-size="11" font-weight="bold" fill="{color}" text-anchor="middle">{name}</text>')
+        else:
+            a(f'<text x="{x:.1f}" y="{y0 - 6:.1f}" font-size="12" font-weight="bold" fill="{color}" text-anchor="middle">{name}</text>')
     else:
         y = hy(r0)
         x_at = lambda h: hx(c0) + h * P * S
@@ -134,6 +151,9 @@ def block(name, c0, r0, vertical, labels, color):
         a(f'<rect x="{x0:.1f}" y="{y - 3.5*S:.1f}" width="{x1-x0:.1f}" height="{7*S:.1f}" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>')
         for i, lab in enumerate(labels):
             xo, xh = x_at(orig[i]), x_at(hole[i])
+            if lab == KEY:
+                key_mark(xh, y)
+                continue
             a(f'<line x1="{xo:.1f}" y1="{y:.1f}" x2="{xh:.1f}" y2="{y:.1f}" stroke="#222" stroke-width="2"/>')
             a(f'<rect x="{xo-2:.1f}" y="{y-2:.1f}" width="4" height="4" fill="#222"/>')
             a(f'<circle cx="{xh:.1f}" cy="{y:.1f}" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>')
@@ -142,13 +162,29 @@ def block(name, c0, r0, vertical, labels, color):
         a(f'<text x="{(x0+x1)/2:.1f}" y="{ly:.1f}" font-size="9" fill="#1a1a1a" text-anchor="middle">'
           + " · ".join(f"{i+1} {lab}" for i, lab in enumerate(labels)) + '</text>')
 
-# right edge, vertical: column W (index 22), plug overhang toward the board edge
+# right edge, vertical: column W (index 22), plug overhang toward the board edge.
+# X3 sits under X4 (rows 26-30): on row 30 it would be in the way of the WeAct's USB-C plug.
 block("X5", 22, 1, True, ["VCC 3V3","GND","CS","RST","DC","SDI","SCK","LED"], "#16a085")
-block("X4", 22, 15, True, ["▶","●","◀","GND","ILL+","запас"], "#c0392b")
-# bottom edge, horizontal: last row (30), plug overhang toward the board edge
-block("X1", 2, 29, False, ["+12","GND"], "#e74c3c")
-block("X3", 7, 29, False, ["3V3","GND","TX","RX"], "#2980b9")
-block("X2", 15, 29, False, ["CAN-H","CAN-L","GND"], "#8e44ad")
+block("X4", 22, 15, True, ["▶","●","◀","GND","ILL+",KEY], "#c0392b")
+block("X3", 22, 25, True, ["3V3","GND","TX","RX"], "#2980b9", name_left=True)
+# bottom edge, horizontal: last row (30), plug overhang toward the board edge; the gap between
+# X1 (ends x 20.2 mm) and X2 (starts x 41.0 mm) is the USB-C lane (plug centre x 32.7 mm)
+block("X1", 2, 29, False, ["+12",KEY,"GND"], "#e74c3c")
+block("X2", 15, 29, False, ["H","L",KEY,"GND"], "#8e44ad")
+
+# WeAct USB-C plug (straight, up to 21 mm long, ~12 mm wide) and the SWD header at the other end
+ux = wx0 + 28.19 * S
+a(f'<rect x="{ux - 6*S:.1f}" y="{wy1:.1f}" width="{12*S:.1f}" height="{21*S:.1f}" rx="4" fill="#ee8a00" fill-opacity="0.10" '
+  'stroke="#b35400" stroke-width="1.5" stroke-dasharray="6 4"/>')
+for i, (t, fs, bold) in enumerate((("штекер USB-C", 10, True), ("прямой, ≤ 21 мм", 9, False),
+                                   ("полоса I–N:", 9, False), ("не выше 10 мм", 9, False))):
+    w = ' font-weight="bold"' if bold else ""
+    a(f'<text x="{ux:.1f}" y="{wy1 + 12.5*S + 11*i:.1f}" font-size="{fs}" fill="#b35400" text-anchor="middle"{w}>{t}</text>')
+sx0, sx1 = wx0 + 25.4 * S, wx0 + 33.1 * S          # P3 pins 4..1 (GND, CLK, DIO, 3V3)
+a(f'<rect x="{sx0 - 3:.1f}" y="{wy0 + 1.2*S:.1f}" width="{sx1 - sx0 + 6:.1f}" height="{3.6*S:.1f}" rx="2" '
+  'fill="#2b4f86" fill-opacity="0.25" stroke="#2b4f86"/>')
+a(f'<text x="{(sx0 + sx1) / 2:.1f}" y="{wy0 + 1.2*S + 19:.1f}" font-size="9" fill="#2b4f86" text-anchor="middle" '
+  'font-weight="bold">SWD ↑ к стенке</text>')
 
 # small parts in the free right column (cols R..U)
 def part(c0, r0, w, h, text, color):
@@ -156,11 +192,14 @@ def part(c0, r0, w, h, text, color):
     a(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w*P*S+8:.1f}" height="{h*P*S+8:.1f}" rx="4" fill="{color}" fill-opacity="0.15" stroke="{color}" stroke-width="1.5"/>')
     for i, line in enumerate(text.split("|")):
         a(f'<text x="{x + 5:.1f}" y="{y + 14 + i*12:.1f}" font-size="10" fill="{color}">{line}</text>')
-part(17, 1, 3, 6, "Подсветка|2N7000|R1 10k→5V|R2 1k←PA8|R3 10k→GND", "#d35400")
+part(17, 1, 3, 6, "Подсветка|2N7000|R1 10k→5V|R2 1k←PA8|R3 100k→GND", "#d35400")
 part(17, 9, 3, 6, "Кнопки|3×1k→3V3|3×100n→GND|3×1k в линию|к PE7–PE9", "#c0392b")
 # rows 17-23 only: row 24 carries the bare 3V3 bus underneath (row 25 GND)
 part(17, 16, 3, 6, "Габариты|BC547|47k←ILL+|100k, 100n|1N4148|10k→3V3", "#c0392b")
-part(4, 25, 10, 1.6, "TVS 1.5KE20A: полоска (катод) к X1.1 +12, к входу PD65W", "#e74c3c")
+# TVS left of the USB-C lane (cols B-H, 6 pitches between the leads), next to X1
+part(1, 25, 6, 1.6, "TVS 1.5KE20A|полоска к X1.1 (+12)", "#e74c3c")
+# GPS series resistors near X3: PA2 -> 100 R -> X3.4, X3.3 -> 100 R -> PA3 (rows 26-27, cols R-U)
+part(17, 25, 3, 1, "GPS|2×100 Ом", "#2980b9")
 
 a(f'<text x="{hx(5):.1f}" y="{hy(1) + 2:.1f}" font-size="1" fill="#fff"> </text>')
 
@@ -173,16 +212,23 @@ notes = [
  ("без гнёзд: GND / 5V / 3V3 есть ниже (P2.41–44).", "#333"),
  ("", ""),
  ("Клеммники 3.81 мм на сетке 2.54", "#222"),
- ("Каждый вывод — ступенькой 0.6 мм (■ → ●): пары 1–2,", "#333"),
- ("3–4, 5–6, 7–8 навстречу друг другу; занято 1, 2, 4, 5,", "#333"),
- ("7, 8, 10, 11-е отверстие ряда. Вывод 0.8 × 0.8 мм: если", "#333"),
- ("не входит в отверстие — рассверлить до Ø1.4.", "#333"),
+ ("Вывод (■) попадает в отверстие (●) со сдвигом 0.6 мм:", "#333"),
+ ("пары 1–2, 3–4, 5–6, 7–8 навстречу друг другу; занято 1, 2,", "#333"),
+ ("4, 5, 7, 8, 10, 11-е отверстие ряда. В машину — гнездо", "#333"),
+ ("на проволочках, корпус на клею ~4 мм над платой", "#333"),
+ ("(carrier-board.md §3). Отверстия не сверлить.", "#333"),
+ ("✕ — ключ: штырь вынут, отверстие пустое (X1.2, X2.3, X4.6).", "#c0392b"),
  ("Пунктир — вилка (11.1 мм), висит выше 10 мм.", "#333"),
  ("Провода из вилки выходят вверх: плата на гайке M3", "#333"),
  ("(2.4 мм), не на стойках 8 мм — иначе не влезет по высоте.", "#333"),
  ("", ""),
+ ("WeAct: USB-C и SWD", "#222"),
+ ("USB-C — к ряду 30: прямой штекер идёт по полосе I–N", "#333"),
+ ("между X1 и X2 (рыжий пунктир), там ничего выше 10 мм.", "#333"),
+ ("SWD — у верхнего края, смотрит в стенку коробки.", "#333"),
+ ("", ""),
  ("Вне платы (в коробке, на скотче VHB)", "#222"),
- ("PD65W: вход ← X1 через TVS; USB-C → WeAct.", "#333"),
+ ("PD65W: за рядом 30; вход ← X1 через TVS, USB-C → WeAct.", "#333"),
  ("SN65HVD230: 3V3, GND, TX←PD1, RX→PD0, CANH/L → X2.", "#333"),
  ("Si4599: исток 5V (P2.42), затвор ← драйвер, сток → X5.8.", "#333"),
  ("GPS — на своей плате под стеклом, кабель → X3.", "#333"),

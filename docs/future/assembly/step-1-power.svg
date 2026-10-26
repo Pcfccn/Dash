@@ -4,11 +4,13 @@
 <text x="20" y="52" font-size="12" fill="#555" text-anchor="start" font-weight="normal">Предохранитель 2 А — в жгуте, у самой врезки в провод ACC. На плате — клеммник X1, TVS и PD65W.</text>
 <text x="20" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">В ЖГУТЕ (вне коробки)</text>
 <text x="390" y="78" font-size="11" fill="#888" text-anchor="start" font-weight="bold">НА ПЛАТЕ / В КОРОБКЕ</text>
-<rect x="300" y="100" width="56" height="82" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
+<rect x="300" y="100" width="56" height="110" rx="4" fill="#e3f1e3" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="328" y="82" font-size="14" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X1</text>
 <text x="328" y="95" font-size="10" fill="#1d5a1d" text-anchor="middle" font-weight="normal">клеммник</text>
 <text x="328" y="126" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 +12 В</text>
-<text x="328" y="154" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 масса</text>
+<rect x="304" y="140" width="48" height="20" rx="3" fill="#fff" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="3 2"/>
+<text x="328" y="154" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">2 ✕ ключ</text>
+<text x="328" y="182" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 масса</text>
 <rect x="20" y="102" width="130" height="38" rx="6" fill="#fff5f5" stroke="#d62828" stroke-width="1.5"/>
 <text x="30" y="118" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">провод ACC</text>
 <text x="30" y="133" font-size="10" fill="#7a1010" text-anchor="start" font-weight="normal">(12 В в ACC/ON)</text>
@@ -21,9 +23,9 @@
 <rect x="20" y="160" width="130" height="38" rx="6" fill="#f2f2f2" stroke="#222" stroke-width="1.5"/>
 <text x="30" y="176" font-size="10" fill="#111" text-anchor="start" font-weight="normal">масса кузова</text>
 <text x="30" y="191" font-size="10" fill="#111" text-anchor="start" font-weight="normal">(болт)</text>
-<polyline points="150,179 240,179 240,150 300,150" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="270" cy="166" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
-<text x="270" y="170" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
+<polyline points="150,179 240,179 240,178 300,178" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="270" cy="194" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
+<text x="270" y="198" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">2</text>
 <rect x="600" y="96" width="180" height="96" rx="8" fill="#fff8ef" stroke="#ee8a00" stroke-width="1.5"/>
 <text x="690.0" y="116" font-size="13" fill="#111" text-anchor="middle" font-weight="bold">PD65W</text>
 <text x="690.0" y="166" font-size="10" fill="#444" text-anchor="middle" font-weight="normal">подписи входа —</text>
@@ -38,7 +40,7 @@
 <circle cx="430" cy="122" r="4" fill="#d62828"/>
 <circle cx="530" cy="108" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
 <text x="530" y="112" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">3</text>
-<polyline points="356,150 380,150 380,300 560,300 560,150 600,150" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="356,178 380,178 380,300 560,300 560,150 600,150" fill="none" stroke="#222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
 <circle cx="650" cy="286" r="10" fill="#fff" stroke="#111" stroke-width="1.5"/>
 <text x="650" y="290" font-size="11" fill="#111" text-anchor="middle" font-weight="bold">4</text>
 <polyline points="430,122 430,193.0" fill="none" stroke="#222" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
@@ -65,5 +67,5 @@
 <text x="830" y="160" font-size="10" fill="#ee8a00" text-anchor="middle" font-weight="normal">кабель USB-C</text>
 <rect x="20" y="385" width="1060" height="39" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
 <text x="32" y="403" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
-<text x="32" y="421" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">От лабораторного БП 12 В на X1 (+ на 1): на выходе USB-C 5.0–5.2 В. TVS холодный. WeAct пока не подключать.</text>
+<text x="32" y="421" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">От лабораторного БП 12 В на X1 (+ на 1, − на 3): на выходе USB-C 5.0–5.2 В. TVS холодный. WeAct пока не подключать.</text>
 </svg>

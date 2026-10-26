@@ -777,9 +777,9 @@
 <circle cx="553.7" cy="684.0" r="3" fill="#ffffff" stroke="#b8c9b0" stroke-width="1"/>
 <circle cx="553.7" cy="704.3" r="3" fill="#ffffff" stroke="#b8c9b0" stroke-width="1"/>
 <circle cx="553.7" cy="724.6" r="3" fill="#ffffff" stroke="#b8c9b0" stroke-width="1"/>
-<rect x="76.3" y="105.3" width="324.8" height="527.5" rx="6" fill="#2b4f86" fill-opacity="0.10" stroke="#2b4f86" stroke-width="2" stroke-dasharray="8 5"/>
-<text x="238.7" y="610.8" font-size="15" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct MiniSTM32H743 — сверху, на гнёздах</text>
-<text x="238.7" y="625.8" font-size="11" fill="#2b4f86" text-anchor="middle">под ней — только провода</text>
+<rect x="76.2" y="103.8" width="325.1" height="535.0" rx="6" fill="#2b4f86" fill-opacity="0.10" stroke="#2b4f86" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="238.7" y="616.9" font-size="15" fill="#2b4f86" text-anchor="middle" font-weight="bold">WeAct MiniSTM32H743 — сверху, на гнёздах</text>
+<text x="238.7" y="631.9" font-size="11" fill="#2b4f86" text-anchor="middle">под ней — только провода</text>
 <text x="114.6" y="141.7" font-size="11" fill="#2b4f86">P2</text>
 <text x="348.8" y="141.7" font-size="11" fill="#2b4f86">P1</text>
 <rect x="82.3" y="212.6" width="8" height="373.8" fill="#222" fill-opacity="0.55" rx="2"/>
@@ -802,7 +802,6 @@
 <circle cx="391.1" cy="562.1" r="4.5" fill="#16a085"/>
 <circle cx="391.1" cy="582.4" r="4.5" fill="#16a085"/>
 <circle cx="106.6" cy="257.3" r="4.5" fill="#16a085"/>
-<circle cx="106.6" cy="297.9" r="4.5" fill="#000"/>
 <circle cx="106.6" cy="338.6" r="4.5" fill="#2980b9"/>
 <circle cx="86.3" cy="338.6" r="4.5" fill="#2980b9"/>
 <circle cx="106.6" cy="399.5" r="4.5" fill="#16a085"/>
@@ -814,21 +813,19 @@
 <circle cx="106.6" cy="562.1" r="4.5" fill="#e67e22"/>
 <circle cx="86.3" cy="562.1" r="4.5" fill="#e74c3c"/>
 <circle cx="106.6" cy="582.4" r="4.5" fill="#000"/>
-<circle cx="86.3" cy="582.4" r="4.5" fill="#000"/>
 <text x="361.8" y="321.7" font-size="9" fill="#8e44ad" text-anchor="end">P1.18 PD1 CAN TX</text>
 <text x="361.8" y="342.1" font-size="9" fill="#8e44ad" text-anchor="end">P1.19 PD0 CAN RX</text>
 <text x="361.8" y="423.3" font-size="9" fill="#d35400" text-anchor="end">P1.28 PA8 подсветка</text>
 <text x="361.8" y="565.6" font-size="9" fill="#16a085" text-anchor="end">P1.41 PB15 MOSI</text>
 <text x="361.8" y="585.9" font-size="9" fill="#16a085" text-anchor="end">P1.43 PB13 SCK</text>
 <text x="115.6" y="260.8" font-size="9" fill="#16a085">P2.11 PC0 CS</text>
-<text x="115.6" y="301.4" font-size="9" fill="#000">P2.15 GND</text>
 <text x="115.6" y="342.1" font-size="9" fill="#2980b9">P2.19 PA2 TX→GPS · 20 PA3 RX←GPS</text>
 <text x="115.6" y="403.0" font-size="9" fill="#16a085">P2.25 PC4 DC · 26 PC5 RST</text>
 <text x="115.6" y="443.7" font-size="9" fill="#c0392b">P2.30 PE7 ▶</text>
 <text x="115.6" y="464.0" font-size="9" fill="#c0392b">P2.31 PE8 ● · 32 PE9 ◀</text>
 <text x="115.6" y="524.9" font-size="9" fill="#c0392b">P2.38 PE15 габариты</text>
 <text x="115.6" y="565.6" font-size="9" fill="#e67e22">P2.41 3V3 · 42 5V</text>
-<text x="115.6" y="585.9" font-size="9" fill="#000">P2.43 GND · 44 GND</text>
+<text x="115.6" y="585.9" font-size="9" fill="#000">P2.43 GND</text>
 <rect x="505.4" y="132.2" width="88.8" height="250.2" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
 <rect x="505.4" y="132.2" width="56.0" height="250.2" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
 <line x1="533.4" y1="150.6" x2="533.4" y2="155.7" stroke="#222" stroke-width="2"/>
@@ -886,56 +883,69 @@
 <rect x="531.4" y="555.0" width="4" height="4" fill="#222"/>
 <circle cx="533.4" cy="562.1" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
 <text x="598.2" y="565.6" font-size="10" fill="#1a1a1a">X4.5 ILL+</text>
-<line x1="533.4" y1="587.5" x2="533.4" y2="582.4" stroke="#222" stroke-width="2"/>
-<rect x="531.4" y="585.5" width="4" height="4" fill="#222"/>
-<circle cx="533.4" cy="582.4" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<text x="598.2" y="585.9" font-size="10" fill="#1a1a1a">X4.6 запас</text>
+<circle cx="533.4" cy="582.4" r="4.2" fill="#fff" stroke="#c0392b" stroke-width="1.4"/>
+<path d="M530.4,579.4 L536.4,585.4 M530.4,585.4 L536.4,579.4" stroke="#c0392b" stroke-width="1.6"/>
+<text x="598.2" y="585.9" font-size="10" fill="#c0392b">X4.6 ✕ ключ</text>
 <text x="533.4" y="410.6" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">X4</text>
-<rect x="103.4" y="696.6" width="67.4" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
-<rect x="103.4" y="696.6" width="67.4" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<rect x="505.4" y="619.8" width="88.8" height="128.3" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="505.4" y="619.8" width="56.0" height="128.3" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<line x1="533.4" y1="638.3" x2="533.4" y2="643.4" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="636.3" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="643.4" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="646.9" font-size="10" fill="#1a1a1a">X3.1 3V3</text>
+<line x1="533.4" y1="668.8" x2="533.4" y2="663.7" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="666.8" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="663.7" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="667.2" font-size="10" fill="#1a1a1a">X3.2 GND</text>
+<line x1="533.4" y1="699.2" x2="533.4" y2="704.3" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="697.2" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="704.3" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="707.8" font-size="10" fill="#1a1a1a">X3.3 TX</text>
+<line x1="533.4" y1="729.7" x2="533.4" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="531.4" y="727.7" width="4" height="4" fill="#222"/>
+<circle cx="533.4" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<text x="598.2" y="728.1" font-size="10" fill="#1a1a1a">X3.4 RX</text>
+<text x="533.4" y="617.3" font-size="11" font-weight="bold" fill="#2980b9" text-anchor="middle">X3</text>
+<rect x="103.4" y="696.6" width="97.8" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="103.4" y="696.6" width="97.8" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
 <line x1="121.9" y1="724.6" x2="127.0" y2="724.6" stroke="#222" stroke-width="2"/>
 <rect x="119.9" y="722.6" width="4" height="4" fill="#222"/>
 <circle cx="127.0" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<line x1="152.4" y1="724.6" x2="147.3" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="150.4" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="147.3" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<circle cx="147.3" cy="724.6" r="4.2" fill="#fff" stroke="#c0392b" stroke-width="1.4"/>
+<path d="M144.3,721.6 L150.3,727.6 M144.3,727.6 L150.3,721.6" stroke="#c0392b" stroke-width="1.6"/>
+<line x1="182.8" y1="724.6" x2="187.9" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="180.8" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="187.9" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
 <text x="98.4" y="728.6" font-size="12" font-weight="bold" fill="#e74c3c" text-anchor="end">X1</text>
-<text x="137.1" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 +12 · 2 GND</text>
-<rect x="205.0" y="696.6" width="128.3" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
-<rect x="205.0" y="696.6" width="128.3" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
-<line x1="223.5" y1="724.6" x2="228.6" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="221.5" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="228.6" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<line x1="254.0" y1="724.6" x2="248.9" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="252.0" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="248.9" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<line x1="284.4" y1="724.6" x2="289.5" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="282.4" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="289.5" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<line x1="314.9" y1="724.6" x2="309.8" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="312.9" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="309.8" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<text x="200.0" y="728.6" font-size="12" font-weight="bold" fill="#2980b9" text-anchor="end">X3</text>
-<text x="269.2" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 3V3 · 2 GND · 3 TX · 4 RX</text>
-<rect x="367.6" y="696.6" width="97.8" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
-<rect x="367.6" y="696.6" width="97.8" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
+<text x="152.4" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 +12 · 2 ключ · 3 GND</text>
+<rect x="367.6" y="696.6" width="128.3" height="88.8" rx="3" fill="none" stroke="#1d5a1d" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="367.6" y="696.6" width="128.3" height="56.0" rx="3" fill="#3a8f3a" fill-opacity="0.80" stroke="#1d5a1d"/>
 <line x1="386.0" y1="724.6" x2="391.1" y2="724.6" stroke="#222" stroke-width="2"/>
 <rect x="384.0" y="722.6" width="4" height="4" fill="#222"/>
 <circle cx="391.1" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
 <line x1="416.5" y1="724.6" x2="411.4" y2="724.6" stroke="#222" stroke-width="2"/>
 <rect x="414.5" y="722.6" width="4" height="4" fill="#222"/>
 <circle cx="411.4" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
-<line x1="447.0" y1="724.6" x2="452.1" y2="724.6" stroke="#222" stroke-width="2"/>
-<rect x="445.0" y="722.6" width="4" height="4" fill="#222"/>
-<circle cx="452.1" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
+<circle cx="452.1" cy="724.6" r="4.2" fill="#fff" stroke="#c0392b" stroke-width="1.4"/>
+<path d="M449.1,721.6 L455.1,727.6 M449.1,727.6 L455.1,721.6" stroke="#c0392b" stroke-width="1.6"/>
+<line x1="477.5" y1="724.6" x2="472.4" y2="724.6" stroke="#222" stroke-width="2"/>
+<rect x="475.5" y="722.6" width="4" height="4" fill="#222"/>
+<circle cx="472.4" cy="724.6" r="3.6" fill="#f1c40f" stroke="#222" stroke-width="1"/>
 <text x="362.6" y="728.6" font-size="12" font-weight="bold" fill="#8e44ad" text-anchor="end">X2</text>
-<text x="416.5" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 CAN-H · 2 CAN-L · 3 GND</text>
+<text x="431.8" y="690.6" font-size="9" fill="#1a1a1a" text-anchor="middle">1 H · 2 L · 3 ключ · 4 GND</text>
+<rect x="253.7" y="638.9" width="96.0" height="168.0" rx="4" fill="#ee8a00" fill-opacity="0.10" stroke="#b35400" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="301.7" y="738.9" font-size="10" fill="#b35400" text-anchor="middle" font-weight="bold">штекер USB-C</text>
+<text x="301.7" y="749.9" font-size="9" fill="#b35400" text-anchor="middle">прямой, ≤ 21 мм</text>
+<text x="301.7" y="760.9" font-size="9" fill="#b35400" text-anchor="middle">полоса I–N:</text>
+<text x="301.7" y="771.9" font-size="9" fill="#b35400" text-anchor="middle">не выше 10 мм</text>
+<rect x="276.4" y="113.4" width="67.6" height="28.8" rx="2" fill="#2b4f86" fill-opacity="0.25" stroke="#2b4f86"/>
+<text x="310.2" y="132.4" font-size="9" fill="#2b4f86" text-anchor="middle" font-weight="bold">SWD ↑ к стенке</text>
 <rect x="427.8" y="151.7" width="69.0" height="129.9" rx="4" fill="#d35400" fill-opacity="0.15" stroke="#d35400" stroke-width="1.5"/>
 <text x="432.8" y="165.7" font-size="10" fill="#d35400">Подсветка</text>
 <text x="432.8" y="177.7" font-size="10" fill="#d35400">2N7000</text>
 <text x="432.8" y="189.7" font-size="10" fill="#d35400">R1 10k→5V</text>
 <text x="432.8" y="201.7" font-size="10" fill="#d35400">R2 1k←PA8</text>
-<text x="432.8" y="213.7" font-size="10" fill="#d35400">R3 10k→GND</text>
+<text x="432.8" y="213.7" font-size="10" fill="#d35400">R3 100k→GND</text>
 <rect x="427.8" y="314.2" width="69.0" height="129.9" rx="4" fill="#c0392b" fill-opacity="0.15" stroke="#c0392b" stroke-width="1.5"/>
 <text x="432.8" y="328.2" font-size="10" fill="#c0392b">Кнопки</text>
 <text x="432.8" y="340.2" font-size="10" fill="#c0392b">3×1k→3V3</text>
@@ -949,29 +959,39 @@
 <text x="432.8" y="506.5" font-size="10" fill="#c0392b">100k, 100n</text>
 <text x="432.8" y="518.5" font-size="10" fill="#c0392b">1N4148</text>
 <text x="432.8" y="530.5" font-size="10" fill="#c0392b">10k→3V3</text>
-<rect x="163.6" y="639.4" width="211.2" height="40.5" rx="4" fill="#e74c3c" fill-opacity="0.15" stroke="#e74c3c" stroke-width="1.5"/>
-<text x="168.6" y="653.4" font-size="10" fill="#e74c3c">TVS 1.5KE20A: полоска (катод) к X1.1 +12, к входу PD65W</text>
+<rect x="102.6" y="639.4" width="129.9" height="40.5" rx="4" fill="#e74c3c" fill-opacity="0.15" stroke="#e74c3c" stroke-width="1.5"/>
+<text x="107.6" y="653.4" font-size="10" fill="#e74c3c">TVS 1.5KE20A</text>
+<text x="107.6" y="665.4" font-size="10" fill="#e74c3c">полоска к X1.1 (+12)</text>
+<rect x="427.8" y="639.4" width="69.0" height="28.3" rx="4" fill="#2980b9" fill-opacity="0.15" stroke="#2980b9" stroke-width="1.5"/>
+<text x="432.8" y="653.4" font-size="10" fill="#2980b9">GPS</text>
+<text x="432.8" y="665.4" font-size="10" fill="#2980b9">2×100 Ом</text>
 <text x="187.9" y="157.7" font-size="1" fill="#fff"> </text>
 <text x="710.0" y="80" font-size="13" fill="#222" font-weight="bold">Гнёзда под WeAct</text>
 <text x="710.0" y="98" font-size="13" fill="#333">Из двух 1×40 (C9811): 2 полоски по 20 (выводы 5–44)</text>
 <text x="710.0" y="116" font-size="13" fill="#333">(P1) и 2 по 19 (P2, выводы 7–44). Красный пунктир —</text>
 <text x="710.0" y="134" font-size="13" fill="#333">без гнёзд: GND / 5V / 3V3 есть ниже (P2.41–44).</text>
 <text x="710.0" y="170" font-size="13" fill="#222" font-weight="bold">Клеммники 3.81 мм на сетке 2.54</text>
-<text x="710.0" y="188" font-size="13" fill="#333">Каждый вывод — ступенькой 0.6 мм (■ → ●): пары 1–2,</text>
-<text x="710.0" y="206" font-size="13" fill="#333">3–4, 5–6, 7–8 навстречу друг другу; занято 1, 2, 4, 5,</text>
-<text x="710.0" y="224" font-size="13" fill="#333">7, 8, 10, 11-е отверстие ряда. Вывод 0.8 × 0.8 мм: если</text>
-<text x="710.0" y="242" font-size="13" fill="#333">не входит в отверстие — рассверлить до Ø1.4.</text>
-<text x="710.0" y="260" font-size="13" fill="#333">Пунктир — вилка (11.1 мм), висит выше 10 мм.</text>
-<text x="710.0" y="278" font-size="13" fill="#333">Провода из вилки выходят вверх: плата на гайке M3</text>
-<text x="710.0" y="296" font-size="13" fill="#333">(2.4 мм), не на стойках 8 мм — иначе не влезет по высоте.</text>
-<text x="710.0" y="332" font-size="13" fill="#222" font-weight="bold">Вне платы (в коробке, на скотче VHB)</text>
-<text x="710.0" y="350" font-size="13" fill="#333">PD65W: вход ← X1 через TVS; USB-C → WeAct.</text>
-<text x="710.0" y="368" font-size="13" fill="#333">SN65HVD230: 3V3, GND, TX←PD1, RX→PD0, CANH/L → X2.</text>
-<text x="710.0" y="386" font-size="13" fill="#333">Si4599: исток 5V (P2.42), затвор ← драйвер, сток → X5.8.</text>
-<text x="710.0" y="404" font-size="13" fill="#333">GPS — на своей плате под стеклом, кабель → X3.</text>
-<text x="710.0" y="440" font-size="13" fill="#222" font-weight="bold">Перед пайкой</text>
-<text x="710.0" y="458" font-size="13" fill="#333">Сверить с шелкографией WeAct: P1.1 = GND, P1.2 = 5V,</text>
-<text x="710.0" y="476" font-size="13" fill="#333">P2.1 = GND, P2.2 = 3V3 (схема V12). Ряды: у P1 нечётные</text>
-<text x="710.0" y="494" font-size="13" fill="#333">снаружи, у P2 — внутри (вид сверху).</text>
-<text x="710.0" y="512" font-size="13" fill="#333">Полный список проводов — carrier-board.md.</text>
+<text x="710.0" y="188" font-size="13" fill="#333">Вывод (■) попадает в отверстие (●) со сдвигом 0.6 мм:</text>
+<text x="710.0" y="206" font-size="13" fill="#333">пары 1–2, 3–4, 5–6, 7–8 навстречу друг другу; занято 1, 2,</text>
+<text x="710.0" y="224" font-size="13" fill="#333">4, 5, 7, 8, 10, 11-е отверстие ряда. В машину — гнездо</text>
+<text x="710.0" y="242" font-size="13" fill="#333">на проволочках, корпус на клею ~4 мм над платой</text>
+<text x="710.0" y="260" font-size="13" fill="#333">(carrier-board.md §3). Отверстия не сверлить.</text>
+<text x="710.0" y="278" font-size="13" fill="#c0392b">✕ — ключ: штырь вынут, отверстие пустое (X1.2, X2.3, X4.6).</text>
+<text x="710.0" y="296" font-size="13" fill="#333">Пунктир — вилка (11.1 мм), висит выше 10 мм.</text>
+<text x="710.0" y="314" font-size="13" fill="#333">Провода из вилки выходят вверх: плата на гайке M3</text>
+<text x="710.0" y="332" font-size="13" fill="#333">(2.4 мм), не на стойках 8 мм — иначе не влезет по высоте.</text>
+<text x="710.0" y="368" font-size="13" fill="#222" font-weight="bold">WeAct: USB-C и SWD</text>
+<text x="710.0" y="386" font-size="13" fill="#333">USB-C — к ряду 30: прямой штекер идёт по полосе I–N</text>
+<text x="710.0" y="404" font-size="13" fill="#333">между X1 и X2 (рыжий пунктир), там ничего выше 10 мм.</text>
+<text x="710.0" y="422" font-size="13" fill="#333">SWD — у верхнего края, смотрит в стенку коробки.</text>
+<text x="710.0" y="458" font-size="13" fill="#222" font-weight="bold">Вне платы (в коробке, на скотче VHB)</text>
+<text x="710.0" y="476" font-size="13" fill="#333">PD65W: за рядом 30; вход ← X1 через TVS, USB-C → WeAct.</text>
+<text x="710.0" y="494" font-size="13" fill="#333">SN65HVD230: 3V3, GND, TX←PD1, RX→PD0, CANH/L → X2.</text>
+<text x="710.0" y="512" font-size="13" fill="#333">Si4599: исток 5V (P2.42), затвор ← драйвер, сток → X5.8.</text>
+<text x="710.0" y="530" font-size="13" fill="#333">GPS — на своей плате под стеклом, кабель → X3.</text>
+<text x="710.0" y="566" font-size="13" fill="#222" font-weight="bold">Перед пайкой</text>
+<text x="710.0" y="584" font-size="13" fill="#333">Сверить с шелкографией WeAct: P1.1 = GND, P1.2 = 5V,</text>
+<text x="710.0" y="602" font-size="13" fill="#333">P2.1 = GND, P2.2 = 3V3 (схема V12). Ряды: у P1 нечётные</text>
+<text x="710.0" y="620" font-size="13" fill="#333">снаружи, у P2 — внутри (вид сверху).</text>
+<text x="710.0" y="638" font-size="13" fill="#333">Полный список проводов — carrier-board.md.</text>
 </svg>

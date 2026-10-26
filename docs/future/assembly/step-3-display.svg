@@ -92,8 +92,9 @@
 <polyline points="576,290 700,290 700,290 830,290" fill="none" stroke="#6c757d" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
 <polyline points="576,318 700,318 700,318 830,318" fill="none" stroke="#ee8a00" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="820" y="350" font-size="10" fill="#a00" text-anchor="end" font-weight="normal">не подключать</text>
-<rect x="20" y="430" width="1060" height="56" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
-<text x="32" y="448" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
-<text x="32" y="466" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">Прозвонка: каждый вывод экрана звонится со своим выводом WeAct (CS–PC0, RESET–PC5, DC–PC4, SDI–PB15, SCK–PB13),</text>
-<text x="32" y="483" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">VCC — с шиной 3V3, GND — с GND; соседние провода X5 между собой не звонятся.</text>
+<rect x="20" y="420" width="1060" height="73" rx="6" fill="#f1faf2" stroke="#2a9d3a" stroke-width="1.5"/>
+<text x="32" y="438" font-size="12" fill="#1d6a2a" text-anchor="start" font-weight="bold">Проверка</text>
+<text x="32" y="456" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">Прозвонка: каждый вывод экрана звонится со своим выводом WeAct (CS–PC0, RESET–PC5, DC–PC4, SDI–PB15, SCK–PB13),</text>
+<text x="32" y="473" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">VCC — с шиной 3V3, GND — с GND; соседние провода X5 между собой не звонятся.</text>
+<text x="32" y="490" font-size="12" fill="#1d4d26" text-anchor="start" font-weight="normal">До шага 4: ток в вывод LED при 3.3 В и при 5 В. Единицы мА — LED только вход управления: записать (build-hardware.md §3).</text>
 </svg>

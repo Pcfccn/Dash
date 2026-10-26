@@ -6,15 +6,17 @@
 <text x="640" y="102" font-size="14" fill="#6a6a3a" text-anchor="start" font-weight="bold">Коробка Dash 140×82×38 (плата-носитель на гайках M3)</text>
 <text x="20" y="90" font-size="13" fill="#888" text-anchor="start" font-weight="bold">МАШИНА</text>
 <text x="1160" y="90" font-size="13" fill="#888" text-anchor="start" font-weight="bold">ЭКРАН И GPS</text>
-<rect x="362" y="150" width="76" height="72" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
+<rect x="362" y="150" width="76" height="94" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="400" y="166" font-size="13" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X1 питание</text>
 <text x="400" y="189" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 +12 В ACC</text>
-<text x="400" y="211" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 масса</text>
-<rect x="362" y="420" width="76" height="94" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
+<text x="400" y="211" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">2 ✕ ключ</text>
+<text x="400" y="233" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 масса</text>
+<rect x="362" y="420" width="76" height="116" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="400" y="436" font-size="13" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X2 CAN</text>
 <text x="400" y="459" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 CAN-H</text>
 <text x="400" y="481" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">2 CAN-L</text>
-<text x="400" y="503" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 GND</text>
+<text x="400" y="503" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">3 ✕ ключ</text>
+<text x="400" y="525" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 GND</text>
 <rect x="362" y="640" width="76" height="160" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="400" y="656" font-size="13" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X4 кнопки</text>
 <text x="400" y="679" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 ▶</text>
@@ -22,7 +24,7 @@
 <text x="400" y="723" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">3 ◀</text>
 <text x="400" y="745" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">4 GND</text>
 <text x="400" y="767" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">5 ILL+</text>
-<text x="400" y="789" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">6 запас</text>
+<text x="400" y="789" font-size="10" fill="#c0392b" text-anchor="middle" font-weight="bold">6 ✕ ключ</text>
 <rect x="1042" y="130" width="76" height="204" rx="4" fill="#3a8f3a" fill-opacity="0.18" stroke="#1d5a1d" stroke-width="1.5"/>
 <text x="1080" y="146" font-size="13" fill="#1d5a1d" text-anchor="middle" font-weight="bold">X5 экран</text>
 <text x="1080" y="169" font-size="10" fill="#123" text-anchor="middle" font-weight="normal">1 VCC 3V3</text>
@@ -53,7 +55,7 @@
 <rect x="20" y="262" width="210" height="50" rx="8" fill="#f4f4f4" stroke="#222222" stroke-width="1.5"/>
 <text x="30" y="282" font-size="14" fill="#111" text-anchor="start" font-weight="bold">Масса кузова</text>
 <text x="30" y="300" font-size="11" fill="#333" text-anchor="start" font-weight="normal">болт / штатная точка массы</text>
-<polyline points="230,287 345,287 345,207 362,207" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="230,287 345,287 345,229 362,229" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
 <rect x="20" y="400" width="230" height="150" rx="8" fill="#f7f2fc" stroke="#7a4fb0" stroke-width="1.5"/>
 <text x="30" y="420" font-size="14" fill="#111" text-anchor="start" font-weight="bold">Разъём OBD2</text>
 <text x="30" y="438" font-size="11" fill="#333" text-anchor="start" font-weight="normal">под панелью → разветвитель 1 → 2:</text>
@@ -65,11 +67,11 @@
 <text x="30" y="528" font-size="11" fill="#333" text-anchor="start" font-weight="normal">16 (постоянные 12 В) — не брать</text>
 <polyline points="250,455 362,455" fill="none" stroke="#e0b000" stroke-width="3" stroke-linejoin="round"/>
 <polyline points="250,477 362,477" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round"/>
-<polyline points="250,499 362,499" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
+<polyline points="250,521 362,521" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
 <text x="305" y="447" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">6</text>
 <text x="305" y="471" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">14</text>
-<text x="305" y="493" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">5</text>
-<text x="20" y="568" font-size="10" fill="#555" text-anchor="start" font-weight="normal">CAN-H / CAN-L — витая пара, отвод от разветвителя покороче</text>
+<text x="305" y="515" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">5</text>
+<text x="20" y="568" font-size="10" fill="#555" text-anchor="start" font-weight="normal">CAN-H / CAN-L — витая пара; до X2 ≤ 30 см вместе с хвостом разветвителя</text>
 <rect x="20" y="625" width="230" height="150" rx="8" fill="#f6f7f8" stroke="#6c757d" stroke-width="1.5"/>
 <text x="30" y="645" font-size="14" fill="#111" text-anchor="start" font-weight="bold">3 кнопки 8 мм (1NO)</text>
 <text x="30" y="663" font-size="11" fill="#333" text-anchor="start" font-weight="normal">в штатной заглушке LC100</text>
@@ -96,9 +98,9 @@
 <rect x="574" y="110" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
 <text x="591.0" y="122" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
 <polyline points="572,118 574,118" fill="none" stroke="#222222" stroke-width="2" stroke-linejoin="round"/>
-<polyline points="438,207 452,207" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
-<rect x="452" y="199" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
-<text x="469.0" y="211" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
+<polyline points="438,229 452,229" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="452" y="221" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
+<text x="469.0" y="233" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
 <rect x="500" y="160" width="120" height="70" rx="8" fill="#fff8ef" stroke="#f08c00" stroke-width="1.5"/>
 <text x="510" y="180" font-size="13" fill="#111" text-anchor="start" font-weight="bold">PD65W</text>
 <text x="510" y="198" font-size="11" fill="#333" text-anchor="start" font-weight="normal">вход 8–30 В</text>
@@ -117,9 +119,9 @@
 <text x="480" y="513" font-size="11" fill="#333" text-anchor="start" font-weight="normal">СНЯТЬ</text>
 <polyline points="438,455 470,455" fill="none" stroke="#e0b000" stroke-width="3" stroke-linejoin="round"/>
 <polyline points="438,477 470,477" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round"/>
-<polyline points="438,499 442,499" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
-<rect x="442" y="491" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
-<text x="459.0" y="503" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
+<polyline points="438,521 442,521" fill="none" stroke="#222222" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="442" y="513" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
+<text x="459.0" y="525" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
 <polyline points="610,455 650,455" fill="none" stroke="#7a4fb0" stroke-width="2.2" stroke-linejoin="round"/>
 <text x="658" y="459" font-size="10" fill="#203a66" text-anchor="start" font-weight="normal">PD1 · P1.18  CAN TX</text>
 <polyline points="610,485 650,485" fill="none" stroke="#7a4fb0" stroke-width="2.2" stroke-linejoin="round"/>
@@ -151,7 +153,6 @@
 <polyline points="438,763 470,763" fill="none" stroke="#d62828" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="7 4"/>
 <polyline points="610,775 650,775" fill="none" stroke="#d62828" stroke-width="2.2" stroke-linejoin="round"/>
 <text x="658" y="779" font-size="10" fill="#203a66" text-anchor="start" font-weight="normal">PE15 · P2.38  габариты</text>
-<text x="446" y="789" font-size="11" fill="#888" text-anchor="start" font-weight="normal">—</text>
 <polyline points="870,209 1042,209" fill="none" stroke="#6c757d" stroke-width="2.2" stroke-linejoin="round"/>
 <text x="862" y="213" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">CS · PC0 · P2.11</text>
 <polyline points="870,231 1042,231" fill="none" stroke="#6c757d" stroke-width="2.2" stroke-linejoin="round"/>
@@ -173,7 +174,7 @@
 <text x="905" y="383" font-size="11" fill="#333" text-anchor="start" font-weight="normal">2N7000 + Si4599</text>
 <text x="905" y="398" font-size="11" fill="#333" text-anchor="start" font-weight="normal">R1 10 к → 5 В</text>
 <text x="905" y="413" font-size="11" fill="#333" text-anchor="start" font-weight="normal">R2 1 к ← PA8</text>
-<text x="905" y="428" font-size="11" fill="#333" text-anchor="start" font-weight="normal">R3 10 к → GND</text>
+<text x="905" y="428" font-size="11" fill="#333" text-anchor="start" font-weight="normal">R3 100 к → GND</text>
 <text x="905" y="443" font-size="11" fill="#333" text-anchor="start" font-weight="normal">образ ROAD INV</text>
 <polyline points="870,370 895,370" fill="none" stroke="#f08c00" stroke-width="2.2" stroke-linejoin="round"/>
 <text x="862" y="374" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">PA8 · P1.28  ШИМ</text>
@@ -187,12 +188,16 @@
 <polyline points="1042,617 1006,617" fill="none" stroke="#222222" stroke-width="2.2" stroke-linejoin="round"/>
 <rect x="972" y="609" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
 <text x="989.0" y="621" font-size="10" fill="#222222" text-anchor="middle" font-weight="bold">GND</text>
-<polyline points="870,639 1042,639" fill="none" stroke="#1f6fd1" stroke-width="2.2" stroke-linejoin="round"/>
+<polyline points="870,639 1042,639" fill="none" stroke="#9aa4ad" stroke-width="2.6" stroke-linejoin="round"/>
 <text x="862" y="643" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">PA3 · P2.20  ← TX GPS</text>
-<polyline points="870,661 1042,661" fill="none" stroke="#9aa4ad" stroke-width="2.6" stroke-linejoin="round"/>
+<polyline points="870,661 1042,661" fill="none" stroke="#1f6fd1" stroke-width="2.2" stroke-linejoin="round"/>
 <text x="862" y="665" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">PA2 · P2.19  → RX GPS</text>
+<rect x="902" y="633" width="30" height="12" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.2"/>
+<text x="917" y="629" font-size="9" fill="#333" text-anchor="middle" font-weight="bold">100 Ом</text>
+<rect x="902" y="655" width="30" height="12" rx="2" fill="#fff3c4" stroke="#333" stroke-width="1.2"/>
+<text x="917" y="681" font-size="9" fill="#333" text-anchor="middle" font-weight="bold">100 Ом</text>
 <text x="862" y="734" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">3V3 · P2.41 → шина 3V3</text>
-<text x="862" y="756" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">GND · P2.43 / P2.44 → шина GND</text>
+<text x="862" y="756" font-size="10" fill="#203a66" text-anchor="end" font-weight="normal">GND · P2.43 → шина GND (одна точка)</text>
 <rect x="876" y="722" width="34" height="16" rx="3" fill="#fff" stroke="#d62828" stroke-width="1.5"/>
 <text x="893.0" y="734" font-size="10" fill="#d62828" text-anchor="middle" font-weight="bold">3V3</text>
 <rect x="876" y="744" width="34" height="16" rx="3" fill="#fff" stroke="#222222" stroke-width="1.5"/>
@@ -226,9 +231,9 @@
 <text x="1168" y="599" font-size="11" fill="#1b4f7a" text-anchor="start" font-weight="bold">VCC — ТОЛЬКО 3V3</text>
 <polyline points="1118,617 1160,617" fill="none" stroke="#222222" stroke-width="2.4" stroke-linejoin="round"/>
 <text x="1168" y="621" font-size="11" fill="#1b4f7a" text-anchor="start" font-weight="normal">GND</text>
-<polyline points="1118,639 1160,639" fill="none" stroke="#1f6fd1" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1118,639 1160,639" fill="none" stroke="#9aa4ad" stroke-width="2.4" stroke-linejoin="round"/>
 <text x="1168" y="643" font-size="11" fill="#1b4f7a" text-anchor="start" font-weight="normal">TX</text>
-<polyline points="1118,661 1160,661" fill="none" stroke="#9aa4ad" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1118,661 1160,661" fill="none" stroke="#1f6fd1" stroke-width="2.4" stroke-linejoin="round"/>
 <text x="1168" y="665" font-size="11" fill="#1b4f7a" text-anchor="start" font-weight="normal">RX</text>
 <text x="1300" y="600" font-size="10" fill="#1b4f7a" text-anchor="start" font-weight="normal">под лобовым стеклом, антенной вверх</text>
 <text x="1300" y="616" font-size="10" fill="#1b4f7a" text-anchor="start" font-weight="normal">PPS — не нужен</text>
@@ -245,12 +250,13 @@
 <text x="549" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">CAN-H</text>
 <polyline points="612,991 640,991" fill="none" stroke="#2a9d3a" stroke-width="3" stroke-linejoin="round"/>
 <text x="646" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">CAN-L</text>
-<polyline points="709,991 737,991" fill="none" stroke="#1f6fd1" stroke-width="3" stroke-linejoin="round"/>
-<text x="743" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GPS TX</text>
-<polyline points="815,991 843,991" fill="none" stroke="#9aa4ad" stroke-width="3" stroke-linejoin="round"/>
-<text x="849" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GPS RX</text>
-<polyline points="921,991 949,991" fill="none" stroke="#6c757d" stroke-width="3" stroke-linejoin="round"/>
-<text x="955" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">сигналы</text>
-<text x="20" y="1019" font-size="11" fill="#444" text-anchor="start" font-weight="normal">3V3 / GND / 5V в флажках — шины платы-носителя. X1.2 — масса питания (кузов), X2.3 — опорная земля CAN от OBD 5; на плате обе — одна шина GND.</text>
-<text x="20" y="1037" font-size="11" fill="#444" text-anchor="start" font-weight="normal">Пустые выводы и разводка по отверстиям — carrier-board.md §5 и carrier-board.svg. +12 В есть только в X1.1 и X4.5: их метки делать особенно заметными.</text>
+<polyline points="709,991 737,991" fill="none" stroke="#9aa4ad" stroke-width="3" stroke-linejoin="round"/>
+<text x="743" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GPS TX (белый)</text>
+<polyline points="887,991 915,991" fill="none" stroke="#1f6fd1" stroke-width="3" stroke-linejoin="round"/>
+<text x="921" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GPS RX (синий)</text>
+<polyline points="1065,991 1093,991" fill="none" stroke="#6c757d" stroke-width="3" stroke-linejoin="round"/>
+<text x="1099" y="995" font-size="11" fill="#333" text-anchor="start" font-weight="normal">сигналы</text>
+<text x="20" y="1019" font-size="11" fill="#444" text-anchor="start" font-weight="normal">3V3 / GND / 5V в флажках — шины платы-носителя. X1.3 — масса питания (кузов), X2.4 — опорная земля CAN от OBD 5; на плате обе — одна шина GND.</text>
+<text x="20" y="1037" font-size="11" fill="#444" text-anchor="start" font-weight="normal">✕ ключ (X1.2, X2.3, X4.6) — штыря нет, вилка с ключом не входит в чужое гнездо (carrier-board.md §3). +12 В есть только в X1.1 и X4.5.</text>
+<text x="20" y="1055" font-size="11" fill="#444" text-anchor="start" font-weight="normal">Разводка по отверстиям — carrier-board.md §5 и carrier-board.svg. GPS: 100 Ом в линию у X3.</text>
 </svg>
