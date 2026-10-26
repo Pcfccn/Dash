@@ -263,9 +263,12 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  /* Recorded for the next boot. Once AppMain_Init has started the IWDG this
-   * stop ends in a watchdog reset; before that (clock/peripheral init) it
-   * still hangs, as there is nothing to show a fault on yet. */
+  /* Recorded for the next boot. The IWDG runs from right after HAL_Init
+   * (~10 s boot timeout), so this stop always ends in a watchdog reset —
+   * also in clock / peripheral init. A fault that repeats there (e.g. HSE
+   * not starting: FDCAN needs it) is a silent reset loop with the heartbeat
+   * LED off and no panel; DIAG shows "LAST RESET: HAL ERROR xN" only once a
+   * boot gets that far. */
   fault_record(FAULT_ERROR_HANDLER);
   __disable_irq();
   while (1)

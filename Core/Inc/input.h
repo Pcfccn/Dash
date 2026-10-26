@@ -28,6 +28,8 @@ typedef struct {
     uint32_t down_t;                 /* tick the current press began           */
     uint32_t last_edge;              /* tick of the last accepted edge         */
     uint8_t  seen;                   /* EXTI presses already turned into taps  */
+    bool     late_ok;                /* the press just taken by level may still
+                                      * be counted by the EXTI (next sample)    */
 } btn_t;
 
 typedef struct {
@@ -40,9 +42,13 @@ typedef struct {
 btn_out_t btn_step(btn_t *b, bool pressed, uint8_t presses, uint32_t press_t, uint32_t now);
 
 /* Day / night from the parking-light input (BC547 pulls PE15 LOW while the
- * dash illumination is on). Any LOW within DN_PWM_HOLD_MS counts as "on", so
- * a PWM-dimmed illumination line still reads as night; a change is taken only
- * after it has lasted DN_SETTLE_MS, so the backlight does not flicker. */
+ * dash illumination is on). pin_low = LOW now OR a falling edge since the
+ * previous sample (app_main.c latches it in the EXTI): one level sample per
+ * loop iteration can miss every LOW phase of a PWM-dimmed line. Any LOW within
+ * DN_PWM_HOLD_MS counts as "on", so such a line still reads as night; a change
+ * is taken only after it has lasted DN_SETTLE_MS, so the backlight does not
+ * flicker. daynight_init() starts from the pin, so the first profile is the
+ * right one instead of "day" for DN_SETTLE_MS. */
 #define DN_PWM_HOLD_MS 100u
 #define DN_SETTLE_MS   500u
 
@@ -54,6 +60,7 @@ typedef struct {
     uint32_t last_low;
 } daynight_t;
 
+void daynight_init(daynight_t *d, bool pin_low, uint32_t now);
 bool daynight_step(daynight_t *d, bool pin_low, uint32_t now);
 
 #endif /* INPUT_H */

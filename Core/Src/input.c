@@ -6,6 +6,17 @@ btn_out_t btn_step(btn_t *b, bool pressed, uint8_t presses, uint32_t press_t, ui
 {
     btn_out_t o = { 0, false };
 
+    /* The level path took a press at the previous sample; its edge fell
+     * between the count snapshot and the level read, so the EXTI's count of
+     * that same press arrives only now. All presses counted within the
+     * debounce window of that press's start are that press, not more taps
+     * (a real second press needs a release and 30 ms of quiet first). */
+    if (b->late_ok) {
+        b->late_ok = false;
+        if (presses != b->seen && (uint32_t)(press_t - b->down_t) < BTN_DEBOUNCE_MS)
+            b->seen = presses;
+    }
+
     /* Presses the EXTI counted that have not been handled yet. */
     uint8_t unseen = (uint8_t)(presses - b->seen);
     if (unseen > BTN_MAX_BURST) unseen = BTN_MAX_BURST;
@@ -31,6 +42,7 @@ btn_out_t btn_step(btn_t *b, bool pressed, uint8_t presses, uint32_t press_t, ui
             b->seen      = presses;
             b->down_t    = now;
             b->hold_done = false;
+            b->late_ok   = true;
         } else if (!b->hold_done) {
             o.taps++;
         }
@@ -43,6 +55,15 @@ btn_out_t btn_step(btn_t *b, bool pressed, uint8_t presses, uint32_t press_t, ui
         o.hold = true;
     }
     return o;
+}
+
+void daynight_init(daynight_t *d, bool pin_low, uint32_t now)
+{
+    d->night     = pin_low;
+    d->pending   = pin_low;
+    d->pending_t = now;
+    d->ever_low  = pin_low;
+    d->last_low  = now;
 }
 
 bool daynight_step(daynight_t *d, bool pin_low, uint32_t now)

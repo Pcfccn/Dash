@@ -119,6 +119,41 @@ static void t_burst_capped(void)
     CHECK(o.taps == BTN_MAX_BURST);
 }
 
+/* Review C8: the press edge falls between the count snapshot and the level
+ * read, so the level path takes the press first and the EXTI's count of it
+ * arrives one sample later. That used to be replayed as a second tap after
+ * the release. */
+static void t_late_count_is_the_same_press(void)
+{
+    uint32_t t = 1000;
+    reset(3000);
+    hold_level(false, &t, 100);
+    t += 10;
+    btn_out_t o = btn_step(&B, true, presses, press_t, t);   /* level: pressed, count old */
+    taps += o.taps;
+    exti_press(t);                                          /* ISR ran just after */
+    hold_level(true, &t, 120);
+    hold_level(false, &t, 100);
+    CHECK(taps == 1);
+    /* a real second press later still counts */
+    exti_press(t + 1); hold_level(true, &t, 100);
+    hold_level(false, &t, 100);
+    CHECK(taps == 2);
+}
+
+/* Review C8: the first profile comes from the pin, not "day" for 0.5 s. */
+static void t_daynight_init_from_pin(void)
+{
+    daynight_t d;
+    memset(&d, 0, sizeof d);
+    daynight_init(&d, true, 5000);
+    CHECK(d.night);
+    CHECK(daynight_step(&d, false, 5010));                  /* a PWM off phase   */
+    CHECK(daynight_step(&d, true, 5020));
+    daynight_init(&d, false, 9000);
+    CHECK(!d.night && !daynight_step(&d, false, 9010));
+}
+
 static void t_daynight(void)
 {
     daynight_t d;
@@ -160,6 +195,8 @@ int main(void)
         { "taps_inside_a_stall",       t_taps_inside_a_stall },
         { "press_seen_after_taps",     t_press_seen_after_whole_taps },
         { "burst_capped",              t_burst_capped },
+        { "late_count_same_press",     t_late_count_is_the_same_press },
+        { "daynight_init_from_pin",    t_daynight_init_from_pin },
         { "daynight",                  t_daynight },
         { "daynight_glitch_ignored",   t_daynight_glitch_ignored },
     };

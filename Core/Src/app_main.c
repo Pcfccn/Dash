@@ -33,7 +33,7 @@
  * Build the new board's image with `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0`
  * (review C5-HW-04). BACKLIGHT_ACTIVE_LOW itself, with its 0/1 check, lives in
  * app_main.h so the status screen can show the variant. */
-#define BACKLIGHT_BOOT_PCT   100u    /* full brightness at boot (PA8 held LOW on the direct drive) */
+#define BACKLIGHT_BOOT_PCT   100u    /* until AppMain_Init has the profile (and for LCD_PROBE) */
 
 /* Buttons (input.h): ▶ PE7, ● PE8, ◀ PE9 — dry contacts to ground with a
  * 1 k pull-up, pressed = LOW — and the on-board KEY (PC13, pressed = HIGH) as
@@ -42,14 +42,16 @@
  *   ▶ / KEY  tap: next page;      brightness mode: +10 % (100 -> 10)
  *            hold 3 s: brightness mode on / off
  *   ◀        tap: previous page;  brightness mode: -10 % (down to 10)
- *   ●        tap: page action (SNIFF: clean point); brightness mode: -10 %
- *            hold 2 s: page reset (nothing to reset yet: TRIP / PERF later)
+ *   ●        tap: page action (SNIFF: clean point, TRIP: next counter);
+ *            brightness mode: -10 %
+ *            hold 2 s: page reset (TRIP: the selected counter, PERF: results,
+ *            STATS: statistics) — never in brightness mode
  * Brightness mode also ends after BL_MODE_IDLE_MS without a press.
  * Day / night: PE15 reads LOW while the parking lights are on (BC547 on ILL+),
  * filtered by daynight_step(); one brightness profile each, brightness mode
  * edits the active one, and a change of profile fades at BL_RAMP_PCT_S.
- * Profiles live in RAM until the odometer journal (SPI NOR) exists, so a
- * power cycle restores the defaults. */
+ * Profiles are kept in the SPI NOR (trip_app_set_brightness(), saved 2 s
+ * after the last change) and loaded in AppMain_Init. */
 enum { B_NEXT = 0, B_ACTION, B_PREV, B_KEY, B_N };
 #define BL_STEP_PCT      10u
 #define BL_MIN_PCT       10u
@@ -125,7 +127,13 @@ static void btn_hold(uint8_t b, uint32_t t)
     if (b == B_NEXT || b == B_KEY) {          /* brightness mode on / off */
         s_bl_mode = !s_bl_mode;
         s_bl_mode_t = t;
+        return;
     }
+    /* In brightness mode ● and ◀ only step the level. A ● held there (to keep
+     * dimming) must not reach the page's reset — TRIP / A counter, PERF
+     * results, STATS — unseen: the brightness overlay is on the small screen
+     * only (review C8). */
+    if (s_bl_mode) { s_bl_mode_t = t; return; }
     /* ● held 2 s on STATS: start the statistics and the speedometer check over. */
     if (b == B_ACTION && cluster_ui_get_page() == UI_PAGE_STATS) {
         trip_stats_reset(t);
@@ -158,10 +166,19 @@ static void heartbeat_led_init(void)
  * ends inside it is never seen by level). A press edge after BTN_DEBOUNCE_MS
  * of quiet counts; closer edges of contact bounce only restart the window. The
  * ISR only ever increments s_presses[] and btn_step() only advances its own
- * copy, so neither side can overwrite the other's update. */
+ * copy, so neither side can overwrite the other's update. A press counts only
+ * after the ISR has seen the button released: the first (quiet) edge of a
+ * release, read while the contact bounced shut again, used to count as a new
+ * press (review C8). Every edge records the level it read, so the state
+ * follows the last edge of a bounce burst. */
 static volatile uint8_t  s_presses[B_N];  /* free-running press count (ISR)     */
 static volatile uint32_t s_press_t[B_N];  /* tick of the latest counted press   */
 static volatile uint32_t s_edge_t[B_N];   /* tick of the last edge of any kind  */
+static volatile bool     s_isr_down[B_N]; /* level the ISR read at that edge    */
+/* PE15 (parking lights) falling edge since the loop last looked: a PWM-dimmed
+ * illumination line is LOW only part of the time, and one level sample per
+ * iteration (6-30 ms) can miss every LOW phase (review C8). */
+static volatile bool     s_dn_low_seen;
 
 static const struct { GPIO_TypeDef *port; uint16_t pin; GPIO_PinState down; } BTN_PIN[B_N] = {
     [B_NEXT]   = { GPIOE, GPIO_PIN_7,  GPIO_PIN_RESET },
@@ -187,9 +204,21 @@ static void btn_snapshot(uint8_t b, uint8_t *presses, uint32_t *press_t)
     __set_PRIMASK(pm);
 }
 
+/* LOW now, or a falling edge since the last call (cleared by it). */
+static bool dn_low_take(void)
+{
+    uint32_t pm = __get_PRIMASK();
+    __disable_irq();
+    bool seen = s_dn_low_seen;
+    s_dn_low_seen = false;
+    __set_PRIMASK(pm);
+    return seen || HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_15) == GPIO_PIN_RESET;
+}
+
 void EXTI15_10_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
 }
 
 void EXTI9_5_IRQHandler(void)
@@ -201,15 +230,18 @@ void EXTI9_5_IRQHandler(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+    if (GPIO_Pin == GPIO_PIN_15) { s_dn_low_seen = true; return; }   /* PE15, falling only */
     for (uint8_t b = 0; b < B_N; b++) {
         if (BTN_PIN[b].pin != GPIO_Pin) continue;
         uint32_t now   = HAL_GetTick();
+        bool     down  = btn_down(b);
         bool     quiet = (now - s_edge_t[b]) >= BTN_DEBOUNCE_MS;
         s_edge_t[b] = now;
-        if (quiet && btn_down(b)) {
+        if (quiet && down && !s_isr_down[b]) {
             s_press_t[b] = now;
             s_presses[b]++;
         }
+        s_isr_down[b] = down;
         return;
     }
 }
@@ -218,7 +250,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  * while pressed (its RESET and BOOT0 neighbours can't serve as UI keys).
  * ▶ ● ◀ on PE7-PE9 and the parking-light input on PE15: pull-ups, LOW =
  * active. Both edges of the buttons raise EXTI, so a press is caught even
- * while the loop is stuck in a display flush; PE15 is only sampled. */
+ * while the loop is stuck in a display flush; PE15's falling edge only sets
+ * s_dn_low_seen (its level is sampled too). */
 static void buttons_init(void)
 {
     GPIO_InitTypeDef gi = { 0 };
@@ -232,7 +265,7 @@ static void buttons_init(void)
     gi.Pin   = GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
     gi.Pull  = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOE, &gi);
-    gi.Mode  = GPIO_MODE_INPUT;
+    gi.Mode  = GPIO_MODE_IT_FALLING;
     gi.Pin   = GPIO_PIN_15;
     gi.Pull  = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOE, &gi);
@@ -277,6 +310,12 @@ void AppMain_Init(void)
     heartbeat_led_init();   /* first, before anything that might block */
     buttons_init();         /* KEY PC13, ▶ ● ◀ PE7-PE9, parking lights PE15 */
 
+#if LCD_PROBE
+    /* The probe pattern runs inside lv_port_disp_init(): light the panel
+     * first, or a gate driver that needs PA8 driven shows nothing. */
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    backlight_set(BACKLIGHT_BOOT_PCT);
+#endif
     lv_port_disp_init();          /* lv_init + the 4" ILI9488 display (default) */
     cluster_app_init(&hfdcan1);   /* store + pages on the 4" + start OBD-II      */
     {   /* brightness profiles saved last time (trip_app.c / nvlog.c) */
@@ -292,9 +331,14 @@ void AppMain_Init(void)
     st7735_status_note(FW_VARIANT_SHORT, 10000u);
     gps_init();                   /* USART2: listens only; finds the module later */
 
+    /* Day or night from the start (the EXTI has watched PE15 since
+     * buttons_init), so the backlight comes up at its own profile instead of
+     * 100 % and a fade down at night (review C8). */
+    daynight_init(&s_dn, dn_low_take(), HAL_GetTick());
+
     /* backlight: TIM1_CH1 / PA8 -> Si4599 P-FET gate, per docs/wiring.md */
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-    backlight_set(BACKLIGHT_BOOT_PCT);
+    backlight_set(*bl_active());
 
     /* Init is done: from here the watchdog must be fed every iteration
      * (started with the long boot timeout in main.c). */
@@ -341,14 +385,23 @@ void AppMain_Run(void)
     }
     if (s_bl_mode && (t - s_bl_mode_t) >= BL_MODE_IDLE_MS) s_bl_mode = 0;
 
-    /* Day / night profile, faded 1 % at a time. */
-    daynight_step(&s_dn, HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_15) == GPIO_PIN_RESET, t);
+    /* Day / night profile, faded at BL_RAMP_PCT_S by elapsed time: a step a
+     * loop iteration made the fade as slow as the loop (30 %/s at 30 ms). */
+    daynight_step(&s_dn, dn_low_take(), t);
     {
         static uint32_t ramp_t;
         uint8_t target = *bl_active();
-        if (s_bl_pct != target && (t - ramp_t) >= 1000u / BL_RAMP_PCT_S) {
+        if (s_bl_pct == target) {
             ramp_t = t;
-            backlight_set((uint8_t)(s_bl_pct < target ? s_bl_pct + 1u : s_bl_pct - 1u));
+        } else {
+            uint32_t n = (t - ramp_t) * BL_RAMP_PCT_S / 1000u;       /* % due */
+            if (n > 0u) {
+                uint32_t d = (s_bl_pct < target) ? (uint32_t)(target - s_bl_pct)
+                                                 : (uint32_t)(s_bl_pct - target);
+                if (n > d) n = d;
+                ramp_t += n * 1000u / BL_RAMP_PCT_S;
+                backlight_set((uint8_t)(s_bl_pct < target ? s_bl_pct + n : s_bl_pct - n));
+            }
         }
     }
     bool key_now = btn_down(B_KEY);
@@ -371,12 +424,14 @@ void AppMain_Run(void)
         last_status_ms = now;
         /* -1 = nothing to show ("--"): never decoded (NaN), stale, or the
          * link is down — the same test as the main display (cluster_policy.h).
-         * 0 would be a believable reading, and casting NaN to int is UB. */
+         * 0 would be a believable reading, and casting NaN to int is UB.
+         * Rounded like the main panel's fmt(): speed is A x 60/67, rarely
+         * whole, so truncating showed 1 km/h less than the 4" (review C8). */
         uint32_t tn = HAL_GetTick();
         st_link_t link = !g_obd.can_ok ? ST_LINK_DOWN
                        : (policy_ecm_fresh(&g_obd, tn) ? ST_LINK_ECM : ST_LINK_BUS);
-        st7735_status_set(policy_shown(&g_obd, M_SPEED, tn)   ? (int32_t)g_obd.speed : -1,
-                          policy_shown(&g_obd, M_RPM, tn)     ? (int32_t)g_obd.rpm   : -1,
+        st7735_status_set(policy_shown(&g_obd, M_SPEED, tn)   ? (int32_t)(g_obd.speed + 0.5f) : -1,
+                          policy_shown(&g_obd, M_RPM, tn)     ? (int32_t)(g_obd.rpm + 0.5f)   : -1,
                           policy_shown(&g_obd, M_BATTERY, tn) ? (int32_t)(g_obd.battery * 10.0f + 0.5f) : -1,
                           link);
         /* KEY diagnostic: page index, live PC13 level, accepted-press count */
