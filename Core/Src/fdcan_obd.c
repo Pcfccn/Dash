@@ -372,10 +372,14 @@ static void tx_outcome(void) {
     tx_watch &= ~done;
 }
 
+static bool listen_only;        /* bus monitoring mode after bus-off (below)    */
+
 /* Returns false when the TX FIFO refused the frame (full, or the controller is
- * not started, e.g. mid bus-off recovery): the caller must then not wait for a
- * reply that cannot come. */
+ * not started, e.g. mid bus-off recovery), or when the node only listens after
+ * a bus-off (not queued at all: it would go out stale when transmitting
+ * resumes): the caller must then not wait for a reply that cannot come. */
 static bool can_send(uint32_t req_id, const uint8_t *data8) {
+    if (listen_only) return false;
     FDCAN_TxHeaderTypeDef tx = {0};
     tx.Identifier          = req_id;
     tx.IdType              = FDCAN_STANDARD_ID;
@@ -841,9 +845,43 @@ static bool dispatch(uint32_t resp_id, const uint8_t *p, uint16_t n) {
  * exposes both so a frozen frame counter can be explained rather than guessed.
  * Reads are gated to ~10 Hz; the message-lost flag is a single register bit. */
 static volatile uint16_t rx_lost_cnt;   /* RX FIFO0 overflow events            */
-static volatile uint16_t busoff_cnt;    /* bus-off recoveries attempted        */
+static volatile uint16_t busoff_cnt;    /* bus-off events                      */
 static volatile uint16_t start_fail_cnt; /* HAL_FDCAN_Start refusals (retried) */
 static volatile uint8_t  busoff_now, errpass_now;
+
+/* ---- bus-off: back off, then only listen (review C9 FW-01) ----------------
+ * Bus-off means our own transmissions kept failing (TEC > 255). With a fault
+ * on our side — CAN-H / CAN-L swapped, a failing transceiver, a bad ground —
+ * every restart puts the node back on the truck's powertrain bus as an
+ * error-active node, which destroys other nodes' frames (ECM <-> TCM) with
+ * its error flags until it is error passive again. Restarting at every health
+ * check did that ten times a second for as long as the fault lasted (600
+ * restarts a minute, modelled on this file). Now:
+ *  - a bus-off is one event from the moment PSR.BO rises until it is seen
+ *    clear again. BO stays set through the recovery sequence (129 x 11
+ *    recessive bits: milliseconds on an idle bus, longer on a busy one), and
+ *    stopping the controller again in that time restarted the recovery —
+ *    on a bus busy enough the node never came back;
+ *  - the first bus-off of a streak restarts at once (a one-off: a supply dip
+ *    while cranking); each further one within BUSOFF_FORGET_MS of the last
+ *    waits BUSOFF_PAUSE_MS before the node transmits again;
+ *  - the BUSOFF_GIVE_UP-th ends transmitting until the next power-up.
+ * While it waits, and after giving up, the controller runs in bus monitoring
+ * mode (CCCR.MON): it still receives (the selector keeps working) but never
+ * drives the bus — no frames, no ACK, no error flags — and no request is
+ * queued. The ECM values go stale, so the strip says NO ECM DATA; DIAG line 1
+ * says why (BOFF<n>, TXWAIT / TXOFF). */
+#define BUSOFF_FORGET_MS 60000u
+#define BUSOFF_GIVE_UP   5u
+static const uint16_t BUSOFF_PAUSE_MS[BUSOFF_GIVE_UP - 1u] = { 0u, 1000u, 5000u, 15000u };
+static bool     busoff_seen;    /* PSR.BO was set at the last look              */
+static uint8_t  busoff_streak;  /* bus-offs, each within BUSOFF_FORGET_MS       */
+static uint32_t busoff_last_ms; /* HAL tick of the latest one                   */
+static bool     tx_wait;        /* in a pause, until tx_resume_at ...           */
+static uint32_t tx_resume_at;
+static bool     tx_off;         /* ... or given up until the next power-up      */
+/* listen_only (declared with can_send): the controller runs in bus monitoring
+ * mode now. */
 
 static void obd_check_health(void) {
     static uint32_t t_last;
@@ -861,20 +899,40 @@ static void obd_check_health(void) {
     if (HAL_FDCAN_GetProtocolStatus(hfd, &ps) == HAL_OK) {
         busoff_now  = ps.BusOff ? 1u : 0u;
         errpass_now = ps.ErrorPassive ? 1u : 0u;
-        if (ps.BusOff) {
-            /* Bus-off latches the node off the bus until INIT is cleared;
-             * Stop then Start does that and begins the recovery sequence.
-             * Filters live in message RAM and survive the cycle. */
+        if (ps.BusOff && !busoff_seen) {
+            /* Bus-off latches the node off the bus (INIT set) until INIT is
+             * cleared; Stop then Start below does that and begins the
+             * recovery sequence. Filters live in message RAM and survive. */
             if (busoff_cnt < 0xFFFFu) busoff_cnt++;
+            bool again = busoff_streak != 0u && now - busoff_last_ms <= BUSOFF_FORGET_MS;
+            busoff_streak = again ? (uint8_t)(busoff_streak < 0xFFu ? busoff_streak + 1u : 0xFFu) : 1u;
+            busoff_last_ms = now;
+            if (busoff_streak >= BUSOFF_GIVE_UP) {
+                tx_off = true;
+            } else {
+                tx_resume_at = now + BUSOFF_PAUSE_MS[busoff_streak - 1u];
+                tx_wait = BUSOFF_PAUSE_MS[busoff_streak - 1u] != 0u;
+            }
             (void)HAL_FDCAN_Stop(hfd);
         }
+        busoff_seen = ps.BusOff != 0u;
     }
-    /* Stopped (the recovery above, or a Start that failed before): start it.
-     * A failed Start leaves the controller READY, so this retries on every
-     * health check instead of leaving the node off the bus for good. */
-    if (HAL_FDCAN_GetState(hfd) == HAL_FDCAN_STATE_READY &&
-        HAL_FDCAN_Start(hfd) != HAL_OK && start_fail_cnt < 0xFFFFu)
-        start_fail_cnt++;
+    if (tx_wait && (int32_t)(now - tx_resume_at) >= 0) tx_wait = false;
+    /* Transmit, or only listen. The mode can change only while stopped. */
+    bool quiet = tx_off || tx_wait;
+    if (quiet != listen_only && HAL_FDCAN_GetState(hfd) == HAL_FDCAN_STATE_BUSY)
+        (void)HAL_FDCAN_Stop(hfd);
+    /* Stopped (the recovery above, a mode change, or a Start that failed
+     * before): start it in the mode wanted. A failed Start leaves the
+     * controller READY, so this retries on every health check instead of
+     * leaving the node off the bus for good. CCCR.MON may be written only
+     * with INIT and CCE set, which is how Stop (and Init) leave them. */
+    if (HAL_FDCAN_GetState(hfd) == HAL_FDCAN_STATE_READY) {
+        if (quiet) hfd->Instance->CCCR |= FDCAN_CCCR_MON;
+        else       hfd->Instance->CCCR &= ~FDCAN_CCCR_MON;
+        listen_only = quiet;
+        if (HAL_FDCAN_Start(hfd) != HAL_OK && start_fail_cnt < 0xFFFFu) start_fail_cnt++;
+    }
     if (rx_irq) HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
 }
 
@@ -887,6 +945,8 @@ void obd_can_health(obd_health_t *h) {
     h->txn_capped     = txn_cap_cnt;
     h->rx_irq         = rx_irq;
     h->busoff_recover = busoff_cnt;
+    h->tx_wait        = listen_only && !tx_off;
+    h->tx_off         = tx_off;
     h->rx_bad         = rx_bad_cnt;
     h->tx_fail        = tx_fail_cnt;
     h->tx_lost        = tx_lost_cnt;

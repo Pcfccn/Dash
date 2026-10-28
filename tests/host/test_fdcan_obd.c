@@ -30,6 +30,7 @@ static int   hw_head, hw_tail;
 typedef struct { uint32_t id; uint8_t data[8]; } txf_t;
 static txf_t             txlog[64];
 static int               tx_n;
+static int               tx_total;          /* AddMessage calls, uncapped */
 static HAL_StatusTypeDef tx_status;
 
 static const uint8_t DLC2B[16] = { 0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64 };
@@ -57,11 +58,22 @@ HAL_StatusTypeDef HAL_FDCAN_ConfigFilter(FDCAN_HandleTypeDef *h, FDCAN_FilterTyp
 HAL_StatusTypeDef HAL_FDCAN_ConfigGlobalFilter(FDCAN_HandleTypeDef *h, uint32_t a, uint32_t b,
                                                uint32_t c, uint32_t d)
 { (void)h; (void)a; (void)b; (void)c; (void)d; return HAL_OK; }
+/* Bus-off model (review C9). mock_fault: our transmissions fail (CAN-H / CAN-L
+ * swapped, a dead transceiver), so a node started in normal mode goes bus-off
+ * mock_refail_ms after it came back. PSR.BO stays set through the recovery
+ * sequence, which takes mock_recovery_ms after Start (longer on a busy bus).
+ * In bus monitoring mode (CCCR.MON) the node never transmits, so never fails. */
+static bool     mock_fault, mock_bo;
+static uint32_t mock_recovery_ms, mock_refail_ms, mock_recover_at, mock_up_at;
+static int      starts_normal;                 /* Starts with MON clear          */
+
 HAL_StatusTypeDef HAL_FDCAN_Start(FDCAN_HandleTypeDef *h)
 {
     start_calls++;
     if (start_status != HAL_OK) return start_status;
     h->State = HAL_FDCAN_STATE_BUSY;
+    if (!(h->Instance->CCCR & FDCAN_CCCR_MON)) starts_normal++;
+    if (mock_bo) mock_recover_at = HAL_GetTick() + mock_recovery_ms;   /* recovery restarts */
     return HAL_OK;
 }
 HAL_StatusTypeDef HAL_FDCAN_Stop(FDCAN_HandleTypeDef *h) { h->State = HAL_FDCAN_STATE_READY; return HAL_OK; }
@@ -93,6 +105,7 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ(FDCAN_HandleTypeDef *h,
         printf("  FAIL: SID %02X transmitted with OILP_DPID_ENABLE 0\n", data[1]);
     }
 #endif
+    tx_total++;
     if (tx_status != HAL_OK) return tx_status;
     tx_latest = 1u << (tx_put++ % 3u);
     fdregs.TXBTO &= ~tx_latest;                 /* a new request resets both */
@@ -127,7 +140,20 @@ HAL_StatusTypeDef HAL_FDCAN_GetRxMessage(FDCAN_HandleTypeDef *h, uint32_t loc,
 }
 
 HAL_StatusTypeDef HAL_FDCAN_GetProtocolStatus(FDCAN_HandleTypeDef *h, FDCAN_ProtocolStatusTypeDef *ps)
-{ (void)h; memset(ps, 0, sizeof *ps); return HAL_OK; }
+{
+    memset(ps, 0, sizeof *ps);
+    uint32_t now = HAL_GetTick();
+    bool running = h->State == HAL_FDCAN_STATE_BUSY;
+    if (mock_bo && running && (int32_t)(now - mock_recover_at) >= 0) {
+        mock_bo = false;                               /* recovery sequence done */
+        mock_up_at = now;
+    }
+    if (!mock_bo && mock_fault && running && !(h->Instance->CCCR & FDCAN_CCCR_MON) &&
+        now - mock_up_at >= mock_refail_ms)
+        mock_bo = true;                                /* TEC past 255 again     */
+    ps->BusOff = mock_bo;
+    return HAL_OK;
+}
 
 /* ------------------------------------------- stubs for the rest of the app */
 static int  updates;
@@ -210,6 +236,10 @@ static void reset(void)
     tx_put = 0; tx_latest = 0; tx_hold = false; tx_watch = 0; tx_lost_cnt = 0;
     last_txbuf = 0; await_txbuf = 0; await_tx_lost = false;
     ecm_heard = false; ecm_heard_ms = 0;          /* the ECM has said nothing yet */
+    busoff_seen = false; busoff_streak = 0; busoff_last_ms = 0; busoff_cnt = 0;
+    tx_wait = false; tx_resume_at = 0; tx_off = false; listen_only = false; rx_lost_cnt = 0;
+    mock_fault = false; mock_bo = false; mock_recovery_ms = 30; mock_refail_ms = 2000;
+    mock_recover_at = 0; mock_up_at = 0; starts_normal = 0; tx_total = 0;
     obd_init(&hmock);
 }
 
@@ -1961,6 +1991,172 @@ static void t_c8_boost_and_gear_stamps(void)
     CHECK(near(g_obd.boost, 1.0f) && g_obd.gear == -1);
 }
 
+/* ------------------------------------------------------------- review C9 */
+/* The loop as cluster_app_run drives it: RX and health every 5 ms, the
+ * scheduler every 25 ms. */
+static void c9_run(uint32_t ms)
+{
+    for (uint32_t t = 0; t < ms; t += 5u) {
+        now_ms += 5u;
+        obd_rx_poll();
+        if (now_ms % 25u == 0u) obd_poll_tick();
+    }
+}
+
+static uint16_t c9_busoffs(void) { obd_health_t h; obd_can_health(&h); return h.busoff_recover; }
+
+/* Run until the n-th bus-off has been handled (bounded). */
+static void c9_until_busoff(uint16_t n)
+{
+    for (int i = 0; i < 20000 && c9_busoffs() < n; i++) c9_run(5u);
+}
+
+/* FW-01: with our transmissions failing for good, the node used to be back
+ * on the bus at every health check (600 restarts a minute). Now it backs off
+ * (0 / 1 / 5 / 15 s) and after the fifth bus-off in a row only listens. */
+static void t_c9_busoff_backs_off_then_listens(void)
+{
+    irq_mode();
+    int s0 = starts_normal;
+    mock_fault = true;
+    c9_run(20000u);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.busoff_recover == 4u);                 /* 2, 4.1, 7.2, 14.3 s */
+    CHECK(h.tx_wait && !h.tx_off);                 /* in the 15 s pause    */
+    CHECK((fdregs.CCCR & FDCAN_CCCR_MON) != 0u);
+    c9_run(280000u);                               /* five minutes in all  */
+    obd_can_health(&h);
+    CHECK(h.busoff_recover == BUSOFF_GIVE_UP);
+    CHECK(h.tx_off && !h.tx_wait);
+    CHECK((fdregs.CCCR & FDCAN_CCCR_MON) != 0u);
+    CHECK(starts_normal - s0 == (int)BUSOFF_GIVE_UP - 1);   /* back on the bus 4 times */
+    int tx0 = tx_total;
+    c9_run(60000u);
+    CHECK(tx_total == tx0);                        /* nothing queued, ever */
+}
+
+/* A one-off bus-off (a supply dip while cranking) restarts at once and
+ * polling goes on; another one more than a minute later is a new streak. */
+static void t_c9_busoff_once_restarts_at_once(void)
+{
+    irq_mode();
+    mock_fault = true;
+    c9_until_busoff(1u);
+    mock_fault = false;
+    c9_run(500u);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.busoff_recover == 1u && !h.tx_wait && !h.tx_off && !h.bus_off);
+    CHECK((fdregs.CCCR & FDCAN_CCCR_MON) == 0u);
+    int tx0 = tx_total;
+    c9_run(1000u);
+    CHECK(tx_total > tx0);                         /* polling goes on      */
+    c9_run(70000u);
+    mock_fault = true;
+    mock_up_at = now_ms - mock_refail_ms;          /* fails at once        */
+    c9_until_busoff(2u);
+    mock_fault = false;
+    c9_run(500u);
+    obd_can_health(&h);
+    CHECK(h.busoff_recover == 2u && busoff_streak == 1u && !h.tx_wait);
+    CHECK((fdregs.CCCR & FDCAN_CCCR_MON) == 0u);
+}
+
+/* In a pause the node listens (the selector still arrives), sends nothing,
+ * and transmits again once the pause is over. */
+static void t_c9_pause_listens_then_resumes(void)
+{
+    irq_mode();
+    mock_fault = true;
+    c9_until_busoff(2u);                           /* second in a row: 1 s */
+    mock_fault = false;
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.tx_wait && (fdregs.CCCR & FDCAN_CCCR_MON) != 0u);
+    int tx0 = tx_total, txf0 = tx_fail_cnt;
+    PUSH(CAN_ID_SELECTOR, 8, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00);
+    FDCAN1_IT0_IRQHandler();
+    c9_run(500u);
+    CHECK(g_obd.sel_range == 1 && g_obd.can_ok);   /* still receiving       */
+    CHECK(tx_total == tx0);                        /* nothing sent          */
+    CHECK(tx_fail_cnt == txf0);                    /* and not a TX refusal  */
+    c9_run(800u);
+    obd_can_health(&h);
+    CHECK(!h.tx_wait && (fdregs.CCCR & FDCAN_CCCR_MON) == 0u);
+    c9_run(200u);
+    CHECK(tx_total > tx0);                         /* polling again         */
+}
+
+/* PSR.BO stays set through the recovery sequence; on a busy bus that takes
+ * longer than a health check. Stopping again then restarted the recovery,
+ * and the node never came back. One bus-off is one event. */
+static void t_c9_recovery_not_restarted(void)
+{
+    irq_mode();
+    mock_recovery_ms = 250u;
+    mock_fault = true;
+    c9_until_busoff(1u);
+    mock_fault = false;
+    int s0 = start_calls;
+    c9_run(600u);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(start_calls == s0);                      /* left to recover       */
+    CHECK(h.busoff_recover == 1u && !h.bus_off);   /* and it did            */
+}
+
+/* TEST-03: the hardware FIFO overflow flag reaches LOST and is cleared. */
+static void t_c9_fifo_lost_counted(void)
+{
+    fdregs.IR |= FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST;
+    c9_run(200u);
+    obd_health_t h;
+    obd_can_health(&h);
+    CHECK(h.rx_lost == 1u);
+    CHECK((fdregs.IR & FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST) == 0u);
+}
+
+/* TEST-01: the ECM answered, then went quiet (key to ACC, ECM asleep). A
+ * timeout counts against a PID only while the ECM was heard within
+ * ECM_ALIVE_MS; the old window was never exercised (C8 only covered an ECM
+ * never heard at all). */
+static void t_c9_ecm_went_silent(void)
+{
+    ecm_talks();
+    now_ms += ECM_ALIVE_MS;                        /* its last frame ages   */
+    for (unsigned i = 0; i < 3u * OILP_MISS22_MAX; i++) {
+        CHECK(req_oilp());
+        now_ms += OBD_AWAIT_MS;
+        obd_poll_tick();
+        await_resp_id = 0;
+    }
+    CHECK(oilp.mode == OILP_VIA22 && oilp.miss22 == 0u);
+    ecm_talks();                                   /* heard just inside     */
+    CHECK(req_oilp());
+    now_ms += ECM_ALIVE_MS - 10u;
+    obd_poll_tick();
+    await_resp_id = 0;
+    CHECK(oilp.miss22 == 1u);
+}
+
+/* TEST-02: a reply that arrived (ISR stamp) before our request went out is
+ * someone else's — decoded, but it does not close the transaction. */
+static void t_c9_reply_before_request(void)
+{
+    irq_mode();
+    static const uint8_t rpm = 0x0C;
+    uint32_t t0 = now_ms;
+    PUSH(0x7E8, 8, 0x04, 0x41, 0x0C, 0x1F, 0x40, 0x00, 0x00, 0x00);   /* 2000 rpm */
+    FDCAN1_IT0_IRQHandler();
+    now_ms = t0 + 10u;
+    CHECK(req_mode01(&rpm, 1));
+    now_ms = t0 + 20u;
+    obd_rx_poll();
+    CHECK(near(g_obd.rpm, 2000.0f) && g_obd.upd_ms[M_RPM] == t0);
+    CHECK(await_resp_id == OBD_RESP_ECM);          /* still open            */
+}
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -2070,6 +2266,13 @@ int main(void)
         { "c8_cap_not_after_sniff",     t_c8_cap_not_counted_after_sniff },
         { "c8_medium_rotation_even",    t_c8_medium_rotation_even },
         { "c8_boost_and_gear_stamps",   t_c8_boost_and_gear_stamps },
+        { "c9_busoff_backs_off",        t_c9_busoff_backs_off_then_listens },
+        { "c9_busoff_once_at_once",     t_c9_busoff_once_restarts_at_once },
+        { "c9_pause_listens_resumes",   t_c9_pause_listens_then_resumes },
+        { "c9_recovery_not_restarted",  t_c9_recovery_not_restarted },
+        { "c9_fifo_lost_counted",       t_c9_fifo_lost_counted },
+        { "c9_ecm_went_silent",         t_c9_ecm_went_silent },
+        { "c9_reply_before_request",    t_c9_reply_before_request },
     };
     for (size_t i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         int before = fails;

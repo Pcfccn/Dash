@@ -16,8 +16,10 @@ typedef struct {
     uint32_t StdFiltersNbr, ExtFiltersNbr, RxFifo0ElmtsNbr, RxFifo0ElmtSize;
 } FDCAN_InitTypeDef;
 
-/* Only the TX buffer status registers fdcan_obd.c reads. */
-typedef struct { volatile uint32_t TXBRP, TXBTO, TXBCF; } FDCAN_GlobalTypeDef;
+/* Only the registers fdcan_obd.c touches: TX buffer status, the interrupt
+ * flags (RX FIFO 0 message lost) and CCCR (bus monitoring mode). */
+typedef struct { volatile uint32_t TXBRP, TXBTO, TXBCF, IR, CCCR; } FDCAN_GlobalTypeDef;
+#define FDCAN_CCCR_MON          0x00000020U
 
 typedef struct {
     FDCAN_GlobalTypeDef   *Instance;
@@ -70,8 +72,9 @@ void HAL_NVIC_EnableIRQ(IRQn_Type irq);
 void HAL_NVIC_DisableIRQ(IRQn_Type irq);
 #define __DMB() __sync_synchronize()
 
-#define __HAL_FDCAN_GET_FLAG(h, f)   (0)
-#define __HAL_FDCAN_CLEAR_FLAG(h, f) ((void)0)
+/* As the real HAL: IR is read, and cleared by writing ones (modelled as &=~). */
+#define __HAL_FDCAN_GET_FLAG(h, f)   ((((h)->Instance->IR) & (f)) == (f))
+#define __HAL_FDCAN_CLEAR_FLAG(h, f) ((h)->Instance->IR &= ~(uint32_t)(f))
 
 uint32_t          HAL_GetTick(void);
 HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *h);

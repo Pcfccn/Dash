@@ -86,7 +86,10 @@ typedef struct {
     uint16_t rx_lost;           /* RX FIFO0 overflow events + RX ring drops      */
     uint16_t rx_hwm;            /* most frames ever waiting in the RX ring       */
     bool     rx_irq;            /* true: interrupt RX; false: polled fallback    */
-    uint16_t busoff_recover;    /* bus-off recovery attempts                     */
+    uint16_t busoff_recover;    /* bus-off events                                */
+    bool     tx_wait;           /* only listening: a pause after repeated bus-offs */
+    bool     tx_off;            /* only listening until the next power-up: too many
+                                 * bus-offs in a row (fdcan_obd.c, review C9)   */
     uint16_t rx_bad;            /* received frames dropped as truncated/malformed */
     uint16_t tx_fail;           /* requests the TX FIFO refused                  */
     uint16_t tx_lost;           /* sent once, never on the bus (lost arbitration

@@ -1354,8 +1354,12 @@ void cluster_ui_refresh(void)
          *         waiting in the 256-deep RX ring; then, only when non-zero,
          *         CAP (transactions cut by the 10 s total limit), TXL (requests
          *         sent once and never on the bus: lost arbitration or a bus
-         *         error, no automatic retransmission) and WIDE (SNIFF is off
-         *         but the narrow filter is not restored yet).
+         *         error, no automatic retransmission), WIDE (SNIFF is off
+         *         but the narrow filter is not restored yet) and BOFF
+         *         (bus-off events since power-up). While the node only
+         *         listens after repeated bus-offs (fdcan_obd.c) the whole line
+         *         says so instead: "BUS-OFF xN: TX PAUSED" / "TX OFF, CHECK
+         *         CAN WIRING" (until the next power-up).
          * Line 2: RX FIFO/ring loss, frames dropped as malformed, TX refusals,
          *         then GPS: - none found, ? searching, V<sats> running without
          *         a fix, <sats>/<km/h> with a fresh fix; O<n> when GPS bytes
@@ -1384,12 +1388,23 @@ void cluster_ui_refresh(void)
         obd_health_t h;
         obd_can_health(&h);
         uint32_t loop = app_loop_max_ms();
-        cat(db, sizeof db, &o, "NRC %s LOOP %u Q%u", nrc,
-            (unsigned)(loop > 9999u ? 9999u : loop), (unsigned)h.rx_hwm);
-        if (h.txn_capped)             cat(db, sizeof db, &o, " CAP%u", (unsigned)h.txn_capped);
-        if (h.tx_lost)                cat(db, sizeof db, &o, " TXL%u",
-                                          (unsigned)(h.tx_lost > 999u ? 999u : h.tx_lost));
-        if (can_sniff_restore_pending()) cat(db, sizeof db, &o, " WIDE");
+        unsigned boff = (unsigned)(h.busoff_recover > 99u ? 99u : h.busoff_recover);
+        if (h.tx_off) {
+            /* Too many bus-offs in a row: the node only listens until the
+             * next power-up (fdcan_obd.c). Nothing else on this line matters
+             * as much, and the full words fit where the counters would not. */
+            cat(db, sizeof db, &o, "BUS-OFF x%u: TX OFF, CHECK CAN WIRING", boff);
+        } else if (h.tx_wait) {
+            cat(db, sizeof db, &o, "BUS-OFF x%u: TX PAUSED, LISTENING", boff);
+        } else {
+            cat(db, sizeof db, &o, "NRC %s LOOP %u Q%u", nrc,
+                (unsigned)(loop > 9999u ? 9999u : loop), (unsigned)h.rx_hwm);
+            if (h.txn_capped)             cat(db, sizeof db, &o, " CAP%u", (unsigned)h.txn_capped);
+            if (h.tx_lost)                cat(db, sizeof db, &o, " TXL%u",
+                                              (unsigned)(h.tx_lost > 999u ? 999u : h.tx_lost));
+            if (can_sniff_restore_pending()) cat(db, sizeof db, &o, " WIDE");
+            if (boff)                     cat(db, sizeof db, &o, " BOFF%u", boff);
+        }
         char gt[16];
         const gps_state_t *gs = gps_state();
         if (gs->link == GPS_LINK_ABSENT)   lv_snprintf(gt, sizeof gt, "-");
