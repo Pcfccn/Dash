@@ -43,6 +43,17 @@
 #define LV_LOG_LEVEL LV_LOG_LEVEL_WARN
 #define LV_LOG_PRINTF 0
 
+/*------------- Asserts -------------*/
+/* LVGL's own checks (LV_ASSERT_MALLOC above all: LV_MEM_SIZE exhausted, the
+ * one to expect as pages grow) used to halt in LVGL's default `while(1);`.
+ * The IWDG then reset the board and DIAG said "LAST RESET: WATCHDOG", the same
+ * as any hang. fault_assert_failed() records the file and line first, so DIAG
+ * says "LAST RESET: ASSERT lv_xxx.c:<line>" (review C9 FW-02). Core/Inc is on
+ * the include path of every source in both builds (.cproject, tools/build.py);
+ * tools/ui_render stubs the function. */
+#define LV_ASSERT_HANDLER_INCLUDE "fault.h"
+#define LV_ASSERT_HANDLER fault_assert_failed(__FILE__, __LINE__);
+
 /*------------- Widgets used by ui_dashboard.c -------------*/
 #define LV_USE_ARC 1
 #define LV_USE_BAR 1

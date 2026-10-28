@@ -6,8 +6,9 @@
 
 Compiler lookup: --cc, $CC, gcc/clang on PATH, then zig (the `ziglang` pip
 package, in this interpreter or ~/tools/hostcc-venv). UndefinedBehaviorSanitizer
-is always on; AddressSanitizer is added where the toolchain supports it
-(not on Windows).
+is always on; AddressSanitizer is added where the toolchain supports it:
+gcc / clang off Windows. zig cc has no ASan (it drops the flag without a
+word), so with zig the suite says so and runs UBSan alone, in trap mode.
 """
 import argparse
 import importlib.util
@@ -47,7 +48,10 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
     san = ["-fsanitize=undefined", "-fsanitize-trap=undefined"]
-    if os.name != "nt":
+    zig = any("ziglang" in c or Path(c).stem == "zig" for c in cc)
+    if os.name != "nt" and zig:
+        print("note: zig cc has no AddressSanitizer: UBSan only (gcc / clang for ASan)")
+    elif os.name != "nt":
         # -fno-sanitize-recover: UBSan otherwise prints "runtime error" and
         # lets the test exit 0 — every UB must fail the suite, as the trap does
         # on Windows (review C8).

@@ -19,7 +19,10 @@ that figure is too high; --m32 builds for 32-bit x86 (zig or clang with a
 
 Compiler: the same lookup as host_test.py (gcc/clang, else zig). PNG: written
 here (zlib), no third-party package. LVGL objects are rebuilt when lv_conf.h,
-LVGL's version or the flags change (conf.stamp in the object directory).
+any LVGL header, the compiler or the flags change (conf.stamp in the object
+directory). -D is checked like build.py's (a switch of the firmware, with a
+value it takes), and the output directory is emptied of the last run's
+pictures first, so a page that is no longer drawn leaves no stale PNG.
 """
 import argparse
 import concurrent.futures as cf
@@ -34,6 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from host_test import find_cc  # noqa: E402
+from build import check_defines  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 LVGL = ROOT / "Middlewares" / "lvgl"
@@ -69,12 +73,19 @@ def write_png(path, rgb565, w, h, scale):
 
 
 def lvgl_stamp(cc, base):
-    """What the LVGL objects depend on beyond their own .c: the project's
-    lv_conf.h, LVGL's version header, the compiler and the flags."""
+    """What the LVGL objects depend on beyond their own .c (an object is
+    otherwise rebuilt only when its .c is newer): the project's lv_conf.h and
+    fault.h (its assert handler), every LVGL header, the compiler — its
+    version too, an upgraded zig is another compiler — and the flags."""
     h = hashlib.sha256()
-    for f in (ROOT / "Middlewares" / "lv_conf.h", LVGL / "lv_version.h"):
+    deps = [ROOT / "Middlewares" / "lv_conf.h", ROOT / "Core" / "Inc" / "fault.h"]
+    deps += sorted(LVGL.rglob("*.h"))
+    for f in deps:
         if f.exists():
+            h.update(f.as_posix().encode())
             h.update(f.read_bytes())
+    ver = subprocess.run([*cc, "--version"], capture_output=True, text=True)
+    h.update((ver.stdout + ver.stderr).encode())
     h.update(" ".join([*cc, *base]).encode())
     return h.hexdigest()
 
@@ -94,6 +105,7 @@ def main():
     ap.add_argument("--scale", type=int, default=1)
     ap.add_argument("--m32", action="store_true", help="32-bit build (heap use as on the MCU)")
     args = ap.parse_args()
+    check_defines(args.defines)
     cc = find_cc(args.cc)
     arch = []
     if args.m32:
@@ -102,13 +114,15 @@ def main():
     tag = "_".join(d.lower().replace("=", "_") for d in args.defines + (["m32"] if args.m32 else []))
     out = ROOT / "build" / ("render" + ("-" + tag if tag else ""))
     lv_obj_dir = ROOT / "build" / ("render-lvgl" + ("-m32" if args.m32 else ""))
-    base = ["-std=gnu11", "-O1", "-g0", "-w", *arch, f"-I{LVGL}"]
+    # Core/Inc: lv_conf.h takes its assert handler from fault.h, as in the
+    # firmware build (stubbed in stubs.c).
+    base = ["-std=gnu11", "-O1", "-g0", "-w", *arch, f"-I{LVGL}", f"-I{ROOT / 'Core/Inc'}"]
 
     # LVGL: compiled once, shared by every variant — again after a change to
     # lv_conf.h (object mtimes alone cannot see it: LV_MEM_SIZE, features).
     stamp, want = lv_obj_dir / "conf.stamp", lvgl_stamp(cc, base)
     if lv_obj_dir.exists() and (not stamp.exists() or stamp.read_text().strip() != want):
-        print("lv_conf.h, LVGL or the flags changed: rebuilding the LVGL objects")
+        print("lv_conf.h, LVGL, the compiler or the flags changed: rebuilding the LVGL objects")
         shutil.rmtree(lv_obj_dir)
     lv_obj_dir.mkdir(parents=True, exist_ok=True)
     stamp.write_text(want + "\n")
@@ -125,6 +139,8 @@ def main():
     srcs += sorted((ROOT / "Core/Src").glob("montserrat_*.c"))
     srcs += [HERE / "main.c", HERE / "stubs.c"]
     out.mkdir(parents=True, exist_ok=True)
+    for old in [*out.glob("*.png"), *out.glob("*.rgb565")]:
+        old.unlink()                 # last run's pages: only this run's are kept
     app_objs = []
     for s in srcs:
         o = out / "obj" / (s.stem + ".o")

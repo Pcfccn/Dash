@@ -12,6 +12,8 @@
 #ifndef UI_PALETTE_TN
 #define UI_PALETTE_TN 1
 #endif
+/* Not #if: an unknown word (e.g. UI_PALETTE_TN=on) would read as 0 there. */
+_Static_assert(UI_PALETTE_TN == 0 || UI_PALETTE_TN == 1, "UI_PALETTE_TN must be 0 or 1");
 
 /* Page order for ▶ / KEY. SNIFF is skipped while it may not open. */
 enum {

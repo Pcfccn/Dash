@@ -18,6 +18,8 @@
 #ifndef SNIFF_BENCH_OVERRIDE
 #define SNIFF_BENCH_OVERRIDE 0
 #endif
+/* Not #if: an unknown word (e.g. SNIFF_BENCH_OVERRIDE=on) would read as 0 there. */
+_Static_assert(SNIFF_BENCH_OVERRIDE == 0 || SNIFF_BENCH_OVERRIDE == 1, "SNIFF_BENCH_OVERRIDE must be 0 or 1");
 
 static inline float policy_value(const volatile obd_data_t *d, metric_key_t k)
 {

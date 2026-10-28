@@ -73,6 +73,8 @@ _Static_assert(OBD_DEMO == 0 || OBD_DEMO == 1, "OBD_DEMO must be 0 or 1");
 #ifndef OILP_DPID_ENABLE
 #define OILP_DPID_ENABLE       0
 #endif
+/* Not #if: an unknown word (e.g. OILP_DPID_ENABLE=on) would read as 0 there. */
+_Static_assert(OILP_DPID_ENABLE == 0 || OILP_DPID_ENABLE == 1, "OILP_DPID_ENABLE must be 0 or 1");
 #define OILP_DEFINE_MAX        6u
 /* OILP_VALIDATED 0: the reading is shown but never coloured as a warning —
  * the scaling and the low thresholds have not been checked on this engine.
@@ -80,6 +82,8 @@ _Static_assert(OBD_DEMO == 0 || OBD_DEMO == 1, "OBD_DEMO must be 0 or 1");
 #ifndef OILP_VALIDATED
 #define OILP_VALIDATED         0
 #endif
+/* Not #if: an unknown word (e.g. OILP_VALIDATED=on) would read as 0 there. */
+_Static_assert(OILP_VALIDATED == 0 || OILP_VALIDATED == 1, "OILP_VALIDATED must be 0 or 1");
 
 /* Vehicle speed: PID 0x0D (A km/h) x this. One-point correction from the
  * 2026-08-23 run (GPS 60 km/h = 67 on screen, ~12 % optimistic). It assumes the

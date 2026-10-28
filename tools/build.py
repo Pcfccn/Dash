@@ -18,8 +18,9 @@ reference build: if compiler options change there, change them here too.
 explicit experiment build. It goes to its own build-<name>/ directory, so the
 normal build/ is never silently a variant (the dependency check cannot see a
 changed -D). NAME must be one of the firmware's switches (an `#ifndef NAME` /
-`#define NAME <default>` in Core/Inc): a typo would otherwise build a plain
-ROAD image into a directory named like the variant.
+`#define NAME <default>` in Core/Inc), and VALUE one it takes (0 / 1,
+FAULT_TEST 0..4): a typo in either would otherwise build a plain ROAD image
+into a directory named like the variant.
 
 --lint first compiles every Core/Src file once more at -O2 with
 -Warray-bounds=2 / -Wstringop-overflow=4 / -Wextra, output discarded, and stops
@@ -90,6 +91,7 @@ LDSCRIPT = ROOT / "STM32H743VITX_FLASH.ld"
 SWITCH_RE = re.compile(r"#ifndef\s+([A-Z][A-Z0-9_]*)[^\n]*\n\s*#\s*define\s+\1[ \t]+(\S+)")
 NOT_SWITCHES = {"FW_GIT"}
 CUBEMX_HEADERS = {"stm32h7xx_hal_conf.h", "FreeRTOSConfig.h", "main.h"}
+SWITCH_VALUES = {"FAULT_TEST": ["0", "1", "2", "3", "4"]}   # else 0 / 1
 LINT_VALUES = {"FAULT_TEST": ["1", "2", "3", "4"]}   # else: the other of 0 / 1
 
 
@@ -102,6 +104,22 @@ def known_switches():
             if m.group(1) not in NOT_SWITCHES:
                 found.setdefault(m.group(1), m.group(2))
     return found
+
+
+def check_defines(defines):
+    """Each -D must be NAME=VALUE for a switch of the firmware, with a value it
+    takes. The name alone is not enough: most switches are read with #if, where
+    an unknown word counts as 0, so `-D LCD_PROBE=on` built a plain image into
+    build-lcd_probe_on/ (review C9). Shared with tools/ui_render.py."""
+    known = known_switches()
+    for d in defines:
+        name, _, value = d.partition("=")
+        if name not in known:
+            sys.exit(f"-D {name}: not a switch of this firmware. Known: "
+                     + ", ".join(f"{k} (default {v})" for k, v in sorted(known.items())))
+        allowed = SWITCH_VALUES.get(name, ["0", "1"])
+        if value not in allowed:
+            sys.exit(f"-D {d}: {name} takes {' / '.join(allowed)} (as -D {name}=<value>)")
 
 
 def find_toolchain(arg):
@@ -222,12 +240,7 @@ def main():
     args = ap.parse_args()
 
     global OUT, CFLAGS
-    known = known_switches()
-    for d in args.defines:
-        name = d.split("=", 1)[0]
-        if name not in known:
-            sys.exit(f"-D {name}: not a switch of this firmware. Known: "
-                     + ", ".join(f"{k} (default {v})" for k, v in sorted(known.items())))
+    check_defines(args.defines)
     if args.defines:
         tag = "_".join(re.sub(r"[^A-Za-z0-9]+", "_", d).lower() for d in args.defines)
         OUT = ROOT / f"build-{tag}"
@@ -256,7 +269,8 @@ def main():
 
     if args.lint or args.lint_variants:
         given = {d.split("=", 1)[0] for d in args.defines}
-        lint(bindir, {k: v for k, v in known.items() if k not in given} if args.lint_variants else {})
+        lint(bindir, {k: v for k, v in known_switches().items() if k not in given}
+             if args.lint_variants else {})
 
     srcs = sources()
     failed, core_warn, vendor_warn, built = [], [], 0, 0

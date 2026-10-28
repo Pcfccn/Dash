@@ -19,6 +19,7 @@ extern uint32_t    ui_render_ms;
 extern gps_state_t ui_render_gps;
 extern odo_t       ui_render_odo;
 extern perf_t      ui_render_perf;
+extern obd_health_t ui_render_health;
 
 static uint32_t tick_cb(void) { return ui_render_ms; }
 
@@ -150,6 +151,20 @@ int main(int argc, char **argv)
     cluster_ui_set_page(UI_PAGE_DRIVE);
     run(250);                                             /* 10 s: past every dwell */
     if (dump("7_drive_alarm")) return 1;
+
+    /* DIAG line 1 at about its longest: NRC, LOOP, Q, CAP, TXL, BOFF after
+     * two recovered bus-offs; then after the fifth in a row, when the node
+     * only listens until the next power-up (fdcan_obd.c, review C9). */
+    ui_render_health.busoff_recover = 2u;
+    ui_render_health.tx_lost = 160u; ui_render_health.txn_capped = 1u;
+    ui_render_health.rx_hwm = 37u;
+    g_obd.last_nrc_sid = 0x22; g_obd.last_nrc = 0x31;
+    cluster_ui_set_page(UI_PAGE_DIAG);
+    run(1);
+    if (dump("8_diag_counters")) return 1;
+    ui_render_health.busoff_recover = 5u; ui_render_health.tx_off = true;
+    run(1);
+    if (dump("8_diag_txoff")) return 1;
 
     /* Every page has been built and drawn: what the LVGL heap holds now,
      * and its peak (render-time layers included). */

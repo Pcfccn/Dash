@@ -14,6 +14,8 @@
 #ifndef LCD_FLIP
 #define LCD_FLIP 0
 #endif
+/* Not #if: an unknown word (e.g. LCD_FLIP=on) would read as 0 there. */
+_Static_assert(LCD_FLIP == 0 || LCD_FLIP == 1, "LCD_FLIP must be 0 or 1");
 
 /* 1 = at power-up, show three bands sent as 16-bit pixels for 4 s before the
  * normal start: tells which controller the module really has (lv_port_disp.c,
@@ -21,6 +23,8 @@
 #ifndef LCD_PROBE
 #define LCD_PROBE 0
 #endif
+/* Not #if: an unknown word (e.g. LCD_PROBE=on) would read as 0 there. */
+_Static_assert(LCD_PROBE == 0 || LCD_PROBE == 1, "LCD_PROBE must be 0 or 1");
 
 void lv_port_disp_init(void);
 uint16_t lv_port_disp_spi_errors(void);   /* aborted SPI2 transfers since boot */

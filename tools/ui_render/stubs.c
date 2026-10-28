@@ -5,6 +5,8 @@
  * be in (review C8: maps "not read" next to a supported 5E, POLL, READY at
  * 86 km/h were renders the panel could never show). */
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "fdcan_obd.h"
@@ -26,8 +28,10 @@ bool obd_is_fresh(const volatile obd_data_t *d, metric_key_t k, uint32_t now)
 { (void)d; (void)k; (void)now; return true; }
 bool obd_sel_fresh(const volatile obd_data_t *d, uint32_t now) { (void)d; (void)now; return true; }
 bool obd_mil_fresh(const volatile obd_data_t *d, uint32_t now) { (void)d; (void)now; return true; }
-/* RX by interrupt, as on the board (rx_irq false would draw POLL). */
-void obd_can_health(obd_health_t *h) { memset(h, 0, sizeof *h); h->rx_irq = true; }
+/* RX by interrupt, as on the board (rx_irq false would draw POLL); main.c
+ * sets the counters for the bus-off scene. */
+obd_health_t ui_render_health = { .rx_irq = true };
+void obd_can_health(obd_health_t *h) { *h = ui_render_health; }
 void obd_oilp_probe(obd_oilp_probe_t *p) { memset(p, 0, sizeof *p); }
 
 /* As this E98: every mode-01 PID up to 0xA0 supported but oil temp (0x5C) and
@@ -101,6 +105,13 @@ uint16_t can_sniff_fps(void) { return s_sniff ? 1480u : 0u; }
 const char *fault_reset_text(void) { return "POWER ON"; }   /* as fault.c says it */
 bool fault_reset_abnormal(void) { return false; }
 uint32_t fault_reset_streak(void) { return 0; }
+/* An LVGL assert (lv_conf.h: a full heap above all) ends the render with
+ * the place, as the firmware records it, instead of LVGL's endless loop. */
+void fault_assert_failed(const char *file, int line)
+{
+    fprintf(stderr, "LVGL ASSERT %s:%d (heap: LV_MEM_SIZE in lv_conf.h?)\n", file, line);
+    exit(1);
+}
 
 uint32_t app_loop_max_ms(void) { return 38; }
 uint16_t lv_port_disp_spi_errors(void) { return 0; }
