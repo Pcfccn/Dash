@@ -25,8 +25,8 @@
  * takes BRIGHTNESS (100 = full), whatever the polarity. Set ACTIVE_LOW to 0 if
  * the gate is ever driven through an inverting stage (an NPN / N-FET pulling
  * the P-FET gate up to 5 V — worth doing: from a 3.3 V pin, with the FET's
- * source on 5 V, "off" is only Vgs = -1.7 V and may not fully close it; to be
- * measured).
+ * source on the WeAct's 5 V rail (4.6-4.8 V after its D10 diode), "off" is
+ * only Vgs = -1.3..-1.5 V and may not fully close it; to be measured).
  * That stage is planned (docs/future/build-hardware.md §3, 2N7000) and is a
  * hardware switch-over: the default 1 matches today's direct-drive wiring, and
  * an image built with it on the 2N7000 board turns the backlight OFF at 100 %.

@@ -124,12 +124,14 @@
 <line x1="661.6" y1="490" x2="661.6" y2="610" stroke="#6c757d" stroke-width="2.2" stroke-linecap="round"/>
 <line x1="664.8" y1="490" x2="664.8" y2="610" stroke="#222" stroke-width="2.2" stroke-linecap="round"/>
 <text x="674.0" y="548" font-size="11" fill="#6c757d" text-anchor="start" font-weight="bold">X4.1–X4.4: 4 провода к кнопкам</text>
-<rect x="960" y="620" width="340" height="120" rx="8" fill="#fff5f5" stroke="#d62828" stroke-width="1.6"/>
+<rect x="960" y="620" width="340" height="150" rx="8" fill="#fff5f5" stroke="#d62828" stroke-width="1.6"/>
 <text x="970" y="640" font-size="13" fill="#111" text-anchor="start" font-weight="bold">ILL+ (габариты)</text>
 <text x="970" y="658" font-size="11" fill="#333" text-anchor="start" font-weight="normal">12 В при включённых габаритах, при любом</text>
 <text x="970" y="673" font-size="11" fill="#333" text-anchor="start" font-weight="normal">положении реостата (плюс, не ILL−)</text>
 <text x="970" y="688" font-size="11" fill="#333" text-anchor="start" font-weight="normal">удобно взять у разъёма соседней</text>
-<text x="970" y="703" font-size="11" fill="#333" text-anchor="start" font-weight="normal">штатной кнопки с подсветкой</text>
+<text x="970" y="703" font-size="11" fill="#333" text-anchor="start" font-weight="normal">штатной кнопки с подсветкой;</text>
+<text x="970" y="718" font-size="11" fill="#333" text-anchor="start" font-weight="normal">у врезки — 10 кОм в линию под термоусадку:</text>
+<text x="970" y="733" font-size="11" fill="#333" text-anchor="start" font-weight="normal">КЗ провода = 1.5 мА, TAIL цел</text>
 <line x1="960" y1="680.0" x2="900" y2="680.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
 <line x1="900.0" y1="680" x2="900.0" y2="520" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>
 <line x1="900" y1="520.0" x2="690.0" y2="520.0" stroke="#d62828" stroke-width="2.2" stroke-linecap="round"/>

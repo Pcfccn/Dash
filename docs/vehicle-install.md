@@ -55,9 +55,13 @@ You **cannot** feed 12 V straight in, and you **must** protect against the noise
   That's acceptable — it comes back once the alternator is up. If you want it to
   survive cranking, use a buck with a low dropout and a bulk input capacitor.
 
-**Grounding:** one common ground. The supply's ground, the board's ground, and the
-SN65HVD230's ground all tie to **vehicle chassis ground** at a body ground bolt
-(not OBD pin 4/5 — harness.md). Use a single star point to avoid ground loops.
+**Grounding:** one common ground on the board. The supply's ground, the board's
+ground, and the SN65HVD230's ground all tie to **vehicle chassis ground** at a body
+ground bolt (X1.3), not to OBD pin 4/5. OBD **pin 5** (signal ground) goes to X2.4
+as the CAN reference only; **pin 4 is not connected** (harness.md, build-hardware.md
+§3). One caveat (review C9): X1.3 + X2.4 make a thin parallel strap between body
+and ECM signal ground; build-hardware.md §3 has the optional 47 Ω in X2.4 that
+keeps starter current out of it if the engine ground strap ever fails.
 
 **Where the 5 V actually connects on the board — there is NO power jack.** Per the
 WeAct V1.2 schematic the power path is:
@@ -100,8 +104,8 @@ The RG's **HS-CAN** (ISO 15765-4, 500 kbps — what this firmware speaks) is on 
 |---|---|---|
 | **6** | **CAN-H** | SN65HVD230 **CANH** |
 | **14** | **CAN-L** | SN65HVD230 **CANL** |
-| 4 | Chassis GND | common ground |
-| 5 | Signal GND | common ground |
+| 4 | Chassis GND | **not connected** (power ground is the body bolt, X1.3) |
+| 5 | Signal GND | X2.4 — CAN reference only |
 | 16 | +12 V constant | (bench test power only — see above) |
 
 **SN65HVD230 transceiver (3.3 V):**
@@ -149,6 +153,13 @@ bus errors / no comms.
 - **Verify:** ignition OFF, measure resistance CANH↔CANL at the OBD port — a
   healthy bus reads **~60 Ω**. If you see ~40 Ω, your module's resistor is still
   in circuit — take it out.
+- **~120 Ω with the module unplugged** (review C9): the bus has only one
+  terminator — a swap can lose the second one with a body module that was left
+  out — or one has failed. Do not "fix" it with the module's resistor: a
+  terminator belongs at the end of the bus, not on a 30 cm stub. Note it, check
+  the truck's own CAN (ECM ↔ TCM) for errors with a scan tool, and decide then.
+  Dash itself works on a 120 Ω bus; the module's resistor stays off either way.
+- **0 Ω / open:** a short in the wiring / the wrong pins (harness.md, X2).
 
 ---
 
@@ -213,7 +224,8 @@ Do the first power-up **key-on / engine-off (KOEO)** to validate before driving.
   `BACKLIGHT_ACTIVE_LOW 1`: `backlight_set()` takes **brightness** (100 = full,
   PA8 held LOW at boot as before), and brightness mode steps really brighten.
   Still to measure on the bench: gate–source voltage at 0/50/100 %. From a 3.3 V
-  pin with the FET source on 5 V, "off" is only Vgs ≈ −1.7 V and may not fully
+  pin with the FET source on 4.6–4.8 V (5 V after the WeAct's D10 diode), "off" is
+  only Vgs ≈ −1.3…−1.5 V and may not fully
   close the FET, so dimming can be weak; the fix is a small NPN/N-FET stage
   pulling the gate — the carrier board's 2N7000 (build-hardware.md §3), whose
   image is `python tools/build.py -D BACKLIGHT_ACTIVE_LOW=0` (`ROAD INV`).
@@ -246,7 +258,8 @@ Car 12 V  (IGNITION/ACC, inline fuse 2-3 A)
                                    └─►  STM32H743 + on-board 0.96" ST7735
 
 GND: one common star ground — buck GND · WeAct GND · display GND · transceiver
-     GND · vehicle chassis (OBD pin 4/5).
+     GND · vehicle chassis at a body bolt (X1.3); OBD pin 5 only as the CAN
+     reference (X2.4), OBD pin 4 not connected.
 ```
 
 ### Signal wiring (all MCU I/O is 3.3 V logic — do not exceed ~3.6 V on any pin)
